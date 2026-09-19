@@ -8,52 +8,62 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg-1: #0a0e1a;
-    --bg-2: #0d1220;
-    --panel: rgba(20, 28, 48, 0.85);
-    --panel-solid: #141c30;
-    --border: rgba(79, 195, 247, 0.2);
-    --primary: #4fc3f7;
-    --primary-dark: #2b8bc7;
-    --primary-glow: rgba(79, 195, 247, 0.4);
-    --text: #ffffff;
-    --text-dim: #8899bb;
-    --green: #50ff78;
-    --red: #ff4444;
+    --primary: #00d9a3;
+    --primary-dark: #00a87e;
+    --primary-glow: rgba(0, 217, 163, 0.4);
+    --secondary: #26c6da;
+    --accent: #ff9800;
+    --accent-glow: rgba(255, 152, 0, 0.5);
+    --text-dim: #7a9ba8;
+    --green: #00ff88;
+    --border: rgba(0, 217, 163, 0.25);
+    --bg-1: #071814;
+    --bg-2: #0a1f1a;
   }
   html, body {
     height: 100%;
     font-family: 'Vazirmatn', Tahoma, sans-serif;
-    background: var(--bg-1);
-    color: var(--text);
+    background: #071814;
+    color: #fff;
     overflow: hidden;
   }
   body {
-    background: radial-gradient(ellipse at top, #1a2540 0%, #0a0e1a 50%),
-                radial-gradient(ellipse at bottom, #1a1530 0%, transparent 60%);
+    background: radial-gradient(ellipse at top, #0d2a24 0%, #071814 50%),
+                radial-gradient(ellipse at bottom, #0a1f2a 0%, transparent 60%);
   }
 
-  /* ================= صفحه ورود ================= */
+  /* ================================================================
+     صفحه ورود
+     ================================================================ */
   #loginScreen {
     height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
-    background: radial-gradient(circle at 30% 20%, rgba(79,195,247,0.15), transparent 50%),
-                radial-gradient(circle at 70% 80%, rgba(150,80,255,0.15), transparent 50%);
+    background: radial-gradient(circle at 30% 20%, rgba(0,217,163,0.18), transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(38,198,218,0.18), transparent 50%);
+    transition: all 0.6s cubic-bezier(0.7, 0, 0.3, 1);
+  }
+  #loginScreen.leaving {
+    opacity: 0;
+    transform: scale(1.1);
+    filter: blur(20px);
   }
   .login-card {
     width: min(420px, 100%);
-    background: linear-gradient(145deg, rgba(30, 40, 65, 0.95), rgba(15, 22, 40, 0.95));
+    background: linear-gradient(145deg, rgba(13, 42, 36, 0.95), rgba(7, 24, 20, 0.95));
     border: 1px solid var(--border);
     border-radius: 24px;
     padding: 40px 32px;
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6),
-                0 0 60px rgba(79, 195, 247, 0.15) inset;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(0, 217, 163, 0.2) inset;
     backdrop-filter: blur(30px);
     position: relative;
     overflow: hidden;
+    animation: cardEnter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes cardEnter {
+    from { opacity: 0; transform: translateY(60px) scale(0.9); }
   }
   .login-card::before {
     content: '';
@@ -62,36 +72,35 @@
     right: -50%;
     width: 200%;
     height: 200%;
-    background: conic-gradient(from 0deg, transparent, rgba(79,195,247,0.1), transparent 30%);
-    animation: rotate 8s linear infinite;
+    background: conic-gradient(from 0deg, transparent, rgba(0,217,163,0.15), transparent 30%);
+    animation: rotate 6s linear infinite;
     pointer-events: none;
   }
   @keyframes rotate { to { transform: rotate(360deg); } }
   .login-inner { position: relative; z-index: 1; }
   .login-icon {
-    width: 70px;
-    height: 70px;
-    margin: 0 auto 20px;
-    border-radius: 22px;
-    background: linear-gradient(135deg, #4fc3f7, #8a5cf7);
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 24px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #00d9a3, #26c6da);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 36px;
-    box-shadow: 0 15px 40px rgba(79,195,247,0.4);
-    animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    font-size: 40px;
+    box-shadow: 0 15px 40px rgba(0,217,163,0.5);
+    animation: iconFloat 3s ease-in-out infinite;
   }
-  @keyframes bounceIn {
-    0% { transform: scale(0); }
-    60% { transform: scale(1.15); }
-    100% { transform: scale(1); }
+  @keyframes iconFloat {
+    0%, 100% { transform: translateY(0) rotate(0); }
+    50% { transform: translateY(-8px) rotate(-5deg); }
   }
   .login-card h1 {
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 800;
     text-align: center;
     margin-bottom: 8px;
-    background: linear-gradient(135deg, #4fc3f7, #8a5cf7);
+    background: linear-gradient(135deg, #00d9a3, #26c6da);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -103,143 +112,155 @@
     margin-bottom: 32px;
     line-height: 1.7;
   }
-  .field { margin-bottom: 18px; }
+  .field { margin-bottom: 20px; }
   .field label {
     display: block;
     font-size: 13px;
-    color: #aabbdd;
+    color: #aabdd0;
     margin-bottom: 8px;
     font-weight: 600;
   }
   .field input {
     width: 100%;
-    padding: 14px 18px;
-    background: rgba(10, 15, 30, 0.6);
+    padding: 15px 20px;
+    background: rgba(7, 24, 20, 0.6);
     border: 1.5px solid var(--border);
-    border-radius: 14px;
+    border-radius: 16px;
     color: #fff;
     font-family: inherit;
     font-size: 15px;
     outline: none;
-    transition: all 0.25s;
+    transition: all 0.3s;
   }
   .field input:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(79,195,247,0.15);
-    background: rgba(10, 15, 30, 0.9);
+    box-shadow: 0 0 0 4px rgba(0,217,163,0.18);
+    background: rgba(7, 24, 20, 0.9);
+    transform: translateY(-2px);
   }
+
   .btn-primary {
     width: 100%;
-    padding: 15px;
-    background: linear-gradient(135deg, #4fc3f7, #2b8bc7);
+    padding: 16px;
+    background: linear-gradient(135deg, #00d9a3, #26c6da);
     color: #fff;
     border: none;
-    border-radius: 14px;
+    border-radius: 16px;
     font-family: inherit;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.25s;
-    box-shadow: 0 10px 30px rgba(79,195,247,0.35);
+    transition: all 0.3s;
+    box-shadow: 0 10px 30px rgba(0,217,163,0.4);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 54px;
   }
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 15px 40px rgba(79,195,247,0.5);
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(0,217,163,0.6);
   }
-  .btn-primary:disabled { opacity: 0.6; cursor: wait; }
+  .btn-primary:active:not(:disabled) { transform: scale(0.98); }
+  .btn-primary.loading { background: linear-gradient(135deg, #00a87e, #1a8a9a); }
+  .btn-primary.loading .btn-text { opacity: 0; }
+  .btn-primary.loading .btn-spinner {
+    opacity: 1;
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .btn-spinner {
+    width: 24px; height: 24px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    opacity: 0;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
 
-  /* ================= چت ================= */
+  /* ================================================================
+     صفحه چت
+     ================================================================ */
   #chatScreen {
     display: none;
     height: 100vh;
     flex-direction: column;
+    opacity: 0;
+    transform: scale(0.95);
   }
-  #chatScreen.on { display: flex; }
+  #chatScreen.on {
+    display: flex;
+    animation: chatEnter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  @keyframes chatEnter { to { opacity: 1; transform: scale(1); } }
 
-  /* Topbar */
   .topbar {
     display: flex;
     align-items: center;
     gap: 14px;
     padding: 14px 22px;
-    background: linear-gradient(180deg, rgba(20, 28, 48, 0.95), rgba(15, 22, 40, 0.85));
+    background: linear-gradient(180deg, rgba(13, 42, 36, 0.95), rgba(7, 24, 20, 0.9));
     border-bottom: 1px solid var(--border);
     backdrop-filter: blur(20px);
     flex-shrink: 0;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    animation: slideDown 0.6s 0.2s both cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes slideDown {
+    from { transform: translateY(-100%); opacity: 0; }
   }
   .logo {
-    width: 44px;
-    height: 44px;
+    width: 44px; height: 44px;
     border-radius: 14px;
-    background: linear-gradient(135deg, #4fc3f7, #8a5cf7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: linear-gradient(135deg, #00d9a3, #26c6da);
+    display: flex; align-items: center; justify-content: center;
     font-size: 22px;
-    box-shadow: 0 8px 25px rgba(79,195,247,0.4);
+    box-shadow: 0 8px 25px rgba(0,217,163,0.5);
+    animation: logoPulse 2s ease-in-out infinite;
   }
-  .topbar-info h1 {
-    font-size: 16px;
-    font-weight: 800;
-    margin-bottom: 2px;
+  @keyframes logoPulse {
+    0%, 100% { box-shadow: 0 8px 25px rgba(0,217,163,0.5); }
+    50% { box-shadow: 0 8px 35px rgba(0,217,163,0.8); }
   }
-  .topbar-info small {
-    color: var(--text-dim);
-    font-size: 11px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
+  .topbar-info h1 { font-size: 16px; font-weight: 800; margin-bottom: 2px; }
+  .topbar-info small { color: var(--text-dim); font-size: 11px; display: flex; align-items: center; gap: 6px; }
   .live-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
+    width: 7px; height: 7px; border-radius: 50%;
     background: var(--green);
     box-shadow: 0 0 8px var(--green);
     animation: pulse 2s infinite;
   }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.85); }
-  }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.85); } }
   .online-badge {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: linear-gradient(135deg, rgba(80,255,120,0.15), rgba(80,255,120,0.08));
+    display: flex; align-items: center; gap: 8px;
+    background: linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,255,136,0.08));
     color: var(--green);
     padding: 7px 16px;
     border-radius: 999px;
     font-size: 12.5px;
     font-weight: 700;
-    border: 1px solid rgba(80,255,120,0.25);
+    border: 1px solid rgba(0,255,136,0.25);
   }
   .topbar-spacer { flex: 1; }
   .status-pill {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    display: flex; align-items: center; gap: 8px;
     padding: 7px 16px;
     border-radius: 999px;
-    background: rgba(80, 255, 120, 0.12);
+    background: rgba(0, 255, 136, 0.12);
     color: var(--green);
     font-size: 12.5px;
     font-weight: 600;
-    border: 1px solid rgba(80,255,120,0.2);
+    border: 1px solid rgba(0,255,136,0.25);
   }
-  .status-pill.reconnecting { background: rgba(255, 190, 0, 0.15); color: #ffbe00; border-color: rgba(255,190,0,0.3); }
-  .status-pill .dot-status {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: currentColor;
-  }
+  .status-pill.reconnecting { background: rgba(255, 190, 0, 0.15); color: #ffbe00; }
+  .status-pill .dot-status { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
   .me-chip {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(79, 195, 247, 0.12);
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(0, 217, 163, 0.12);
     padding: 6px 16px 6px 6px;
     border-radius: 999px;
     font-size: 13px;
@@ -247,38 +268,24 @@
     border: 1px solid var(--border);
   }
   .me-avatar {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 13px;
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 13px;
     color: #fff;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
   }
 
-  /* Main */
-  .main {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 260px 1fr;
-    min-height: 0;
-  }
-  @media (max-width: 768px) {
-    .main { grid-template-columns: 1fr; }
-    .sidebar { display: none; }
-    .sidebar.open { display: flex; position: fixed; inset: 0; z-index: 100; }
-  }
+  .main { flex: 1; display: grid; grid-template-columns: 260px 1fr; min-height: 0; }
+  @media (max-width: 768px) { .main { grid-template-columns: 1fr; } .sidebar { display: none; } }
 
-  /* Sidebar */
   .sidebar {
-    background: linear-gradient(180deg, rgba(15, 22, 40, 0.9), rgba(10, 15, 30, 0.95));
+    background: linear-gradient(180deg, rgba(10, 31, 26, 0.92), rgba(7, 24, 20, 0.95));
     border-left: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
     min-height: 0;
+    animation: slideRight 0.6s 0.3s both cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes slideRight {
+    from { transform: translateX(100%); opacity: 0; }
   }
   .sidebar-head {
     padding: 16px 20px;
@@ -286,132 +293,170 @@
     font-weight: 800;
     color: var(--primary);
     border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    display: flex; align-items: center; gap: 10px;
   }
   .sidebar-head .count-badge {
     margin-right: auto;
-    background: linear-gradient(135deg, rgba(79,195,247,0.25), rgba(79,195,247,0.1));
+    background: linear-gradient(135deg, rgba(0,217,163,0.25), rgba(0,217,163,0.1));
     padding: 3px 12px;
     border-radius: 999px;
     font-size: 11px;
     color: var(--primary);
-    border: 1px solid rgba(79,195,247,0.3);
+    border: 1px solid rgba(0,217,163,0.3);
   }
-  .user-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-  }
+  .user-list { flex: 1; overflow-y: auto; padding: 10px; }
   .user-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    display: flex; align-items: center; gap: 12px;
     padding: 10px 14px;
     border-radius: 14px;
     cursor: pointer;
     margin-bottom: 4px;
-    transition: all 0.2s;
+    transition: all 0.25s;
     position: relative;
+    animation: userIn 0.4s both cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes userIn {
+    from { opacity: 0; transform: translateX(30px); }
   }
   .user-item:hover {
-    background: linear-gradient(135deg, rgba(79,195,247,0.12), rgba(79,195,247,0.05));
+    background: linear-gradient(135deg, rgba(0,217,163,0.12), rgba(0,217,163,0.05));
     transform: translateX(-3px);
   }
-  .user-item.me {
-    cursor: default;
-    background: linear-gradient(135deg, rgba(79,195,247,0.08), transparent);
-  }
+  .user-item.me { cursor: default; background: linear-gradient(135deg, rgba(0,217,163,0.08), transparent); }
   .user-item.me:hover { transform: none; }
-  .u-avatar-wrap {
-    position: relative;
-    flex-shrink: 0;
-  }
+  .u-avatar-wrap { position: relative; flex-shrink: 0; }
   .u-avatar {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 15px;
+    width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 15px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   }
   .u-status {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 11px;
-    height: 11px;
+    position: absolute; bottom: 0; right: 0;
+    width: 11px; height: 11px;
     border-radius: 50%;
     background: var(--green);
-    border: 2px solid #0f1628;
+    border: 2px solid #071814;
     box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
   }
-  .u-name {
-    flex: 1;
-    font-size: 13.5px;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .u-name .you {
-    color: var(--text-dim);
-    font-size: 11px;
-    font-weight: 500;
-  }
+  .u-name { flex: 1; font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .u-name .you { color: var(--text-dim); font-size: 11px; font-weight: 500; }
   .badge-unread {
-    min-width: 22px;
-    height: 22px;
+    min-width: 22px; height: 22px;
     border-radius: 999px;
     background: linear-gradient(135deg, #ff4444, #cc0000);
-    color: #fff;
-    font-size: 11px;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    color: #fff; font-size: 11px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
     padding: 0 7px;
     box-shadow: 0 3px 10px rgba(255,68,68,0.5);
-    animation: badgeIn 0.3s ease;
+    animation: badgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  @keyframes badgeIn { from { transform: scale(0); } }
+  @keyframes badgePop { from { transform: scale(0) rotate(-180deg); } }
 
-  /* Chat area */
+  /* ================================================================
+     Chat area
+     ================================================================ */
   .chat-area {
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
     min-height: 0;
     position: relative;
     background:
-      radial-gradient(ellipse at top, rgba(79,195,247,0.04), transparent 50%),
-      linear-gradient(to bottom, #0a0e1a, #0d1220);
+      radial-gradient(ellipse at top, rgba(0,217,163,0.05), transparent 50%),
+      linear-gradient(to bottom, #071814, #0a1f1a);
   }
   .messages {
-    flex: 1;
-    overflow-y: auto;
+    flex: 1; overflow-y: auto;
     padding: 24px 20px;
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
     gap: 12px;
     scroll-behavior: smooth;
   }
   .msg {
     max-width: 68%;
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
     gap: 5px;
-    animation: msgIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  @keyframes msgIn {
-    from { opacity: 0; transform: translateY(12px) scale(0.95); }
-    to { opacity: 1; transform: none; }
+    position: relative;
+    transition: all 0.3s;
   }
   .msg.mine { align-self: flex-start; align-items: flex-start; }
   .msg.theirs { align-self: flex-end; align-items: flex-end; }
+
+  /* ✨ هایلایت آخرین پیام با نارنجی */
+  .msg.last-message .bubble {
+    box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.7),
+                0 0 25px rgba(255, 152, 0, 0.5),
+                0 0 50px rgba(255, 152, 0, 0.25);
+    animation: lastGlow 2s ease-in-out infinite;
+  }
+  @keyframes lastGlow {
+    0%, 100% {
+      box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.7),
+                  0 0 25px rgba(255, 152, 0, 0.5),
+                  0 0 50px rgba(255, 152, 0, 0.25);
+    }
+    50% {
+      box-shadow: 0 0 0 2px rgba(255, 152, 0, 1),
+                  0 0 35px rgba(255, 152, 0, 0.7),
+                  0 0 70px rgba(255, 152, 0, 0.4);
+    }
+  }
+  .msg.last-message .bubble::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: inherit;
+    border: 1.5px dashed rgba(255, 152, 0, 0.6);
+    pointer-events: none;
+    animation: dashedRotate 8s linear infinite;
+  }
+  @keyframes dashedRotate {
+    to { transform: rotate(360deg); }
+  }
+  .msg.last-message::before {
+    content: 'آخرین پیام';
+    position: absolute;
+    top: -22px;
+    font-size: 10px;
+    color: var(--accent);
+    background: rgba(255, 152, 0, 0.15);
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 152, 0, 0.4);
+    font-weight: 700;
+    animation: labelFloat 2s ease-in-out infinite;
+  }
+  .msg.last-message.mine::before { right: 0; }
+  .msg.last-message.theirs::before { left: 0; }
+  @keyframes labelFloat {
+    0%, 100% { transform: translateY(0); opacity: 0.9; }
+    50% { transform: translateY(-3px); opacity: 1; }
+  }
+
+  .msg.anim-in { animation: msgBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes msgBounce {
+    0% { opacity: 0; transform: translateY(20px) scale(0.85); }
+    60% { transform: translateY(-4px) scale(1.02); }
+    100% { opacity: 1; transform: none; }
+  }
+  .msg.flying-in { animation: flyIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes flyIn {
+    0% { opacity: 0; transform: translateY(60px) scale(0.7) rotate(-8deg); }
+    60% { transform: translateY(-8px) scale(1.05) rotate(2deg); }
+    100% { opacity: 1; transform: none; }
+  }
+  .msg.sticker-fly { animation: stickerSpin 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes stickerSpin {
+    0% { opacity: 0; transform: scale(0) rotate(-360deg); }
+    60% { transform: scale(1.15) rotate(20deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0); }
+  }
+  .msg.image-fly { animation: imageZoom 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes imageZoom {
+    0% { opacity: 0; transform: scale(0.3); filter: blur(10px); }
+    100% { opacity: 1; transform: scale(1); filter: blur(0); }
+  }
+
   .bubble {
     padding: 12px 16px;
     border-radius: 18px;
@@ -421,43 +466,46 @@
     max-width: 100%;
     position: relative;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-  }
-  .mine .bubble {
-    background: linear-gradient(135deg, #4fc3f7, #2b8bc7);
-    color: #fff;
-    border-end-start-radius: 6px;
-    box-shadow: 0 6px 20px rgba(79,195,247,0.3);
-  }
-  .theirs .bubble {
-    background: linear-gradient(135deg, rgba(40, 50, 75, 0.9), rgba(30, 40, 65, 0.9));
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-end-end-radius: 6px;
-  }
-  .bubble.sticker { background: none !important; padding: 0 !important; border: none !important; box-shadow: none !important; }
-  .bubble.sticker img {
-    width: 130px;
-    height: 130px;
-    object-fit: contain;
-    filter: drop-shadow(0 8px 20px rgba(0,0,0,0.5));
     transition: transform 0.2s;
   }
-  .bubble.sticker img:hover { transform: scale(1.05); }
+  .bubble:hover { transform: translateY(-1px); }
+
+  /* پیام‌های من — سبز-آبی */
+  .mine .bubble {
+    background: linear-gradient(135deg, #00d9a3, #00a87e);
+    color: #fff;
+    border-end-start-radius: 6px;
+    box-shadow: 0 6px 20px rgba(0,217,163,0.35);
+  }
+  /* پیام‌های دیگران — آبی فیروزه‌ای */
+  .theirs .bubble {
+    background: linear-gradient(135deg, rgba(20, 60, 70, 0.95), rgba(15, 45, 55, 0.95));
+    color: #fff;
+    border: 1px solid rgba(38, 198, 218, 0.25);
+    border-end-end-radius: 6px;
+    box-shadow: 0 6px 20px rgba(38,198,218,0.15);
+  }
+
+  .bubble.sticker { background: none !important; padding: 0 !important; border: none !important; box-shadow: none !important; }
+  .bubble.sticker img {
+    width: 130px; height: 130px;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 20px rgba(0,0,0,0.5));
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .bubble.sticker img:hover { transform: scale(1.15) rotate(5deg); }
   .bubble.big-emoji { font-size: 54px; line-height: 1.15; padding: 4px; background: none !important; box-shadow: none !important; }
   .bubble.image-bubble {
     padding: 5px !important;
     background: rgba(255,255,255,0.05) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
+    border: 1px solid rgba(38, 198, 218, 0.3) !important;
   }
   .bubble.image-bubble img {
-    max-width: 300px;
-    max-height: 340px;
-    border-radius: 14px;
-    display: block;
-    cursor: pointer;
-    transition: transform 0.2s;
+    max-width: 300px; max-height: 340px;
+    border-radius: 14px; display: block; cursor: pointer;
+    transition: transform 0.3s;
   }
-  .bubble.image-bubble img:hover { transform: scale(1.02); }
+  .bubble.image-bubble img:hover { transform: scale(1.03); }
 
   .reply-quote {
     padding: 8px 12px;
@@ -468,35 +516,19 @@
     font-size: 12.5px;
   }
   .reply-quote .rq-name { color: #fff; font-weight: 800; font-size: 12px; }
-  .reply-quote .rq-text {
-    color: rgba(255,255,255,0.8);
-    margin-top: 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 240px;
-    font-size: 12px;
-  }
-  .theirs .reply-quote {
-    background: rgba(79,195,247,0.1);
-    border-right-color: var(--primary);
-  }
-  .theirs .reply-quote .rq-name { color: var(--primary); }
-  .theirs .reply-quote .rq-text { color: #aabbdd; }
+  .reply-quote .rq-text { color: rgba(255,255,255,0.8); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; font-size: 12px; }
+  .theirs .reply-quote { background: rgba(38,198,218,0.12); border-right-color: var(--secondary); }
+  .theirs .reply-quote .rq-name { color: var(--secondary); }
 
   .meta {
     font-size: 11px;
     color: var(--text-dim);
     padding: 0 6px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    opacity: 0.9;
+    display: flex; align-items: center; gap: 6px;
   }
   .reply-btn {
     opacity: 0;
-    background: none;
-    border: none;
+    background: none; border: none;
     color: var(--primary);
     cursor: pointer;
     font-size: 15px;
@@ -504,24 +536,30 @@
     border-radius: 6px;
     transition: all 0.2s;
   }
-  .reply-btn:hover { background: rgba(79,195,247,0.15); }
+  .reply-btn:hover { background: rgba(0,217,163,0.15); }
   .msg:hover .reply-btn { opacity: 1; }
 
   .msg.system {
     align-self: center;
     max-width: 90%;
-    background: linear-gradient(135deg, rgba(79, 195, 247, 0.15), rgba(79, 195, 247, 0.08));
-    color: #aabbdd;
+    background: linear-gradient(135deg, rgba(0, 217, 163, 0.15), rgba(38, 198, 218, 0.1));
+    color: #a0d8d0;
     font-size: 12.5px;
     padding: 7px 18px;
     border-radius: 999px;
-    border: 1px solid rgba(79,195,247,0.2);
+    border: 1px solid rgba(0,217,163,0.25);
     font-weight: 500;
+    animation: systemIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes systemIn {
+    from { opacity: 0; transform: scale(0.7) translateY(-10px); }
   }
 
-  /* Composer */
+  /* ================================================================
+     Composer
+     ================================================================ */
   .composer-wrap {
-    background: linear-gradient(180deg, rgba(15, 22, 40, 0.85), rgba(20, 28, 48, 0.98));
+    background: linear-gradient(180deg, rgba(10, 31, 26, 0.9), rgba(13, 42, 36, 0.98));
     border-top: 1px solid var(--border);
     flex-shrink: 0;
     backdrop-filter: blur(20px);
@@ -529,64 +567,39 @@
   .reply-preview {
     display: none;
     padding: 12px 20px;
-    background: linear-gradient(90deg, rgba(79, 195, 247, 0.12), rgba(79, 195, 247, 0.04));
+    background: linear-gradient(90deg, rgba(0, 217, 163, 0.12), rgba(0, 217, 163, 0.04));
     border-bottom: 1px solid var(--border);
-    align-items: center;
-    gap: 12px;
-    animation: replyIn 0.25s ease;
+    align-items: center; gap: 12px;
+    animation: replySlide 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  @keyframes replyIn { from { opacity: 0; transform: translateY(-10px); } }
+  @keyframes replySlide { from { opacity: 0; transform: translateY(-20px); } }
   .reply-preview.on { display: flex; }
   .reply-preview .rp-bar {
-    width: 4px;
-    height: 40px;
-    background: linear-gradient(180deg, #4fc3f7, #8a5cf7);
+    width: 4px; height: 40px;
+    background: linear-gradient(180deg, #00d9a3, #26c6da);
     border-radius: 2px;
-    box-shadow: 0 0 12px rgba(79,195,247,0.6);
+    box-shadow: 0 0 12px rgba(0,217,163,0.6);
   }
   .reply-preview .rp-info { flex: 1; min-width: 0; }
-  .reply-preview .rp-name {
-    color: var(--primary);
-    font-size: 12.5px;
-    font-weight: 800;
-    margin-bottom: 2px;
-  }
-  .reply-preview .rp-text {
-    color: #aabbdd;
-    font-size: 12.5px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  .reply-preview .rp-name { color: var(--primary); font-size: 12.5px; font-weight: 800; margin-bottom: 2px; }
+  .reply-preview .rp-text { color: #8ab8b0; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .reply-preview .rp-close {
     background: rgba(255,80,80,0.15);
     color: #ff8080;
     border: 1px solid rgba(255,80,80,0.3);
-    width: 30px;
-    height: 30px;
+    width: 30px; height: 30px;
     border-radius: 10px;
-    cursor: pointer;
-    font-size: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    cursor: pointer; font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
     transition: all 0.2s;
   }
-  .reply-preview .rp-close:hover {
-    background: #ff4444;
-    color: #fff;
-  }
+  .reply-preview .rp-close:hover { background: #ff4444; color: #fff; transform: rotate(90deg); }
 
-  .composer {
-    padding: 14px 18px;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
+  .composer { padding: 14px 18px; display: flex; gap: 10px; align-items: center; }
   .composer input[type="text"] {
     flex: 1;
     padding: 13px 20px;
-    background: rgba(10, 15, 30, 0.7);
+    background: rgba(7, 24, 20, 0.7);
     border: 1.5px solid var(--border);
     border-radius: 16px;
     color: #fff;
@@ -598,191 +611,189 @@
   }
   .composer input[type="text"]:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(79,195,247,0.15);
-    background: rgba(10, 15, 30, 0.95);
+    box-shadow: 0 0 0 4px rgba(0,217,163,0.15);
+    background: rgba(7, 24, 20, 0.95);
+    transform: translateY(-2px);
   }
-  .composer input::placeholder { color: #556688; }
+  .composer input::placeholder { color: #4a7070; }
 
   .icon-btn {
-    width: 46px;
-    height: 46px;
+    width: 46px; height: 46px;
     border-radius: 14px;
-    background: rgba(79, 195, 247, 0.12);
+    background: rgba(0, 217, 163, 0.12);
     color: var(--primary);
     border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 22px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 22px;
     flex-shrink: 0;
-    transition: all 0.2s;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .icon-btn:hover {
-    background: linear-gradient(135deg, #4fc3f7, #2b8bc7);
+    background: linear-gradient(135deg, #00d9a3, #26c6da);
     color: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(79,195,247,0.4);
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 8px 20px rgba(0,217,163,0.4);
   }
-  .icon-btn:active { transform: translateY(0); }
+  .icon-btn:active { transform: translateY(0) scale(0.95); }
+
   .send-btn {
-    width: 46px;
-    height: 46px;
+    width: 46px; height: 46px;
     border-radius: 14px;
-    background: linear-gradient(135deg, #4fc3f7, #2b8bc7);
+    background: linear-gradient(135deg, #00d9a3, #26c6da);
     color: #fff;
     border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 20px;
     flex-shrink: 0;
-    transition: all 0.2s;
-    box-shadow: 0 6px 20px rgba(79,195,247,0.4);
+    transition: all 0.25s;
+    box-shadow: 0 6px 20px rgba(0,217,163,0.4);
+    position: relative;
+    overflow: hidden;
   }
   .send-btn:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 10px 28px rgba(79,195,247,0.5);
+    transform: translateY(-3px) scale(1.08);
+    box-shadow: 0 10px 28px rgba(0,217,163,0.6);
   }
-  .send-btn:active { transform: scale(0.95); }
+  .send-btn:active { transform: scale(0.9); }
+  .send-btn.spinning { animation: sendSpin 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes sendSpin {
+    0% { transform: rotate(0) scale(1); }
+    50% { transform: rotate(180deg) scale(1.3); background: linear-gradient(135deg, #26c6da, #00d9a3); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+  .send-btn.fly { animation: sendFly 0.6s cubic-bezier(0.5, 0, 0.5, 1); }
+  @keyframes sendFly {
+    0% { transform: translate(0, 0) rotate(0); }
+    50% { transform: translate(-30px, -15px) rotate(-25deg) scale(1.4); }
+    100% { transform: translate(0, 0) rotate(0); }
+  }
+  .send-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    background: radial-gradient(circle, rgba(255,255,255,0.5), transparent 70%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .send-btn.spinning::before { animation: sendWave 0.6s ease; }
+  @keyframes sendWave {
+    0% { opacity: 1; transform: scale(0); }
+    100% { opacity: 0; transform: scale(2); }
+  }
 
-  /* Panels */
+  /* ================================================================
+     پنل‌ها
+     ================================================================ */
   .emoji-panel, .sticker-panel {
     position: absolute;
-    bottom: 100px;
-    right: 20px;
+    bottom: 100px; right: 20px;
     width: 380px;
     max-height: 460px;
     overflow-y: auto;
-    background: linear-gradient(145deg, rgba(30, 40, 65, 0.98), rgba(20, 28, 48, 0.98));
-    border: 1px solid rgba(79, 195, 247, 0.4);
+    background: linear-gradient(145deg, rgba(13, 42, 36, 0.98), rgba(7, 24, 20, 0.98));
+    border: 1px solid rgba(0, 217, 163, 0.4);
     border-radius: 20px;
     padding: 16px;
     display: none;
     z-index: 50;
     backdrop-filter: blur(30px);
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7),
-                0 0 40px rgba(79, 195, 247, 0.15);
-    animation: panelIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 40px rgba(0, 217, 163, 0.2);
   }
-  @keyframes panelIn {
-    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  .emoji-panel.on, .sticker-panel.on {
+    display: block;
+    animation: panelPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  .emoji-panel.on, .sticker-panel.on { display: block; }
-  .emoji-grid {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 4px;
+  @keyframes panelPop {
+    0% { opacity: 0; transform: scale(0.7) translateY(30px); }
+    60% { transform: scale(1.03) translateY(-4px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
   }
+  .emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
   .emoji-item {
     aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 24px;
     border-radius: 10px;
     cursor: pointer;
     user-select: none;
-    transition: all 0.15s;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  .emoji-item:hover {
-    background: rgba(79, 195, 247, 0.25);
-    transform: scale(1.2);
-  }
-  .sticker-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-  }
+  .emoji-item:hover { background: rgba(0, 217, 163, 0.25); transform: scale(1.3) rotate(8deg); }
+  .emoji-item:active { transform: scale(0.9); }
+  .sticker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .sticker-item {
     aspect-ratio: 1;
-    background: linear-gradient(145deg, rgba(79, 195, 247, 0.08), rgba(79, 195, 247, 0.02));
-    border: 1px solid rgba(79, 195, 247, 0.15);
+    background: linear-gradient(145deg, rgba(0, 217, 163, 0.08), rgba(0, 217, 163, 0.02));
+    border: 1px solid rgba(0, 217, 163, 0.15);
     border-radius: 14px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     padding: 8px;
-    transition: all 0.2s;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .sticker-item:hover {
-    background: linear-gradient(145deg, rgba(79, 195, 247, 0.2), rgba(79, 195, 247, 0.1));
+    background: linear-gradient(145deg, rgba(0, 217, 163, 0.2), rgba(0, 217, 163, 0.1));
     border-color: var(--primary);
-    transform: scale(1.05) rotate(-2deg);
-    box-shadow: 0 8px 20px rgba(79,195,247,0.3);
+    transform: scale(1.1) rotate(-4deg);
+    box-shadow: 0 8px 20px rgba(0,217,163,0.4);
   }
-  .sticker-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
-  }
+  .sticker-item:active { transform: scale(0.95); }
+  .sticker-item img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3)); }
   .panel-title {
     font-size: 13px;
     color: var(--primary);
     font-weight: 800;
     padding: 4px 8px 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    display: flex; align-items: center; gap: 8px;
   }
   .panel-title .count {
     margin-right: auto;
-    background: rgba(79,195,247,0.15);
+    background: rgba(0,217,163,0.15);
     padding: 2px 10px;
     border-radius: 999px;
     font-size: 11px;
     color: var(--primary);
-    border: 1px solid rgba(79,195,247,0.25);
+    border: 1px solid rgba(0,217,163,0.25);
   }
-  .panel-divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(79,195,247,0.3), transparent);
-    margin: 16px 0;
-  }
+  .panel-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(0,217,163,0.3), transparent); margin: 16px 0; }
 
-  /* Image preview modal */
   .image-preview-modal {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.92);
     display: none;
     z-index: 300;
-    align-items: center;
-    justify-content: center;
+    align-items: center; justify-content: center;
     padding: 30px;
     backdrop-filter: blur(10px);
-    animation: fadeIn 0.2s ease;
   }
+  .image-preview-modal.on { display: flex; animation: fadeIn 0.3s ease; }
   @keyframes fadeIn { from { opacity: 0; } }
-  .image-preview-modal.on { display: flex; }
   .image-preview-modal img {
-    max-width: 90vw;
-    max-height: 90vh;
+    max-width: 90vw; max-height: 90vh;
     border-radius: 16px;
     box-shadow: 0 30px 100px rgba(0, 0, 0, 0.8);
-    animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: zoomIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } }
+  @keyframes zoomIn { from { transform: scale(0.5); opacity: 0; } }
 
-  /* Upload preview */
   .upload-preview {
     position: absolute;
-    bottom: 100px;
-    right: 20px;
+    bottom: 100px; right: 20px;
     width: 240px;
     padding: 14px;
-    background: linear-gradient(145deg, rgba(30, 40, 65, 0.98), rgba(20, 28, 48, 0.98));
-    border: 1px solid rgba(79, 195, 247, 0.4);
+    background: linear-gradient(145deg, rgba(13, 42, 36, 0.98), rgba(7, 24, 20, 0.98));
+    border: 1px solid rgba(0, 217, 163, 0.4);
     border-radius: 20px;
     display: none;
     z-index: 60;
     box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    animation: panelIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  .upload-preview.on { display: block; }
+  .upload-preview.on {
+    display: block;
+    animation: panelPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
   .upload-preview img {
     width: 100%;
     border-radius: 12px;
@@ -791,11 +802,7 @@
     object-fit: contain;
     background: rgba(0,0,0,0.3);
   }
-  .upload-preview .up-btns {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-  }
+  .upload-preview .up-btns { display: flex; gap: 8px; margin-top: 12px; }
   .upload-preview .up-btns button {
     flex: 1;
     padding: 10px;
@@ -807,124 +814,94 @@
     border: none;
     transition: all 0.2s;
   }
-  .up-send {
-    background: linear-gradient(135deg, #4fc3f7, #2b8bc7);
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(79,195,247,0.4);
-  }
+  .up-send { background: linear-gradient(135deg, #00d9a3, #26c6da); color: #fff; }
   .up-send:hover { transform: translateY(-2px); }
-  .up-cancel {
-    background: rgba(255,80,80,0.15);
-    color: #ff8080;
-    border: 1px solid rgba(255,80,80,0.3) !important;
-  }
-  .up-cancel:hover { background: rgba(255,80,80,0.3); }
+  .up-cancel { background: rgba(255,80,80,0.15); color: #ff8080; border: 1px solid rgba(255,80,80,0.3) !important; }
 
-  /* PM window */
   .pm-overlay {
-    position: fixed;
-    inset: 0;
+    position: fixed; inset: 0;
     background: rgba(0, 0, 0, 0.7);
     display: none;
     z-index: 200;
     backdrop-filter: blur(8px);
-    animation: fadeIn 0.2s ease;
   }
-  .pm-overlay.on { display: block; }
+  .pm-overlay.on { display: block; animation: fadeIn 0.3s ease; }
   .pm-window {
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.9);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.5) rotate(-10deg);
     width: min(460px, calc(100vw - 32px));
     height: min(620px, calc(100vh - 40px));
-    background: linear-gradient(145deg, rgba(30, 40, 65, 0.98), rgba(20, 28, 48, 0.98));
-    border: 1px solid rgba(79, 195, 247, 0.4);
+    background: linear-gradient(145deg, rgba(13, 42, 36, 0.98), rgba(7, 24, 20, 0.98));
+    border: 1px solid rgba(0, 217, 163, 0.4);
     border-radius: 24px;
     display: none;
     flex-direction: column;
     z-index: 201;
     overflow: hidden;
-    box-shadow: 0 30px 100px rgba(0, 0, 0, 0.8),
-                0 0 60px rgba(79, 195, 247, 0.2);
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+    box-shadow: 0 30px 100px rgba(0, 0, 0, 0.8), 0 0 60px rgba(0,217,163,0.2);
     opacity: 0;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .pm-window.on {
     display: flex;
-    transform: translate(-50%, -50%) scale(1);
+    transform: translate(-50%, -50%) scale(1) rotate(0);
     opacity: 1;
   }
   .pm-head {
     padding: 16px 20px;
     border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: linear-gradient(180deg, rgba(79,195,247,0.08), transparent);
+    display: flex; align-items: center; gap: 12px;
+    background: linear-gradient(180deg, rgba(0,217,163,0.08), transparent);
   }
   .pm-head b { flex: 1; font-size: 15px; font-weight: 700; }
   .pm-close {
-    width: 34px;
-    height: 34px;
+    width: 34px; height: 34px;
     border-radius: 10px;
     background: rgba(255, 80, 80, 0.15);
     color: #ff8080;
     border: 1px solid rgba(255, 80, 80, 0.3);
     cursor: pointer;
     font-size: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     transition: all 0.2s;
   }
-  .pm-close:hover { background: #ff4444; color: #fff; }
+  .pm-close:hover { background: #ff4444; color: #fff; transform: rotate(90deg); }
   .pm-messages { flex: 1; overflow-y: auto; padding: 20px; }
 
-  /* Toasts */
   .toasts {
     position: fixed;
-    top: 24px;
-    left: 50%;
+    top: 24px; left: 50%;
     transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
     gap: 10px;
     z-index: 500;
     pointer-events: none;
   }
   .toast {
-    background: linear-gradient(135deg, rgba(30, 40, 65, 0.98), rgba(20, 28, 48, 0.98));
-    border: 1px solid rgba(79, 195, 247, 0.4);
+    background: linear-gradient(135deg, rgba(13, 42, 36, 0.98), rgba(7, 24, 20, 0.98));
+    border: 1px solid rgba(0, 217, 163, 0.4);
     color: #fff;
     padding: 12px 22px;
     border-radius: 14px;
     font-size: 13.5px;
     font-weight: 600;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5),
-                0 0 30px rgba(79, 195, 247, 0.2);
-    animation: toastIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 217, 163, 0.25);
+    animation: toastIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     backdrop-filter: blur(20px);
   }
-  @keyframes toastIn {
-    from { opacity: 0; transform: translateY(-30px) scale(0.9); }
-  }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(-40px) scale(0.8); } }
 
-  /* Scrollbar */
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, rgba(79, 195, 247, 0.4), rgba(79, 195, 247, 0.2));
+    background: linear-gradient(180deg, rgba(0, 217, 163, 0.5), rgba(38, 198, 218, 0.3));
     border-radius: 4px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, rgba(79, 195, 247, 0.6), rgba(79, 195, 247, 0.4));
   }
 </style>
 </head>
 <body>
 
-<!-- ===== صفحه ورود ===== -->
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-inner">
@@ -936,13 +913,15 @@
           <label for="nameInput">اسمت چیه؟</label>
           <input id="nameInput" maxlength="20" placeholder="مثلاً: امیرپارسا" autocomplete="off">
         </div>
-        <button id="loginBtn" class="btn-primary" type="submit">🚀 ورود به چت</button>
+        <button id="loginBtn" class="btn-primary" type="submit">
+          <span class="btn-text">🚀 ورود به چت</span>
+          <span class="btn-spinner"></span>
+        </button>
       </form>
     </div>
   </div>
 </div>
 
-<!-- ===== صفحه چت ===== -->
 <div id="chatScreen">
   <div class="topbar">
     <div class="logo">💬</div>
@@ -974,13 +953,11 @@
     <div class="chat-area">
       <div class="messages" id="messages"></div>
 
-      <!-- پنل ایموجی -->
       <div class="emoji-panel" id="emojiPanel">
         <div class="panel-title">😀 ایموجی‌ها <span class="count" id="emojiCount">0</span></div>
         <div class="emoji-grid" id="emojiGrid"></div>
       </div>
 
-      <!-- پنل میم و استیکر -->
       <div class="sticker-panel" id="stickerPanel">
         <div class="panel-title">😂 میم‌ها <span class="count" id="memeCount">0</span></div>
         <div class="sticker-grid" id="memeGrid"></div>
@@ -989,7 +966,6 @@
         <div class="sticker-grid" id="stickerGrid"></div>
       </div>
 
-      <!-- پیش‌نمایش عکس -->
       <div class="upload-preview" id="uploadPreview">
         <img id="uploadImg" src="" alt="">
         <div class="up-btns">
@@ -1014,14 +990,13 @@
           <button type="button" class="icon-btn" id="imageBtn" title="ارسال عکس">📷</button>
           <input type="file" id="imageInput" accept="image/*" style="display:none">
           <input type="text" id="chatInput" maxlength="500" placeholder="پیامت رو بنویس...">
-          <button type="submit" class="send-btn" title="ارسال">📤</button>
+          <button type="submit" class="send-btn" id="sendBtn" title="ارسال">📤</button>
         </form>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ===== چت خصوصی ===== -->
 <div class="pm-overlay" id="pmOverlay"></div>
 <div class="pm-window" id="pmWindow">
   <div class="pm-head">
@@ -1036,7 +1011,6 @@
   </form>
 </div>
 
-<!-- ===== پیش‌نمایش عکس بزرگ ===== -->
 <div class="image-preview-modal" id="imagePreviewModal">
   <img id="imagePreviewBig" src="" alt="">
 </div>
@@ -1047,16 +1021,13 @@
 <script>
 'use strict';
 
-// ============================================================
-//   ⚙️ تنظیمات
-// ============================================================
 const ROOM_NAME = 'global-chat-2026';
 const SLOT_PREFIX = 'chat-';
 const MAX_SLOTS = 20;
 const MAX_IMAGE_SIZE = 800 * 1024;
 
 // ============================================================
-//   😂 میم‌ها (۹ تا)
+//   😂 میم‌ها — ۱۳ تا (۹ تا قبلی + ۴ تا جدید)
 // ============================================================
 const MEMES = [
   'https://static.cdn.asset.aparat.com/agf/emoji-5570-732905-b.png',
@@ -1067,11 +1038,15 @@ const MEMES = [
   'https://static.cdn.asset.aparat.com/agf/emoji-2781-793533-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-4759-792773-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-11345-264595-b.png',
-  'https://static.cdn.asset.aparat.com/agf/emoji-10899-230394-b.png'
+  'https://static.cdn.asset.aparat.com/agf/emoji-10899-230394-b.png',
+  'https://static.cdn.asset.aparat.com/agf/emoji-4633-707906-b.png',
+  'https://static.cdn.asset.aparat.com/agf/emoji-4636-727700-b.png',
+  'https://static.cdn.asset.aparat.com/agf/emoji-4635-243901-b.png',
+  'https://static.cdn.asset.aparat.com/agf/emoji-43857-462556-b.png'
 ];
 
 // ============================================================
-//   🎨 استیکرها (۱۰ تا)
+//   🎨 استیکرها — ۱۰ تا
 // ============================================================
 const STICKERS = [
   'https://static.cdn.asset.aparat.com/agf/emoji-2780-505412-b.png',
@@ -1086,83 +1061,46 @@ const STICKERS = [
   'https://static.cdn.asset.aparat.com/agf/emoji-10892-185623-b.png'
 ];
 
-// ============================================================
-//   😀 ایموجی‌ها (۹۶ تا)
-// ============================================================
-const EMOJIS = [
-  '😀','😃','😄','😁','😆','😅','😂','🤣',
-  '😊','😇','🙂','🙃','😉','😌','😍','🥰',
-  '😘','😗','😙','😚','😋','😛','😝','😜',
-  '🤪','🤨','🧐','🤓','😎','🤩','🥳','😏',
-  '😒','😞','😔','😟','😕','🙁','😣','😖',
-  '😫','😩','🥺','😢','😭','😤','😠','😡',
-  '🤬','🤯','😳','🥵','🥶','😱','😨','😰',
-  '😥','😓','🤗','🤔','🤭','🤫','🤥','😶',
-  '😐','😑','😬','🙄','😯','😦','😧','😮',
-  '😲','🥱','😴','🤤','😪','😵','🤐','🥴',
-  '❤️','🧡','💛','💚','💙','💜','🖤','🤍',
-  '👍','👎','👏','🙌','🤝','🙏','💪','✌️'
-];
+const EMOJIS = ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','❤️','🧡','💛','💚','💙','💜','🖤','🤍','👍','👎','👏','🙌','🤝','🙏','💪','✌️'];
 
-// رنگ آواتارها
 const AVATAR_COLORS = [
-  ['#ff6b6b','#fff'], ['#4ecdc4','#fff'], ['#ffe66d','#000'],
-  ['#a8e6cf','#000'], ['#ff8b94','#fff'], ['#c7ceea','#000'],
-  ['#ffd3b6','#000'], ['#b5ead7','#000'], ['#ff9aa2','#fff'],
-  ['#c5a3ff','#fff'], ['#98d8c8','#000'], ['#f7dc6f','#000']
+  ['#00d9a3','#fff'], ['#26c6da','#fff'], ['#00ff88','#000'],
+  ['#4dd0e1','#000'], ['#00bfa5','#fff'], ['#80cbc4','#000'],
+  ['#b2dfdb','#000'], ['#66bb6a','#fff'], ['#26a69a','#fff'],
+  ['#00acc1','#fff'], ['#aed581','#000'], ['#4db6ac','#fff']
 ];
 
-// ============================================================
-//   State
-// ============================================================
 const state = {
   myName: '', myPeerId: null, mySlot: -1,
   peer: null, peers: new Map(),
   pm: new Map(), unread: new Map(),
   pmOpenFor: null, joined: false,
   joinResolve: null, pendingBootstrap: new Set(),
-  joinTimer: null, replyTo: null, pendingImage: null
+  joinTimer: null, replyTo: null, pendingImage: null,
+  lastMsgEl: null
 };
 
-// ============================================================
-//   ابزار
-// ============================================================
 const $ = id => document.getElementById(id);
 const faNum = n => Number(n || 0).toLocaleString('fa-IR');
 const faTime = ts => new Date(ts).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
 
-function safeSend(conn, msg) {
-  try { if (conn && conn.open) conn.send(msg); } catch (_) {}
-}
-function broadcast(msg) {
-  for (const [, e] of state.peers) safeSend(e.conn, msg);
-}
-function slugify(str) {
-  const t = str.trim().toLowerCase();
-  if (/^[a-z0-9][a-z0-9-]{0,31}$/.test(t)) return t;
-  let h = 5381;
-  for (const c of t) h = ((h << 5) + h + c.charCodeAt(0)) >>> 0;
-  return 'r' + h.toString(36);
-}
-function avatarFor(name) {
-  let h = 0;
-  for (const c of name) h = (h * 31 + c.codePointAt(0)) >>> 0;
-  return AVATAR_COLORS[h % AVATAR_COLORS.length];
-}
+function safeSend(conn, msg) { try { if (conn && conn.open) conn.send(msg); } catch (_) {} }
+function broadcast(msg) { for (const [, e] of state.peers) safeSend(e.conn, msg); }
+function slugify(str) { const t = str.trim().toLowerCase(); if (/^[a-z0-9][a-z0-9-]{0,31}$/.test(t)) return t; let h = 5381; for (const c of t) h = ((h << 5) + h + c.charCodeAt(0)) >>> 0; return 'r' + h.toString(36); }
+function avatarFor(name) { let h = 0; for (const c of name) h = (h * 31 + c.codePointAt(0)) >>> 0; return AVATAR_COLORS[h % AVATAR_COLORS.length]; }
 function toast(text) {
   const t = document.createElement('div');
   t.className = 'toast';
   t.textContent = text;
   $('toasts').appendChild(t);
   setTimeout(() => {
-    t.style.transition = 'all 0.3s';
+    t.style.transition = 'all 0.4s';
     t.style.opacity = '0';
-    t.style.transform = 'translateY(-20px)';
-    setTimeout(() => t.remove(), 300);
+    t.style.transform = 'translateY(-30px) scale(0.8)';
+    setTimeout(() => t.remove(), 400);
   }, 3200);
 }
 
-// فشرده‌سازی عکس
 function compressImage(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1172,19 +1110,11 @@ function compressImage(file) {
         const canvas = document.createElement('canvas');
         let { width, height } = img;
         const MAX = 800;
-        if (width > MAX || height > MAX) {
-          if (width > height) { height = (height/width)*MAX; width = MAX; }
-          else { width = (width/height)*MAX; height = MAX; }
-        }
-        canvas.width = width;
-        canvas.height = height;
+        if (width > MAX || height > MAX) { if (width > height) { height = (height/width)*MAX; width = MAX; } else { width = (width/height)*MAX; height = MAX; } }
+        canvas.width = width; canvas.height = height;
         canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-        let q = 0.75;
-        let dataUrl = canvas.toDataURL('image/jpeg', q);
-        while (dataUrl.length > MAX_IMAGE_SIZE && q > 0.3) {
-          q -= 0.1;
-          dataUrl = canvas.toDataURL('image/jpeg', q);
-        }
+        let q = 0.75; let dataUrl = canvas.toDataURL('image/jpeg', q);
+        while (dataUrl.length > MAX_IMAGE_SIZE && q > 0.3) { q -= 0.1; dataUrl = canvas.toDataURL('image/jpeg', q); }
         resolve(dataUrl);
       };
       img.onerror = reject;
@@ -1195,37 +1125,24 @@ function compressImage(file) {
   });
 }
 
-// صدا
 let audioCtx = null;
 function playNotif() {
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
     const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-    o.type = 'sine';
-    o.frequency.value = 800;
-    g.gain.value = 0.08;
-    o.connect(g).connect(audioCtx.destination);
-    o.start();
+    o.type = 'sine'; o.frequency.value = 900; g.gain.value = 0.08;
+    o.connect(g).connect(audioCtx.destination); o.start();
     g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
     o.stop(audioCtx.currentTime + 0.16);
   } catch (_) {}
 }
 
-// ============================================================
-//   PeerJS
-// ============================================================
 function openPeer(id) {
   return new Promise((res, rej) => {
-    let p;
-    try { p = new Peer(id); } catch (e) { rej(e); return; }
+    let p; try { p = new Peer(id); } catch (e) { rej(e); return; }
     let done = false;
-    const to = setTimeout(() => {
-      if (done) return;
-      done = true;
-      try { p.destroy(); } catch (_) {}
-      rej({ type: 'timeout' });
-    }, 10000);
+    const to = setTimeout(() => { if (done) return; done = true; try { p.destroy(); } catch (_) {} rej({ type: 'timeout' }); }, 10000);
     p.on('open', () => { if (done) return; done = true; clearTimeout(to); res(p); });
     p.on('error', err => { if (done) return; done = true; clearTimeout(to); try { p.destroy(); } catch (_) {} rej(err); });
   });
@@ -1233,13 +1150,8 @@ function openPeer(id) {
 
 async function claimSlot(slug) {
   for (let s = 0; s < MAX_SLOTS; s++) {
-    try {
-      const p = await openPeer(SLOT_PREFIX + slug + '-' + s);
-      return { peer: p, slot: s };
-    } catch (err) {
-      if (err && err.type === 'unavailable-id') continue;
-      throw err;
-    }
+    try { const p = await openPeer(SLOT_PREFIX + slug + '-' + s); return { peer: p, slot: s }; }
+    catch (err) { if (err && err.type === 'unavailable-id') continue; throw err; }
   }
   throw { type: 'room-full' };
 }
@@ -1247,20 +1159,20 @@ async function claimSlot(slug) {
 async function joinChat(name) {
   if (typeof Peer === 'undefined') { toast('❌ PeerJS لود نشد'); return; }
   state.myName = name;
-  $('loginBtn').disabled = true;
-  $('loginBtn').textContent = '⏳ در حال اتصال...';
+  const btn = $('loginBtn');
+  btn.disabled = true;
+  btn.classList.add('loading');
   const slug = slugify(ROOM_NAME);
   try {
     const { peer, slot } = await claimSlot(slug);
-    state.peer = peer;
-    state.myPeerId = peer.id;
-    state.mySlot = slot;
+    state.peer = peer; state.myPeerId = peer.id; state.mySlot = slot;
     wirePeer(peer);
     await discover(slug);
-    finishJoin();
+    $('loginScreen').classList.add('leaving');
+    setTimeout(() => finishJoin(), 500);
   } catch (err) {
-    $('loginBtn').disabled = false;
-    $('loginBtn').textContent = '🚀 ورود به چت';
+    btn.disabled = false;
+    btn.classList.remove('loading');
     toast(err && err.type === 'room-full' ? '❌ ظرفیت پر است' : '❌ اتصال برقرار نشد');
   }
 }
@@ -1270,20 +1182,12 @@ function wirePeer(peer) {
   peer.on('disconnected', () => {
     if (!state.peer || state.peer.destroyed) return;
     updateStatus('reconnecting');
-    setTimeout(() => {
-      if (state.peer && !state.peer.destroyed && state.peer.disconnected) {
-        try { state.peer.reconnect(); } catch (_) {}
-      }
-    }, 1500);
+    setTimeout(() => { if (state.peer && !state.peer.destroyed && state.peer.disconnected) { try { state.peer.reconnect(); } catch (_) {} } }, 1500);
   });
   peer.on('open', () => updateStatus('online'));
   peer.on('error', err => {
     const t = err && err.type;
-    if (t === 'peer-unavailable') {
-      const mt = /peer\s+([A-Za-z0-9_-]+)/.exec(err.message || '');
-      if (mt) removePeerById(mt[1]);
-      return;
-    }
+    if (t === 'peer-unavailable') { const mt = /peer\s+([A-Za-z0-9_-]+)/.exec(err.message || ''); if (mt) removePeerById(mt[1]); return; }
     if (t === 'network' || t === 'server-error') updateStatus('reconnecting');
   });
 }
@@ -1293,21 +1197,14 @@ function discover(slug) {
     state.joinResolve = resolve;
     state.pendingBootstrap = new Set();
     const targets = [];
-    for (let s = 0; s < MAX_SLOTS; s++) {
-      if (s !== state.mySlot) targets.push(SLOT_PREFIX + slug + '-' + s);
-    }
+    for (let s = 0; s < MAX_SLOTS; s++) { if (s !== state.mySlot) targets.push(SLOT_PREFIX + slug + '-' + s); }
     if (!targets.length) { finishDiscover(); return; }
     targets.forEach(id => { state.pendingBootstrap.add(id); dial(id); });
     state.joinTimer = setTimeout(finishDiscover, 4500);
   });
 }
 
-function finishDiscover() {
-  clearTimeout(state.joinTimer);
-  const r = state.joinResolve;
-  state.joinResolve = null;
-  if (r) r();
-}
+function finishDiscover() { clearTimeout(state.joinTimer); const r = state.joinResolve; state.joinResolve = null; if (r) r(); }
 
 function finishJoin() {
   state.joined = true;
@@ -1315,15 +1212,11 @@ function finishJoin() {
   $('chatScreen').classList.add('on');
   $('meName').textContent = state.myName;
   const [bg, fg] = avatarFor(state.myName);
-  const av = $('meAvatar');
-  av.style.background = bg;
-  av.style.color = fg;
-  av.textContent = state.myName[0] || '?';
-  renderUsers();
-  updateStatus('online');
-  addSystemMsg('👋 ' + state.myName + ' وارد چت شد');
+  const av = $('meAvatar'); av.style.background = bg; av.style.color = fg; av.textContent = state.myName[0] || '?';
+  renderUsers(); updateStatus('online');
+  setTimeout(() => addSystemMsg('👋 ' + state.myName + ' وارد چت شد'), 600);
   toast('🎉 به چت خوش آمدی، ' + state.myName + '!');
-  $('chatInput').focus();
+  setTimeout(() => $('chatInput').focus(), 800);
 }
 
 function updateStatus(mode) {
@@ -1336,37 +1229,27 @@ function dial(id) {
   if (!state.peer || state.peer.destroyed) return;
   const existing = state.peers.get(id);
   if (existing && existing.conn && existing.conn.open) return;
-  let conn;
-  try { conn = state.peer.connect(id, { reliable: true }); } catch (_) { return; }
+  let conn; try { conn = state.peer.connect(id, { reliable: true }); } catch (_) { return; }
   if (!conn) return;
-  let e = state.peers.get(id);
-  if (!e) { e = { conn: null, name: null, slot: null }; state.peers.set(id, e); }
-  e.conn = conn;
-  attachConn(conn, { outgoing: true });
+  let e = state.peers.get(id); if (!e) { e = { conn: null, name: null, slot: null }; state.peers.set(id, e); }
+  e.conn = conn; attachConn(conn, { outgoing: true });
 }
 
 function attachConn(conn, { outgoing }) {
   const id = conn.peer;
   conn.on('open', () => {
-    if (state.pendingBootstrap.has(id)) {
-      state.pendingBootstrap.delete(id);
-      if (state.pendingBootstrap.size === 0) setTimeout(finishDiscover, 700);
-    }
+    if (state.pendingBootstrap.has(id)) { state.pendingBootstrap.delete(id); if (state.pendingBootstrap.size === 0) setTimeout(finishDiscover, 700); }
     if (outgoing) safeSend(conn, { type: 'hello', name: state.myName, slot: state.mySlot });
   });
-  conn.on('data', msg => {
-    try { handleData(conn, msg); } catch (e) { console.warn(e); }
-  });
+  conn.on('data', msg => { try { handleData(conn, msg); } catch (e) { console.warn(e); } });
   conn.on('close', () => removePeerById(id));
   conn.on('error', () => removePeerById(id));
 }
 
 function removePeerById(id) {
-  const e = state.peers.get(id);
-  if (!e) return;
+  const e = state.peers.get(id); if (!e) return;
   if (e.name && state.joined) addSystemMsg('👋 ' + e.name + ' از چت خارج شد');
-  state.peers.delete(id);
-  renderUsers();
+  state.peers.delete(id); renderUsers();
 }
 
 function handleData(conn, msg) {
@@ -1381,18 +1264,11 @@ function handleData(conn, msg) {
 }
 
 function onHello(conn, msg) {
-  const id = conn.peer;
-  let e = state.peers.get(id);
-  if (!e) {
-    e = { conn, name: msg.name || 'کاربر', slot: msg.slot, isNew: true };
-    state.peers.set(id, e);
-  } else { e.conn = conn; }
+  const id = conn.peer; let e = state.peers.get(id);
+  if (!e) { e = { conn, name: msg.name || 'کاربر', slot: msg.slot, isNew: true }; state.peers.set(id, e); }
+  else { e.conn = conn; }
   if (!e.name) e.name = msg.name || 'کاربر';
-  if (e.isNew && state.joined) {
-    addSystemMsg('👋 ' + e.name + ' وارد چت شد');
-    toast('👋 ' + e.name + ' وارد شد');
-    e.isNew = false;
-  }
+  if (e.isNew && state.joined) { addSystemMsg('👋 ' + e.name + ' وارد چت شد'); toast('👋 ' + e.name + ' وارد شد'); e.isNew = false; }
   safeSend(conn, { type: 'user-list', members: roster() });
   renderUsers();
 }
@@ -1402,11 +1278,8 @@ function onUserList(conn, msg) {
   msg.members.forEach(m => {
     if (!m || !m.id || m.id === state.myPeerId) return;
     let e = state.peers.get(m.id);
-    if (!e) {
-      e = { conn: null, name: m.name, slot: m.slot };
-      state.peers.set(m.id, e);
-      if (!e.conn && state.peer) dial(m.id);
-    } else { e.name = m.name || e.name; }
+    if (!e) { e = { conn: null, name: m.name, slot: m.slot }; state.peers.set(m.id, e); if (!e.conn && state.peer) dial(m.id); }
+    else { e.name = m.name || e.name; }
   });
   renderUsers();
 }
@@ -1414,87 +1287,69 @@ function onUserList(conn, msg) {
 function onPublicMsg(conn, msg) {
   const e = state.peers.get(conn.peer);
   const name = (e && e.name) || msg.name || 'کاربر';
-  addMessage({
-    name, text: msg.text, sticker: msg.sticker,
-    image: msg.image, reply: msg.reply,
-    ts: msg.ts || Date.now(), mine: false
-  });
+  addMessage({ name, text: msg.text, sticker: msg.sticker, image: msg.image, reply: msg.reply, ts: msg.ts || Date.now(), mine: false });
   if (!document.hasFocus() || document.hidden) playNotif();
 }
 
 function onPrivateMsg(conn, msg) {
   if (msg.to !== state.myPeerId) return;
-  const id = conn.peer;
-  const e = state.peers.get(id);
-  if (!e) return;
+  const id = conn.peer; const e = state.peers.get(id); if (!e) return;
   let arr = state.pm.get(id) || [];
-  arr.push({
-    from: e.name, text: msg.text, sticker: msg.sticker,
-    image: msg.image, reply: msg.reply,
-    ts: msg.ts || Date.now(), mine: false
-  });
+  arr.push({ from: e.name, text: msg.text, sticker: msg.sticker, image: msg.image, reply: msg.reply, ts: msg.ts || Date.now(), mine: false });
   state.pm.set(id, arr);
   if (state.pmOpenFor === id) renderPM();
-  else {
-    state.unread.set(id, (state.unread.get(id) || 0) + 1);
-    toast('💬 پیام خصوصی از ' + e.name);
-    playNotif();
-    renderUsers();
-  }
+  else { state.unread.set(id, (state.unread.get(id) || 0) + 1); toast('💬 پیام خصوصی از ' + e.name); playNotif(); renderUsers(); }
 }
 
 function onBye(conn) { removePeerById(conn.peer); }
 
 function roster() {
   const arr = [{ id: state.myPeerId, name: state.myName, slot: state.mySlot }];
-  for (const [id, e] of state.peers) {
-    if (e.name) arr.push({ id, name: e.name, slot: e.slot });
-  }
+  for (const [id, e] of state.peers) { if (e.name) arr.push({ id, name: e.name, slot: e.slot }); }
   return arr;
 }
 
 function buildBubbleContent(bubble, o) {
   if (o.reply) {
-    const q = document.createElement('div');
-    q.className = 'reply-quote';
-    const n = document.createElement('div');
-    n.className = 'rq-name';
-    n.textContent = o.reply.name;
-    q.appendChild(n);
-    const t = document.createElement('div');
-    t.className = 'rq-text';
+    const q = document.createElement('div'); q.className = 'reply-quote';
+    const n = document.createElement('div'); n.className = 'rq-name'; n.textContent = o.reply.name; q.appendChild(n);
+    const t = document.createElement('div'); t.className = 'rq-text';
     if (o.reply.isSticker) t.textContent = '🎨 استیکر';
     else if (o.reply.isImage) t.textContent = '📷 عکس';
     else t.textContent = o.reply.text || '';
-    q.appendChild(t);
-    bubble.appendChild(q);
+    q.appendChild(t); bubble.appendChild(q);
   }
-  if (o.sticker) {
-    bubble.classList.add('sticker');
-    const img = document.createElement('img');
-    img.src = o.sticker;
-    img.alt = 'sticker';
-    bubble.appendChild(img);
-  } else if (o.image) {
-    bubble.classList.add('image-bubble');
-    const img = document.createElement('img');
-    img.src = o.image;
-    img.alt = 'image';
-    img.addEventListener('click', () => openImagePreview(o.image));
-    bubble.appendChild(img);
-  } else if (o.text && o.text.length <= 3 && /\p{Emoji}/u.test(o.text)) {
-    bubble.classList.add('big-emoji');
-    bubble.textContent = o.text;
-  } else {
-    bubble.textContent = o.text || '';
-  }
+  if (o.sticker) { bubble.classList.add('sticker'); const img = document.createElement('img'); img.src = o.sticker; img.alt = 'sticker'; bubble.appendChild(img); }
+  else if (o.image) { bubble.classList.add('image-bubble'); const img = document.createElement('img'); img.src = o.image; img.alt = 'image'; img.addEventListener('click', () => openImagePreview(o.image)); bubble.appendChild(img); }
+  else if (o.text && o.text.length <= 3 && /\p{Emoji}/u.test(o.text)) { bubble.classList.add('big-emoji'); bubble.textContent = o.text; }
+  else { bubble.textContent = o.text || ''; }
 }
 
-function addMessage(o) {
+// ⭐️ حذف هایلایت از همه‌ی پیام‌ها
+function clearLastHighlight() {
+  document.querySelectorAll('.msg.last-message').forEach(el => el.classList.remove('last-message'));
+}
+
+function addMessage(o, animType) {
   const box = $('messages');
   const near = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+
+  // حذف هایلایت قبلی
+  clearLastHighlight();
+
   const w = document.createElement('div');
   w.className = 'msg ' + (o.mine ? 'mine' : 'theirs');
+
+  let animClass = '';
+  if (animType === 'flying' || (o.mine && !animType)) {
+    if (o.sticker) animClass = 'sticker-fly';
+    else if (o.image) animClass = 'image-fly';
+    else animClass = 'flying-in';
+  } else {
+    animClass = 'anim-in';
+  }
+  w.classList.add(animClass);
+
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
   buildBubbleContent(bubble, o);
@@ -1507,24 +1362,36 @@ function addMessage(o) {
   const rb = document.createElement('button');
   rb.className = 'reply-btn';
   rb.textContent = '↩️';
-  rb.title = 'پاسخ';
   rb.addEventListener('click', () => setReplyTo(o));
   meta.appendChild(rb);
   w.appendChild(meta);
   bubble.addEventListener('dblclick', () => setReplyTo(o));
   box.appendChild(w);
   while (box.children.length > 300) box.firstChild.remove();
+
+  // ⭐️ اضافه کردن هایلایت به آخرین پیام
+  setTimeout(() => {
+    w.classList.add('last-message');
+    state.lastMsgEl = w;
+  }, 100);
+
   if (near || o.mine) box.scrollTop = box.scrollHeight;
 }
 
 function addSystemMsg(text) {
   const box = $('messages');
+  clearLastHighlight();
   const w = document.createElement('div');
   w.className = 'msg system';
   w.textContent = text;
   box.appendChild(w);
   while (box.children.length > 300) box.firstChild.remove();
   box.scrollTop = box.scrollHeight;
+  // هایلایت روی آخرین پیام غیرسیستمی
+  const lastNonSystem = [...box.querySelectorAll('.msg:not(.system)')].pop();
+  if (lastNonSystem) {
+    setTimeout(() => lastNonSystem.classList.add('last-message'), 100);
+  }
 }
 
 function renderUsers() {
@@ -1548,53 +1415,31 @@ function userRow(u) {
   wrap.className = 'u-avatar-wrap';
   const av = document.createElement('div');
   av.className = 'u-avatar';
-  av.style.background = bg;
-  av.style.color = fg;
+  av.style.background = bg; av.style.color = fg;
   av.textContent = u.name[0] || '?';
   wrap.appendChild(av);
-  if (!u.me) {
-    const st = document.createElement('div');
-    st.className = 'u-status';
-    wrap.appendChild(st);
-  }
+  if (!u.me) { const st = document.createElement('div'); st.className = 'u-status'; wrap.appendChild(st); }
   row.appendChild(wrap);
   const nm = document.createElement('div');
   nm.className = 'u-name';
   nm.textContent = u.name;
-  if (u.me) {
-    const you = document.createElement('span');
-    you.className = 'you';
-    you.textContent = ' (شما)';
-    nm.appendChild(you);
-  }
+  if (u.me) { const you = document.createElement('span'); you.className = 'you'; you.textContent = ' (شما)'; nm.appendChild(you); }
   row.appendChild(nm);
-  if (u.unread > 0) {
-    const b = document.createElement('div');
-    b.className = 'badge-unread';
-    b.textContent = faNum(u.unread);
-    row.appendChild(b);
-  }
+  if (u.unread > 0) { const b = document.createElement('div'); b.className = 'badge-unread'; b.textContent = faNum(u.unread); row.appendChild(b); }
   if (!u.me) row.addEventListener('click', () => openPM(u.id));
   return row;
 }
 
 function openPM(id) {
   if (id === state.myPeerId) return;
-  const e = state.peers.get(id);
-  if (!e || !e.name) return;
-  state.pmOpenFor = id;
-  state.unread.set(id, 0);
+  const e = state.peers.get(id); if (!e || !e.name) return;
+  state.pmOpenFor = id; state.unread.set(id, 0);
   $('pmTitle').textContent = '💬 ' + e.name;
   const [bg, fg] = avatarFor(e.name);
-  const av = $('pmAvatar');
-  av.style.background = bg;
-  av.style.color = fg;
-  av.textContent = e.name[0] || '?';
-  renderPM();
-  renderUsers();
-  $('pmOverlay').classList.add('on');
-  $('pmWindow').classList.add('on');
-  setTimeout(() => $('pmInput').focus(), 100);
+  const av = $('pmAvatar'); av.style.background = bg; av.style.color = fg; av.textContent = e.name[0] || '?';
+  renderPM(); renderUsers();
+  $('pmOverlay').classList.add('on'); $('pmWindow').classList.add('on');
+  setTimeout(() => $('pmInput').focus(), 400);
 }
 
 function closePM() {
@@ -1604,82 +1449,42 @@ function closePM() {
 }
 
 function renderPM() {
-  const box = $('pmMessages');
-  box.innerHTML = '';
-  const id = state.pmOpenFor;
-  if (!id) return;
+  const box = $('pmMessages'); box.innerHTML = '';
+  const id = state.pmOpenFor; if (!id) return;
   const arr = state.pm.get(id) || [];
-  if (!arr.length) {
-    const e = state.peers.get(id);
-    box.innerHTML = '<div style="color:#8899bb;text-align:center;padding:60px 20px;font-size:13.5px;line-height:2">🔒 این چت خصوصیه<br>بین تو و ' + (e ? e.name : 'این کاربر') + '</div>';
-    return;
-  }
+  if (!arr.length) { const e = state.peers.get(id); box.innerHTML = '<div style="color:#7a9ba8;text-align:center;padding:60px 20px;font-size:13.5px;line-height:2">🔒 این چت خصوصیه<br>بین تو و ' + (e ? e.name : 'این کاربر') + '</div>'; return; }
   arr.forEach(m => {
-    const w = document.createElement('div');
-    w.className = 'msg ' + (m.mine ? 'mine' : 'theirs');
-    const b = document.createElement('div');
-    b.className = 'bubble';
-    buildBubbleContent(b, m);
-    w.appendChild(b);
-    const meta = document.createElement('div');
-    meta.className = 'meta';
-    meta.textContent = faTime(m.ts);
-    w.appendChild(meta);
+    const w = document.createElement('div'); w.className = 'msg ' + (m.mine ? 'mine' : 'theirs');
+    w.classList.add(m.mine ? 'flying-in' : 'anim-in');
+    const b = document.createElement('div'); b.className = 'bubble'; buildBubbleContent(b, m); w.appendChild(b);
+    const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = faTime(m.ts); w.appendChild(meta);
     box.appendChild(w);
   });
   box.scrollTop = box.scrollHeight;
 }
 
-// ============================================================
-//   پنل‌ها
-// ============================================================
 function buildEmojiPanel() {
-  const grid = $('emojiGrid');
-  $('emojiCount').textContent = EMOJIS.length;
+  const grid = $('emojiGrid'); $('emojiCount').textContent = EMOJIS.length;
   EMOJIS.forEach(em => {
-    const d = document.createElement('div');
-    d.className = 'emoji-item';
-    d.textContent = em;
-    d.addEventListener('click', () => {
-      const input = $('chatInput');
-      input.value += em;
-      input.focus();
-    });
+    const d = document.createElement('div'); d.className = 'emoji-item'; d.textContent = em;
+    d.addEventListener('click', () => { const input = $('chatInput'); input.value += em; input.focus(); });
     grid.appendChild(d);
   });
 }
 
 function buildStickerPanel() {
-  // میم‌ها
-  const memeGrid = $('memeGrid');
-  $('memeCount').textContent = MEMES.length;
+  const memeGrid = $('memeGrid'); $('memeCount').textContent = MEMES.length;
   MEMES.forEach(url => {
-    const d = document.createElement('div');
-    d.className = 'sticker-item';
-    const img = document.createElement('img');
-    img.src = url;
-    img.alt = 'meme';
-    d.appendChild(img);
-    d.addEventListener('click', () => {
-      sendSticker(url);
-      closePanels();
-    });
+    const d = document.createElement('div'); d.className = 'sticker-item';
+    const img = document.createElement('img'); img.src = url; d.appendChild(img);
+    d.addEventListener('click', () => { sendSticker(url); closePanels(); });
     memeGrid.appendChild(d);
   });
-  // استیکرها
-  const stickerGrid = $('stickerGrid');
-  $('stickerCount').textContent = STICKERS.length;
+  const stickerGrid = $('stickerGrid'); $('stickerCount').textContent = STICKERS.length;
   STICKERS.forEach(url => {
-    const d = document.createElement('div');
-    d.className = 'sticker-item';
-    const img = document.createElement('img');
-    img.src = url;
-    img.alt = 'sticker';
-    d.appendChild(img);
-    d.addEventListener('click', () => {
-      sendSticker(url);
-      closePanels();
-    });
+    const d = document.createElement('div'); d.className = 'sticker-item';
+    const img = document.createElement('img'); img.src = url; d.appendChild(img);
+    d.addEventListener('click', () => { sendSticker(url); closePanels(); });
     stickerGrid.appendChild(d);
   });
 }
@@ -1691,33 +1496,31 @@ function closePanels() {
 }
 
 function setReplyTo(o) {
-  state.replyTo = {
-    name: o.mine ? state.myName : o.name,
-    text: o.text || '',
-    isSticker: !!o.sticker,
-    isImage: !!o.image
-  };
+  state.replyTo = { name: o.mine ? state.myName : o.name, text: o.text || '', isSticker: !!o.sticker, isImage: !!o.image };
   $('rpName').textContent = '↩️ پاسخ به ' + state.replyTo.name;
   $('rpText').textContent = state.replyTo.isSticker ? '🎨 استیکر' : state.replyTo.isImage ? '📷 عکس' : state.replyTo.text;
   $('replyPreview').classList.add('on');
   $('chatInput').focus();
 }
 
-function clearReply() {
-  state.replyTo = null;
-  $('replyPreview').classList.remove('on');
-}
-
+function clearReply() { state.replyTo = null; $('replyPreview').classList.remove('on'); }
 $('rpClose').addEventListener('click', clearReply);
 
-// ============================================================
-//   ارسال
-// ============================================================
+function animateSendBtn() {
+  const btn = $('sendBtn');
+  btn.classList.remove('spinning', 'fly');
+  void btn.offsetWidth;
+  btn.classList.add('spinning');
+  setTimeout(() => btn.classList.add('fly'), 200);
+  setTimeout(() => btn.classList.remove('spinning', 'fly'), 1000);
+}
+
 function sendText(text) {
   const clean = text.trim();
   if (!clean) return;
   const ts = Date.now();
   const reply = state.replyTo;
+  animateSendBtn();
   addMessage({ name: state.myName, text: clean, reply, ts, mine: true });
   broadcast({ type: 'public-msg', name: state.myName, text: clean, reply, ts });
   clearReply();
@@ -1726,6 +1529,7 @@ function sendText(text) {
 function sendSticker(url) {
   const ts = Date.now();
   const reply = state.replyTo;
+  animateSendBtn();
   addMessage({ name: state.myName, sticker: url, reply, ts, mine: true });
   broadcast({ type: 'public-msg', name: state.myName, sticker: url, reply, ts });
   clearReply();
@@ -1734,18 +1538,16 @@ function sendSticker(url) {
 function sendImage(dataUrl) {
   const ts = Date.now();
   const reply = state.replyTo;
+  animateSendBtn();
   addMessage({ name: state.myName, image: dataUrl, reply, ts, mine: true });
   broadcast({ type: 'public-msg', name: state.myName, image: dataUrl, reply, ts });
   clearReply();
 }
 
 function sendPM(text) {
-  const id = state.pmOpenFor;
-  if (!id) return;
-  const e = state.peers.get(id);
-  if (!e || !e.conn) { toast('❌ کاربر آفلاین است'); return; }
-  const clean = text.trim();
-  if (!clean) return;
+  const id = state.pmOpenFor; if (!id) return;
+  const e = state.peers.get(id); if (!e || !e.conn) { toast('❌ کاربر آفلاین است'); return; }
+  const clean = text.trim(); if (!clean) return;
   const ts = Date.now();
   let arr = state.pm.get(id) || [];
   arr.push({ from: state.myName, text: clean, ts, mine: true });
@@ -1754,14 +1556,9 @@ function sendPM(text) {
   renderPM();
 }
 
-// ============================================================
-//   عکس
-// ============================================================
 $('imageBtn').addEventListener('click', () => $('imageInput').click());
-
 $('imageInput').addEventListener('change', async e => {
-  const file = e.target.files[0];
-  if (!file) return;
+  const file = e.target.files[0]; if (!file) return;
   if (!file.type.startsWith('image/')) { toast('❌ فقط عکس مجازه'); return; }
   if (file.size > 5 * 1024 * 1024) { toast('❌ عکس خیلی بزرگه (حداکثر ۵MB)'); return; }
   toast('⏳ در حال فشرده‌سازی...');
@@ -1769,37 +1566,19 @@ $('imageInput').addEventListener('change', async e => {
     const dataUrl = await compressImage(file);
     state.pendingImage = dataUrl;
     $('uploadImg').src = dataUrl;
-    closePanels();
-    $('uploadPreview').classList.add('on');
+    closePanels(); $('uploadPreview').classList.add('on');
   } catch (err) { toast('❌ خطا در پردازش عکس'); }
   e.target.value = '';
 });
 
 $('upSend').addEventListener('click', () => {
-  if (state.pendingImage) {
-    sendImage(state.pendingImage);
-    state.pendingImage = null;
-    $('uploadPreview').classList.remove('on');
-  }
+  if (state.pendingImage) { sendImage(state.pendingImage); state.pendingImage = null; $('uploadPreview').classList.remove('on'); }
 });
+$('upCancel').addEventListener('click', () => { state.pendingImage = null; $('uploadPreview').classList.remove('on'); });
 
-$('upCancel').addEventListener('click', () => {
-  state.pendingImage = null;
-  $('uploadPreview').classList.remove('on');
-});
+function openImagePreview(src) { $('imagePreviewBig').src = src; $('imagePreviewModal').classList.add('on'); }
+$('imagePreviewModal').addEventListener('click', () => $('imagePreviewModal').classList.remove('on'));
 
-function openImagePreview(src) {
-  $('imagePreviewBig').src = src;
-  $('imagePreviewModal').classList.add('on');
-}
-
-$('imagePreviewModal').addEventListener('click', () => {
-  $('imagePreviewModal').classList.remove('on');
-});
-
-// ============================================================
-//   رویدادها
-// ============================================================
 $('loginForm').addEventListener('submit', e => {
   e.preventDefault();
   const name = $('nameInput').value.trim().slice(0, 20);
@@ -1810,57 +1589,30 @@ $('loginForm').addEventListener('submit', e => {
 $('chatForm').addEventListener('submit', e => {
   e.preventDefault();
   const input = $('chatInput');
-  if (input.value.trim()) {
-    sendText(input.value);
-    input.value = '';
-  }
+  if (input.value.trim()) { sendText(input.value); input.value = ''; }
   closePanels();
 });
 
-$('emojiBtn').addEventListener('click', () => {
-  const p = $('emojiPanel');
-  const wasOn = p.classList.contains('on');
-  closePanels();
-  if (!wasOn) p.classList.add('on');
-});
-
-$('stickerBtn').addEventListener('click', () => {
-  const p = $('stickerPanel');
-  const wasOn = p.classList.contains('on');
-  closePanels();
-  if (!wasOn) p.classList.add('on');
-});
+$('emojiBtn').addEventListener('click', () => { const p = $('emojiPanel'); const wasOn = p.classList.contains('on'); closePanels(); if (!wasOn) p.classList.add('on'); });
+$('stickerBtn').addEventListener('click', () => { const p = $('stickerPanel'); const wasOn = p.classList.contains('on'); closePanels(); if (!wasOn) p.classList.add('on'); });
 
 document.addEventListener('click', e => {
-  if (!e.target.closest('.emoji-panel') &&
-      !e.target.closest('.sticker-panel') &&
-      !e.target.closest('.upload-preview') &&
-      !e.target.closest('.composer')) {
-    closePanels();
-  }
+  if (!e.target.closest('.emoji-panel') && !e.target.closest('.sticker-panel') && !e.target.closest('.upload-preview') && !e.target.closest('.composer')) closePanels();
 });
 
 $('pmForm').addEventListener('submit', e => {
   e.preventDefault();
   const input = $('pmInput');
-  if (input.value.trim()) {
-    sendPM(input.value);
-    input.value = '';
-  }
+  if (input.value.trim()) { sendPM(input.value); input.value = ''; }
 });
 $('pmClose').addEventListener('click', closePM);
 $('pmOverlay').addEventListener('click', closePM);
 
-// ============================================================
-//   شروع
-// ============================================================
 buildEmojiPanel();
 buildStickerPanel();
 
 window.addEventListener('beforeunload', () => {
-  if (state.peer && !state.peer.destroyed) {
-    try { broadcast({ type: 'bye' }); } catch (_) {}
-  }
+  if (state.peer && !state.peer.destroyed) { try { broadcast({ type: 'bye' }); } catch (_) {} }
 });
 </script>
 </body>
