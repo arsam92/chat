@@ -6,6 +6,505 @@
 <title>چت آنلاین</title>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+   /* ═══════════════════════════════════════
+     AURORA BACKGROUND
+     ═══════════════════════════════════════ */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 40%, rgba(0,217,163,0.15), transparent 50%),
+      radial-gradient(ellipse 80% 50% at 80% 60%, rgba(179,136,255,0.15), transparent 50%),
+      radial-gradient(ellipse 60% 40% at 50% 90%, rgba(255,152,0,0.08), transparent 50%);
+    animation: auroraMove 20s ease-in-out infinite;
+    pointer-events: none; z-index: 0;
+  }
+  @keyframes auroraMove {
+    0%,100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(5%,-5%) scale(1.1); }
+    66% { transform: translate(-5%,5%) scale(0.95); }
+  }
+  #chatScreen { position: relative; z-index: 1; }
+
+  /* ═══════════════════════════════════════
+     NEON GLOW + GLASSMORPHISM PRO
+     ═══════════════════════════════════════ */
+  .topbar, .sidebar, .composer-wrap {
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+  }
+  .msg.mine .bubble {
+    box-shadow: 0 6px 20px rgba(0,217,163,0.35), 0 0 30px rgba(0,217,163,0.25) inset;
+  }
+  .msg.theirs .bubble {
+    box-shadow: 0 6px 20px rgba(38,198,218,0.2), 0 0 20px rgba(38,198,218,0.15) inset;
+  }
+  .btn-primary, .send-btn, .icon-btn:hover {
+    position: relative;
+  }
+  .btn-primary::after, .send-btn::after {
+    content: '';
+    position: absolute; inset: -2px;
+    border-radius: inherit;
+    background: inherit;
+    filter: blur(12px); opacity: 0.6; z-index: -1;
+    animation: neonPulse 2s ease-in-out infinite;
+  }
+  @keyframes neonPulse {
+    0%,100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  /* ═══════════════════════════════════════
+     SPRINGY BUTTONS + BUTTON MORPH
+     ═══════════════════════════════════════ */
+  button, .icon-btn, .send-btn, .user-item, .theme-btn {
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  }
+  .icon-btn:hover { border-radius: 50% !important; }
+
+  /* ═══════════════════════════════════════
+     3D CARD FLIP برای مودال‌ها
+     ═══════════════════════════════════════ */
+  .modal-overlay .modal {
+    transform-style: preserve-3d;
+    perspective: 1500px;
+  }
+  .modal-overlay.on .modal {
+    animation: card3DIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes card3DIn {
+    0% { opacity: 0; transform: rotateY(-180deg) scale(0.5); }
+    60% { transform: rotateY(20deg) scale(1.05); }
+    100% { opacity: 1; transform: rotateY(0) scale(1); }
+  }
+
+  /* ═══════════════════════════════════════
+     SIDEBAR SLIDE 3D
+     ═══════════════════════════════════════ */
+  .sidebar {
+    transform-origin: right center;
+    perspective: 1000px;
+  }
+  #chatScreen.on .sidebar {
+    animation: sidebar3D 0.8s 0.3s both cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes sidebar3D {
+    from { transform: rotateY(-90deg) translateX(100%); opacity: 0; }
+  }
+
+  /* ═══════════════════════════════════════
+     AVATAR BOUNCE + ONLINE WAVE + STATUS BLINK
+     ═══════════════════════════════════════ */
+  .user-item { animation: avatarBounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes avatarBounceIn {
+    0% { opacity: 0; transform: scale(0) rotate(-180deg); }
+    60% { transform: scale(1.15) rotate(10deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0); }
+  }
+  .u-status {
+    animation: statusBlink 2s infinite;
+  }
+  @keyframes statusBlink {
+    0%,100% { box-shadow: 0 0 8px var(--green); transform: scale(1); }
+    50% { box-shadow: 0 0 16px var(--green), 0 0 24px var(--green); transform: scale(1.2); }
+  }
+  .u-avatar-wrap::before {
+    content: '';
+    position: absolute; inset: -4px;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+    opacity: 0;
+    animation: onlineWave 3s infinite;
+    pointer-events: none;
+  }
+  @keyframes onlineWave {
+    0% { opacity: 0.8; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.6); }
+  }
+  .u-status.offline { background: #666; animation: none; }
+
+  /* ═══════════════════════════════════════
+     TYPING PULSE (avatar heartbeat)
+     ═══════════════════════════════════════ */
+  .user-item[data-typing="1"] .u-avatar {
+    animation: typingHeartbeat 0.8s infinite;
+  }
+  @keyframes typingHeartbeat {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+
+  /* ═══════════════════════════════════════
+     DISCONNECT FADE
+     ═══════════════════════════════════════ */
+  .user-item.disconnecting {
+    animation: disconnectFade 0.6s forwards;
+  }
+  @keyframes disconnectFade {
+    to { opacity: 0; transform: translateX(100px) scale(0.8); }
+  }
+
+  /* ═══════════════════════════════════════
+     MESSAGE SENT TRAIL + BUBBLE MORPH
+     ═══════════════════════════════════════ */
+  .msg.sent-trail {
+    position: relative;
+  }
+  .msg.sent-trail::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 18px;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    opacity: 0.4;
+    animation: sentTrail 0.8s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes sentTrail {
+    0% { opacity: 0.8; transform: translateX(-30px) scale(0.9); }
+    100% { opacity: 0; transform: translateX(30px) scale(1.1); }
+  }
+  .msg.bubble-morph .bubble {
+    animation: bubbleMorph 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes bubbleMorph {
+    0% { border-radius: 50%; transform: scale(0.5); }
+    60% { border-radius: 10px; transform: scale(1.05); }
+    100% { border-radius: 18px; transform: scale(1); }
+  }
+
+  /* ═══════════════════════════════════════
+     RIPPLE CLICK
+     ═══════════════════════════════════════ */
+  .ripple {
+    position: fixed;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,217,163,0.6), transparent 70%);
+    pointer-events: none;
+    z-index: 9999;
+    animation: rippleAnim 0.7s ease-out forwards;
+  }
+  @keyframes rippleAnim {
+    from { width: 0; height: 0; opacity: 1; }
+    to { width: 80px; height: 80px; opacity: 0; transform: translate(-50%,-50%); }
+  }
+
+  /* ═══════════════════════════════════════
+     EMOJI BURST
+     ═══════════════════════════════════════ */
+  .emoji-burst {
+    position: fixed;
+    font-size: 24px;
+    pointer-events: none;
+    z-index: 9998;
+    animation: emojiBurstAnim 1s ease-out forwards;
+  }
+  @keyframes emojiBurstAnim {
+    0% { transform: translate(0,0) scale(0.5); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(1.5) rotate(720deg); opacity: 0; }
+  }
+
+  /* ═══════════════════════════════════════
+     LOSER SHAKE
+     ═══════════════════════════════════════ */
+  .loser-shake {
+    animation: loserShake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  }
+  @keyframes loserShake {
+    0%,100% { transform: translateX(0); }
+    10%,30%,50%,70%,90% { transform: translateX(-8px); }
+    20%,40%,60%,80% { transform: translateX(8px); }
+  }
+
+  /* ═══════════════════════════════════════
+     WINNER CONFETTI
+     ═══════════════════════════════════════ */
+  .confetti-piece {
+    position: fixed;
+    width: 10px; height: 14px;
+    z-index: 9999;
+    pointer-events: none;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(-10vh) rotate(0); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0.8; }
+  }
+
+  /* ═══════════════════════════════════════
+     SCORE COUNT UP
+     ═══════════════════════════════════════ */
+  .game-score.count-up {
+    animation: scoreCountPulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes scoreCountPulse {
+    0% { transform: scale(0.5); color: var(--accent); }
+    100% { transform: scale(1); color: var(--primary); }
+  }
+
+  /* ═══════════════════════════════════════
+     VS INTRO
+     ═══════════════════════════════════════ */
+  .game-arena.vs-intro .game-player:first-child {
+    animation: vsLeftIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .game-arena.vs-intro .game-player:last-child {
+    animation: vsRightIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes vsLeftIn {
+    0% { opacity: 0; transform: translateX(-200px) rotate(-180deg); }
+    100% { opacity: 1; transform: none; }
+  }
+  @keyframes vsRightIn {
+    0% { opacity: 0; transform: translateX(200px) rotate(180deg); }
+    100% { opacity: 1; transform: none; }
+  }
+  .game-vs.vs-shake {
+    animation: vsShake 0.6s 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes vsShake {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(2) rotate(15deg); color: #ff4444; text-shadow: 0 0 20px #ff4444; }
+  }
+
+  /* ═══════════════════════════════════════
+     RPS 3D REVEAL
+     ═══════════════════════════════════════ */
+  .gp-move.reveal-3d {
+    animation: rpsReveal3D 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes rpsReveal3D {
+    0% { transform: rotateY(0) scale(1); }
+    50% { transform: rotateY(900deg) scale(1.5); }
+    100% { transform: rotateY(0) scale(1); }
+  }
+
+  /* ═══════════════════════════════════════
+     TTT WIN LINE
+     ═══════════════════════════════════════ */
+  .ttt-win-line {
+    position: absolute;
+    background: linear-gradient(90deg, transparent, #ffc107, transparent);
+    height: 6px;
+    border-radius: 3px;
+    box-shadow: 0 0 20px #ffc107;
+    pointer-events: none;
+    z-index: 10;
+    transform-origin: left center;
+    animation: tttLineGrow 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes tttLineGrow {
+    from { transform: scaleX(0); }
+  }
+  .ttt-grid-wrap { position: relative; }
+
+  /* ═══════════════════════════════════════
+     SOUND WAVE (voice)
+     ═══════════════════════════════════════ */
+  .voice-wave.playing .bar {
+    animation: waveSound 0.4s ease-in-out infinite alternate;
+  }
+  @keyframes waveSound {
+    0% { height: 10%; }
+    100% { height: 100%; }
+  }
+
+  /* ═══════════════════════════════════════
+     POLL VOTE BURST
+     ═══════════════════════════════════════ */
+  .poll-option.vote-burst {
+    animation: voteBurst 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes voteBurst {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.08); box-shadow: 0 0 30px var(--primary); }
+    100% { transform: scale(1); }
+  }
+
+  /* ═══════════════════════════════════════
+     BETTER PM ANIMATION
+     ═══════════════════════════════════════ */
+  .pm-window {
+    transform: translate(-50%, -50%) scale(0) rotate(-45deg) !important;
+    filter: blur(20px);
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .pm-window.on {
+    transform: translate(-50%, -50%) scale(1) rotate(0) !important;
+    filter: blur(0);
+  }
+  .pm-window::before {
+    content: '';
+    position: absolute;
+    inset: -20px;
+    border-radius: 40px;
+    background: conic-gradient(from 0deg, var(--primary), var(--secondary), var(--accent), var(--primary));
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.5s;
+    animation: rotate 4s linear infinite;
+  }
+  .pm-window.on::before { opacity: 0.4; }
+  .pm-overlay.on {
+    animation: pmOverlayIn 0.5s ease;
+    background: radial-gradient(circle at center, rgba(0,217,163,0.15), rgba(0,0,0,0.85));
+  }
+  @keyframes pmOverlayIn {
+    from { opacity: 0; backdrop-filter: blur(0); }
+    to { opacity: 1; backdrop-filter: blur(8px); }
+  }
+  /* پیام‌های PM با تاخیر بیا */
+  .pm-messages .msg {
+    animation: pmMsgIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+  .pm-messages .msg:nth-child(1) { animation-delay: 0.1s; }
+  .pm-messages .msg:nth-child(2) { animation-delay: 0.15s; }
+  .pm-messages .msg:nth-child(3) { animation-delay: 0.2s; }
+  .pm-messages .msg:nth-child(4) { animation-delay: 0.25s; }
+  .pm-messages .msg:nth-child(5) { animation-delay: 0.3s; }
+  @keyframes pmMsgIn {
+    0% { opacity: 0; transform: translateX(-30px) scale(0.8); }
+    100% { opacity: 1; transform: none; }
+  }
+
+  /* ═══════════════════════════════════════
+     UNO GAME
+     ═══════════════════════════════════════ */
+  .uno-table {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 16px;
+    padding: 16px 0;
+  }
+  .uno-opponent-hand, .uno-my-hand {
+    display: flex; gap: 6px; justify-content: center;
+    flex-wrap: wrap; min-height: 90px;
+  }
+  .uno-card {
+    width: 60px; height: 90px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; font-weight: 900;
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    border: 3px solid #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .uno-card::before {
+    content: '';
+    position: absolute; inset: 4px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.15);
+  }
+  .uno-card .uno-card-num { position: relative; z-index: 1; font-size: 30px; }
+  .uno-card.red { background: linear-gradient(135deg, #ff5252, #d32f2f); }
+  .uno-card.blue { background: linear-gradient(135deg, #4fc3f7, #2b8bc7); }
+  .uno-card.green { background: linear-gradient(135deg, #4caf50, #2e7d32); }
+  .uno-card.yellow { background: linear-gradient(135deg, #ffc107, #d4a017); }
+  .uno-card.wild { background: linear-gradient(135deg, #333, #666); }
+  .uno-card:hover:not(.disabled) {
+    transform: translateY(-12px) scale(1.08);
+    box-shadow: 0 12px 30px rgba(0,217,163,0.6), 0 0 30px rgba(0,217,163,0.4);
+  }
+  .uno-card.disabled {
+    opacity: 0.5; cursor: not-allowed; filter: grayscale(50%);
+  }
+  .uno-card.opponent {
+    width: 42px; height: 64px; font-size: 20px;
+    background: linear-gradient(135deg, #333, #1a1a1a) !important;
+    cursor: default;
+  }
+  .uno-card.opponent .uno-card-num { color: transparent; font-size: 0; }
+  .uno-card.opponent::after {
+    content: '?'; position: absolute; z-index: 2;
+    font-size: 22px; color: var(--primary); font-weight: 900;
+  }
+  .uno-piles {
+    display: flex; gap: 30px; align-items: center;
+    margin: 16px 0;
+  }
+  .uno-pile {
+    text-align: center;
+  }
+  .uno-pile-label {
+    font-size: 11px; color: #aaa; margin-bottom: 6px; font-weight: 700;
+  }
+  .uno-deck {
+    width: 60px; height: 90px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #333, #111);
+    border: 3px solid #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 20px rgba(0,217,163,0.3);
+    transition: all 0.25s;
+    color: var(--primary);
+    font-weight: 900;
+  }
+  .uno-deck:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 30px rgba(0,217,163,0.6);
+  }
+  .uno-current {
+    width: 80px; height: 120px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px; font-weight: 900;
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    border: 4px solid #fff;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+  }
+  .uno-current.red { background: linear-gradient(135deg, #ff5252, #d32f2f); }
+  .uno-current.blue { background: linear-gradient(135deg, #4fc3f7, #2b8bc7); }
+  .uno-current.green { background: linear-gradient(135deg, #4caf50, #2e7d32); }
+  .uno-current.yellow { background: linear-gradient(135deg, #ffc107, #d4a017); }
+  .uno-current.wild { background: linear-gradient(135deg, #333, #666); }
+  .uno-status {
+    text-align: center;
+    font-size: 14px; color: #ccc;
+    padding: 10px; border-radius: 12px;
+    background: rgba(0,217,163,0.1);
+    border: 1px solid var(--border);
+    min-width: 200px;
+    font-weight: 600;
+  }
+  .uno-color-picker {
+    display: flex; gap: 8px; justify-content: center;
+    margin-top: 12px;
+    animation: panelPop 0.3s;
+  }
+  .uno-color-picker button {
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .uno-color-picker button:hover { transform: scale(1.15); }
+  .uno-color-picker .c-red { background: linear-gradient(135deg, #ff5252, #d32f2f); }
+  .uno-color-picker .c-blue { background: linear-gradient(135deg, #4fc3f7, #2b8bc7); }
+  .uno-color-picker .c-green { background: linear-gradient(135deg, #4caf50, #2e7d32); }
+  .uno-color-picker .c-yellow { background: linear-gradient(135deg, #ffc107, #d4a017); }
+  .uno-card.flying {
+    animation: unoCardFly 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes unoCardFly {
+    0% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-80px) rotate(180deg) scale(1.3); }
+    100% { transform: translateY(0) scale(1); }
+  }
+  .uno-card.dealing {
+    animation: unoCardDeal 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes unoCardDeal {
+    from { opacity: 0; transform: translateX(-200px) rotate(-360deg) scale(0.3); }
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --primary: #00d9a3; --primary-dark: #00a87e; --secondary: #26c6da;
@@ -28,33 +527,194 @@
   html, body { height: 100%; font-family: 'Vazirmatn', Tahoma, sans-serif; background: var(--bg-dark); color: #fff; overflow: hidden; }
   body { background: radial-gradient(ellipse at top, var(--bg-mid) 0%, var(--bg-dark) 50%); }
 
-  /* Login */
-  #loginScreen { height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: radial-gradient(circle at 30% 20%, rgba(0,217,163,0.18), transparent 50%), radial-gradient(circle at 70% 80%, rgba(38,198,218,0.18), transparent 50%); transition: all 0.6s cubic-bezier(0.7, 0, 0.3, 1); }
-  #loginScreen.leaving { opacity: 0; transform: scale(1.1); filter: blur(20px); }
-  .login-card { width: min(420px, 100%); background: linear-gradient(145deg, rgba(13, 42, 36, 0.95), rgba(7, 24, 20, 0.95)); border: 1px solid var(--border); border-radius: 24px; padding: 40px 32px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6); backdrop-filter: blur(30px); position: relative; overflow: hidden; animation: cardEnter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
-  @keyframes cardEnter { from { opacity: 0; transform: translateY(60px) scale(0.9); } }
-  .login-card::before { content: ''; position: absolute; top: -50%; right: -50%; width: 200%; height: 200%; background: conic-gradient(from 0deg, transparent, var(--primary), transparent 30%); opacity: 0.15; animation: rotate 6s linear infinite; pointer-events: none; }
+  /* ═══════════════════════════════════════
+     LOGIN — انیمیشن خفن ورود
+     ═══════════════════════════════════════ */
+  #loginScreen {
+    height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 20px; position: relative; overflow: hidden;
+    background: radial-gradient(circle at 30% 20%, rgba(0,217,163,0.2), transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(38,198,218,0.2), transparent 50%);
+    transition: all 0.8s cubic-bezier(0.7, 0, 0.3, 1);
+  }
+  #loginScreen.leaving {
+    opacity: 0;
+    transform: scale(1.5) rotate(15deg);
+    filter: blur(30px) brightness(2);
+  }
+
+  /* ذرات شناور پس‌زمینه */
+  .login-particles {
+    position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  }
+  .login-particles .p {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--primary), transparent 70%);
+    opacity: 0.4;
+    animation: floatP linear infinite;
+  }
+  @keyframes floatP {
+    0% { transform: translateY(100vh) scale(0); opacity: 0; }
+    10% { opacity: 0.6; }
+    90% { opacity: 0.6; }
+    100% { transform: translateY(-20vh) scale(1.5); opacity: 0; }
+  }
+
+  /* حلقه‌های چرخان دور کارت */
+  .login-rings {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 550px; height: 550px;
+    pointer-events: none; z-index: 0;
+  }
+  .login-rings .ring {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    border: 2px dashed;
+    animation: ringSpin linear infinite;
+  }
+  .login-rings .r1 { border-color: rgba(0,217,163,0.4); animation-duration: 25s; }
+  .login-rings .r2 { border-color: rgba(38,198,218,0.3); inset: 30px; animation-duration: 35s; animation-direction: reverse; }
+  .login-rings .r3 { border-color: rgba(255,152,0,0.25); inset: 60px; animation-duration: 45s; }
+  @keyframes ringSpin { to { transform: rotate(360deg); } }
+
+  .login-card {
+    width: min(440px, 100%);
+    background: linear-gradient(145deg, rgba(13, 42, 36, 0.95), rgba(7, 24, 20, 0.95));
+    border: 1px solid var(--border);
+    border-radius: 28px; padding: 44px 36px;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7), 0 0 80px rgba(0, 217, 163, 0.25);
+    backdrop-filter: blur(30px);
+    position: relative; overflow: hidden; z-index: 1;
+    animation: loginCardIn 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes loginCardIn {
+    0% { opacity: 0; transform: rotateY(-180deg) scale(0.5) translateY(80px); }
+    60% { transform: rotateY(15deg) scale(1.05) translateY(-15px); }
+    100% { opacity: 1; transform: rotateY(0) scale(1) translateY(0); }
+  }
+  .login-card::before {
+    content: ''; position: absolute; top: -50%; right: -50%;
+    width: 200%; height: 200%;
+    background: conic-gradient(from 0deg, transparent, var(--primary), transparent 30%);
+    opacity: 0.2;
+    animation: rotate 8s linear infinite; pointer-events: none;
+  }
   @keyframes rotate { to { transform: rotate(360deg); } }
+  .login-card::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.08) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+    pointer-events: none;
+  }
+  @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
   .login-inner { position: relative; z-index: 1; }
-  .login-icon { width: 80px; height: 80px; margin: 0 auto 24px; border-radius: 24px; background: var(--msg-mine); display: flex; align-items: center; justify-content: center; font-size: 40px; box-shadow: 0 15px 40px rgba(0,217,163,0.5); }
-  .login-card h1 { font-size: 30px; font-weight: 800; text-align: center; margin-bottom: 8px; background: var(--msg-mine); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .login-card p { color: var(--text-dim); font-size: 13.5px; text-align: center; margin-bottom: 32px; line-height: 1.7; }
-  .field { margin-bottom: 20px; }
+  .login-icon-wrap {
+    position: relative; margin: 0 auto 26px; width: 90px; height: 90px;
+    animation: iconDrop 1s 0.3s both cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes iconDrop {
+    0% { opacity: 0; transform: translateY(-100px) rotate(-180deg) scale(0); }
+    100% { opacity: 1; transform: none; }
+  }
+  .login-icon {
+    width: 90px; height: 90px; border-radius: 26px;
+    background: var(--msg-mine);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 44px;
+    box-shadow: 0 20px 50px rgba(0,217,163,0.5);
+    position: relative;
+    animation: iconBounce 3s ease-in-out infinite;
+  }
+  @keyframes iconBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .login-icon::before {
+    content: ''; position: absolute; inset: -8px;
+    border-radius: 32px;
+    border: 2px solid var(--primary);
+    opacity: 0.4;
+    animation: pulseRing 2s infinite;
+  }
+  @keyframes pulseRing {
+    0% { transform: scale(1); opacity: 0.4; }
+    100% { transform: scale(1.4); opacity: 0; }
+  }
+
+  .login-card h1 {
+    font-size: 32px; font-weight: 800;
+    text-align: center; margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary), var(--primary));
+    background-size: 200% auto;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: textShimmer 3s linear infinite, slideUpIn 0.8s 0.5s both;
+  }
+  @keyframes textShimmer { to { background-position: 200% center; } }
+  @keyframes slideUpIn { from { opacity: 0; transform: translateY(20px); } }
+
+  .login-card p {
+    color: var(--text-dim); font-size: 13.5px;
+    text-align: center; margin-bottom: 34px; line-height: 1.7;
+    animation: slideUpIn 0.8s 0.6s both;
+  }
+  .field { margin-bottom: 20px; animation: slideRightIn 0.8s 0.7s both cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes slideRightIn { from { opacity: 0; transform: translateX(-50px); } }
+  .field:nth-of-type(2) { animation-delay: 0.85s; }
   .field label { display: block; font-size: 13px; color: #aabdd0; margin-bottom: 8px; font-weight: 600; }
-  .field input { width: 100%; padding: 15px 20px; background: rgba(7, 24, 20, 0.6); border: 1.5px solid var(--border); border-radius: 16px; color: #fff; font-family: inherit; font-size: 15px; outline: none; transition: all 0.3s; }
-  .field input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(0,217,163,0.18); transform: translateY(-2px); }
-  .btn-primary { width: 100%; padding: 16px; background: var(--msg-mine); color: #fff; border: none; border-radius: 16px; font-family: inherit; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s; box-shadow: 0 10px 30px rgba(0,217,163,0.4); display: flex; align-items: center; justify-content: center; min-height: 54px; }
-  .btn-primary:hover:not(:disabled) { transform: translateY(-3px) scale(1.02); }
+  .field input {
+    width: 100%; padding: 15px 20px;
+    background: rgba(7, 24, 20, 0.6);
+    border: 1.5px solid var(--border);
+    border-radius: 16px; color: #fff;
+    font-family: inherit; font-size: 15px;
+    outline: none; transition: all 0.3s;
+  }
+  .field input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(0,217,163,0.18);
+    transform: translateY(-2px) scale(1.02);
+  }
+  .btn-primary {
+    width: 100%; padding: 16px;
+    background: var(--msg-mine);
+    color: #fff; border: none; border-radius: 16px;
+    font-family: inherit; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: all 0.3s;
+    box-shadow: 0 10px 30px rgba(0,217,163,0.4);
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 54px;
+    animation: slideUpIn 0.8s 1s both;
+  }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-3px) scale(1.03); box-shadow: 0 20px 50px rgba(0,217,163,0.6); }
+  .btn-primary::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+    transform: translateX(-100%);
+  }
+  .btn-primary:hover::before { animation: shimmer 0.8s; }
   .btn-primary.loading .btn-text { opacity: 0; }
-  .btn-primary.loading .btn-spinner { opacity: 1; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-  .btn-spinner { width: 24px; height: 24px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; opacity: 0; animation: spin 0.8s linear infinite; }
+  .btn-primary.loading .btn-spinner {
+    opacity: 1; position: absolute;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+  }
+  .btn-spinner {
+    width: 26px; height: 26px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top-color: #fff; border-radius: 50%;
+    opacity: 0; animation: spin 0.8s linear infinite;
+  }
   @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
 
   /* Chat */
   #chatScreen { display: none; height: 100vh; flex-direction: column; opacity: 0; transform: scale(0.95); }
-  #chatScreen.on { display: flex; animation: chatEnter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+  #chatScreen.on { display: flex; animation: chatEnter 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
   @keyframes chatEnter { to { opacity: 1; transform: scale(1); } }
-  .topbar { display: flex; align-items: center; gap: 14px; padding: 14px 22px; background: linear-gradient(180deg, rgba(13, 42, 36, 0.95), rgba(7, 24, 20, 0.9)); border-bottom: 1px solid var(--border); backdrop-filter: blur(20px); flex-shrink: 0; animation: slideDown 0.6s 0.2s both; }
+  .topbar { display: flex; align-items: center; gap: 14px; padding: 14px 22px; background: linear-gradient(180deg, rgba(13, 42, 36, 0.95), rgba(7, 24, 20, 0.9)); border-bottom: 1px solid var(--border); backdrop-filter: blur(20px); flex-shrink: 0; animation: slideDown 0.7s 0.3s both; }
   @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } }
   .logo { width: 44px; height: 44px; border-radius: 14px; background: var(--msg-mine); display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 8px 25px rgba(0,217,163,0.5); }
   .topbar-info h1 { font-size: 16px; font-weight: 800; margin-bottom: 2px; }
@@ -65,8 +725,8 @@
   .status-pill { display: flex; align-items: center; gap: 8px; padding: 7px 16px; border-radius: 999px; background: rgba(0, 255, 136, 0.12); color: var(--green); font-size: 12.5px; font-weight: 600; border: 1px solid rgba(0,255,136,0.25); }
   .status-pill.reconnecting { background: rgba(255, 190, 0, 0.15); color: #ffbe00; }
   .status-pill .dot-status { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-  .me-chip { display: flex; align-items: center; gap: 10px; background: rgba(0, 217, 163, 0.12); padding: 6px 16px 6px 6px; border-radius: 999px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; }
-  .me-chip:hover { background: rgba(0, 217, 163, 0.2); transform: translateY(-1px); }
+  .me-chip { display: flex; align-items: center; gap: 10px; background: rgba(0, 217, 163, 0.12); padding: 6px 16px 6px 6px; border-radius: 999px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); cursor: pointer; }
+  .me-chip:hover { background: rgba(0, 217, 163, 0.2); }
   .me-avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; overflow: hidden; }
   .me-avatar img { width: 100%; height: 100%; object-fit: cover; }
   .settings-btn { width: 42px; height: 42px; border-radius: 12px; background: rgba(0, 217, 163, 0.12); color: var(--primary); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; transition: all 0.25s; }
@@ -74,7 +734,7 @@
 
   .main { flex: 1; display: grid; grid-template-columns: 260px 1fr; min-height: 0; }
   @media (max-width: 768px) { .main { grid-template-columns: 1fr; } .sidebar { display: none; } }
-  .sidebar { background: linear-gradient(180deg, rgba(10, 31, 26, 0.92), rgba(7, 24, 20, 0.95)); border-left: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; animation: slideRight 0.6s 0.3s both; }
+  .sidebar { background: linear-gradient(180deg, rgba(10, 31, 26, 0.92), rgba(7, 24, 20, 0.95)); border-left: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; animation: slideRight 0.7s 0.4s both; }
   @keyframes slideRight { from { transform: translateX(100%); opacity: 0; } }
   .sidebar-head { padding: 16px 20px; font-size: 13px; font-weight: 800; color: var(--primary); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
   .sidebar-head .count-badge { margin-right: auto; background: rgba(0,217,163,0.2); padding: 3px 12px; border-radius: 999px; font-size: 11px; color: var(--primary); border: 1px solid var(--border); }
@@ -99,14 +759,16 @@
 
   /* Chat area */
   .chat-area { display: flex; flex-direction: column; min-height: 0; position: relative; }
-  .messages { flex: 1; overflow-y: auto; padding: 24px 20px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
+  .messages { flex: 1; overflow-y: auto; padding: 24px 20px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
   .msg { max-width: 68%; display: flex; flex-direction: column; gap: 5px; position: relative; }
   .msg.mine { align-self: flex-start; align-items: flex-start; }
   .msg.theirs { align-self: flex-end; align-items: flex-end; }
+
   @property --rgb-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
   .msg.last-message .bubble { position: relative; box-shadow: 0 0 25px rgba(0,217,163,0.4); }
   .msg.last-message .bubble::after { content: ''; position: absolute; inset: -3px; border-radius: inherit; padding: 3px; background: conic-gradient(from var(--rgb-angle), #ff0000, #ff8000, #ffff00, #00ff00, #00ffff, #0080ff, #8000ff, #ff00ff, #ff0000); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; animation: rgbRotate 3s linear infinite; filter: drop-shadow(0 0 8px rgba(255,255,255,0.4)); }
   @keyframes rgbRotate { to { --rgb-angle: 360deg; } }
+
   .msg.anim-in { animation: msgBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
   @keyframes msgBounce { 0% { opacity: 0; transform: translateY(20px) scale(0.85); } 60% { transform: translateY(-4px) scale(1.02); } 100% { opacity: 1; transform: none; } }
   .msg.flying-in { animation: flyIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
@@ -115,6 +777,7 @@
   @keyframes stickerSpin { 0% { opacity: 0; transform: scale(0) rotate(-360deg); } 60% { transform: scale(1.15) rotate(20deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
   .msg.image-fly { animation: imageZoom 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
   @keyframes imageZoom { 0% { opacity: 0; transform: scale(0.3); filter: blur(10px); } 100% { opacity: 1; transform: scale(1); filter: blur(0); } }
+
   .bubble { padding: 12px 16px; border-radius: 18px; font-size: var(--bubble-font); line-height: 1.75; word-wrap: break-word; max-width: 100%; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
   .mine .bubble { background: var(--msg-mine); color: #fff; border-end-start-radius: 6px; }
   .theirs .bubble { background: var(--msg-theirs); color: #fff; border: 1px solid rgba(255,255,255,0.08); border-end-end-radius: 6px; }
@@ -124,28 +787,65 @@
   .bubble.image-bubble { padding: 5px !important; background: rgba(255,255,255,0.05) !important; }
   .bubble.image-bubble img { max-width: 300px; max-height: 340px; border-radius: 14px; display: block; cursor: pointer; }
 
-  /* Voice message */
-  .voice-msg { display: flex; align-items: center; gap: 12px; min-width: 200px; }
-  .voice-play-btn { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.2); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; transition: all 0.2s; }
-  .voice-play-btn:hover { background: rgba(255,255,255,0.35); transform: scale(1.1); }
-  .voice-wave { flex: 1; height: 30px; display: flex; align-items: center; gap: 3px; }
-  .voice-wave .bar { width: 3px; border-radius: 2px; background: rgba(255,255,255,0.6); height: 30%; transition: height 0.2s; }
-  .voice-wave.playing .bar { animation: waveAnim 0.8s ease-in-out infinite alternate; }
-  @keyframes waveAnim { from { height: 20%; } to { height: 100%; } }
-  .voice-dur { font-size: 11.5px; opacity: 0.9; font-weight: 600; }
-  .recording-bar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: rgba(255,80,80,0.1); border-bottom: 1px solid rgba(255,80,80,0.3); animation: recPulse 1.2s infinite; }
-  @keyframes recPulse { 0%,100% { background: rgba(255,80,80,0.1); } 50% { background: rgba(255,80,80,0.2); } }
-  .rec-dot { width: 12px; height: 12px; border-radius: 50%; background: #ff4444; animation: recDot 1s infinite; }
-  @keyframes recDot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.7); } }
-  .rec-info { flex: 1; color: #ff8080; font-weight: 700; font-size: 13.5px; }
-  .rec-cancel { background: rgba(255,80,80,0.2); color: #ff8080; border: 1px solid rgba(255,80,80,0.4); padding: 8px 16px; border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 12.5px; }
+  /* ⭐️ REPLY — کاملاً واضح و قابل فهم */
+  .reply-quote {
+    padding: 10px 12px 10px 32px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    background: linear-gradient(90deg, rgba(0,217,163,0.2), rgba(0,217,163,0.05));
+    border-right: 4px solid var(--primary);
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .reply-quote:hover { background: linear-gradient(90deg, rgba(0,217,163,0.35), rgba(0,217,163,0.15)); transform: translateX(-3px); }
+  .reply-quote::before {
+    content: '↩';
+    position: absolute;
+    top: 50%; right: 8px;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: var(--primary);
+    font-weight: 800;
+  }
+  .reply-quote .rq-name {
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 12.5px;
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 3px;
+  }
+  .reply-quote .rq-name::after {
+    content: '';
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, var(--primary), transparent);
+    opacity: 0.4;
+  }
+  .reply-quote .rq-text {
+    color: rgba(255,255,255,0.9);
+    font-size: 12.5px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 260px;
+    font-weight: 500;
+  }
+  .theirs .reply-quote {
+    background: linear-gradient(90deg, rgba(255,152,0,0.2), rgba(255,152,0,0.05));
+    border-right-color: var(--accent);
+  }
+  .theirs .reply-quote::before { color: var(--accent); }
+  .theirs .reply-quote .rq-name { color: var(--accent); }
+  .theirs .reply-quote .rq-name::after { background: linear-gradient(90deg, var(--accent), transparent); }
 
-  /* Reply quote */
-  .reply-quote { padding: 8px 12px; border-right: 3px solid rgba(255,255,255,0.6); border-radius: 8px; margin-bottom: 8px; background: rgba(0,0,0,0.25); font-size: 12.5px; }
-  .reply-quote .rq-name { color: #fff; font-weight: 800; font-size: 12px; }
-  .reply-quote .rq-text { color: rgba(255,255,255,0.8); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; font-size: 12px; }
-  .theirs .reply-quote { background: rgba(38,198,218,0.12); border-right-color: var(--secondary); }
-  .theirs .reply-quote .rq-name { color: var(--secondary); }
+  /* هایلایت پیام اصلی */
+  .msg.highlighted .bubble {
+    animation: highlightPulse 2s ease;
+  }
+  @keyframes highlightPulse {
+    0%, 100% { box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    25%, 75% { box-shadow: 0 0 0 4px var(--accent), 0 0 40px var(--accent); }
+  }
+
   .meta { font-size: 11px; color: var(--text-dim); padding: 0 6px; display: flex; align-items: center; gap: 6px; }
   .reply-btn, .react-btn, .menu-btn { opacity: 0; background: none; border: none; color: var(--primary); cursor: pointer; font-size: 15px; padding: 2px 6px; border-radius: 6px; transition: all 0.2s; }
   .msg:hover .reply-btn, .msg:hover .react-btn, .msg:hover .menu-btn { opacity: 1; }
@@ -165,6 +865,61 @@
   .reaction-picker .rp-emoji { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; transition: all 0.2s; }
   .reaction-picker .rp-emoji:hover { background: rgba(0,217,163,0.2); transform: scale(1.3); }
 
+  /* Poll */
+  .poll-card {
+    background: rgba(0,0,0,0.25);
+    border-radius: 14px;
+    padding: 14px;
+    margin-top: 4px;
+    border: 1px solid rgba(255,255,255,0.15);
+    min-width: 260px;
+  }
+  .poll-q { font-weight: 800; font-size: 14px; margin-bottom: 12px; line-height: 1.6; }
+  .poll-option {
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 10px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+  .poll-option:hover { background: rgba(255,255,255,0.15); }
+  .poll-option.voted { border-color: var(--primary); }
+  .poll-option .poll-bar {
+    position: absolute; top: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    opacity: 0.4;
+    border-radius: 10px;
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 0;
+  }
+  .poll-option .poll-content {
+    position: relative; z-index: 1;
+    display: flex; justify-content: space-between; align-items: center;
+    font-weight: 600; font-size: 13.5px;
+  }
+  .poll-option .poll-percent { font-weight: 800; color: #fff; }
+  .poll-info { text-align: center; font-size: 11.5px; color: rgba(255,255,255,0.75); margin-top: 8px; font-weight: 600; }
+
+  /* Voice */
+  .voice-msg { display: flex; align-items: center; gap: 12px; min-width: 200px; }
+  .voice-play-btn { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.2); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .voice-play-btn:hover { background: rgba(255,255,255,0.35); transform: scale(1.1); }
+  .voice-wave { flex: 1; height: 30px; display: flex; align-items: center; gap: 3px; }
+  .voice-wave .bar { width: 3px; border-radius: 2px; background: rgba(255,255,255,0.6); height: 30%; }
+  .voice-wave.playing .bar { animation: waveAnim 0.8s ease-in-out infinite alternate; }
+  @keyframes waveAnim { from { height: 20%; } to { height: 100%; } }
+  .voice-dur { font-size: 11.5px; opacity: 0.9; font-weight: 600; }
+  .recording-bar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: rgba(255,80,80,0.1); border-bottom: 1px solid rgba(255,80,80,0.3); animation: recPulse 1.2s infinite; }
+  @keyframes recPulse { 0%,100% { background: rgba(255,80,80,0.1); } 50% { background: rgba(255,80,80,0.2); } }
+  .rec-dot { width: 12px; height: 12px; border-radius: 50%; background: #ff4444; animation: recDot 1s infinite; }
+  @keyframes recDot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.7); } }
+  .rec-info { flex: 1; color: #ff8080; font-weight: 700; font-size: 13.5px; }
+  .rec-cancel { background: rgba(255,80,80,0.2); color: #ff8080; border: 1px solid rgba(255,80,80,0.4); padding: 8px 16px; border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 12.5px; }
+
   /* Composer */
   .composer-wrap { background: linear-gradient(180deg, rgba(10, 31, 26, 0.9), rgba(13, 42, 36, 0.98)); border-top: 1px solid var(--border); flex-shrink: 0; backdrop-filter: blur(20px); }
   .reply-preview { display: none; padding: 12px 20px; background: rgba(0, 217, 163, 0.06); border-bottom: 1px solid var(--border); align-items: center; gap: 12px; position: relative; }
@@ -182,12 +937,14 @@
   .icon-btn.recording { background: rgba(255,80,80,0.3); color: #fff; border-color: #ff4444; animation: recPulse 1s infinite; }
   .send-btn { width: 46px; height: 46px; border-radius: 14px; background: var(--msg-mine); color: #fff; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; flex-shrink: 0; transition: all 0.25s; box-shadow: 0 6px 20px rgba(0,217,163,0.4); }
   .send-btn:hover { transform: translateY(-3px) scale(1.08); }
+  .send-btn.spinning { animation: sendSpin 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes sendSpin { 0% { transform: rotate(0) scale(1); } 50% { transform: rotate(180deg) scale(1.3); } 100% { transform: rotate(360deg) scale(1); } }
 
-  /* Message context menu */
-  .msg-menu { position: fixed; background: linear-gradient(145deg, rgba(30, 45, 40, 0.98), rgba(15, 30, 25, 0.98)); border: 1px solid var(--border); border-radius: 14px; padding: 6px; display: none; z-index: 300; box-shadow: 0 15px 40px rgba(0,0,0,0.7); min-width: 180px; animation: pickerPop 0.25s; }
-  .msg-menu.on { display: block; }
-  .msg-menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 14px; background: none; border: none; color: #fff; font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; border-radius: 10px; text-align: right; transition: all 0.15s; }
-  .msg-menu button:hover { background: rgba(0,217,163,0.15); color: var(--primary); }
+  /* Menus */
+  .msg-menu, .user-menu { position: fixed; background: linear-gradient(145deg, rgba(30, 45, 40, 0.98), rgba(15, 30, 25, 0.98)); border: 1px solid var(--border); border-radius: 14px; padding: 6px; display: none; z-index: 300; box-shadow: 0 15px 40px rgba(0,0,0,0.7); min-width: 190px; animation: pickerPop 0.25s; backdrop-filter: blur(20px); }
+  .msg-menu.on, .user-menu.on { display: block; }
+  .msg-menu button, .user-menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 14px; background: none; border: none; color: #fff; font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; border-radius: 10px; text-align: right; transition: all 0.15s; }
+  .msg-menu button:hover, .user-menu button:hover { background: rgba(0,217,163,0.15); color: var(--primary); }
   .msg-menu button.danger { color: #ff8080; }
   .msg-menu button.danger:hover { background: rgba(255,80,80,0.15); color: #ff4444; }
 
@@ -205,29 +962,16 @@
   .panel-title { font-size: 13px; color: var(--primary); font-weight: 800; padding: 4px 8px 12px; display: flex; align-items: center; gap: 8px; }
   .panel-title .count { margin-right: auto; background: rgba(0,217,163,0.15); padding: 2px 10px; border-radius: 999px; font-size: 11px; color: var(--primary); }
 
-  /* Modal */
+  /* Modals */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); display: none; z-index: 400; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(10px); }
   .modal-overlay.on { display: flex; animation: fadeIn 0.3s; }
   @keyframes fadeIn { from { opacity: 0; } }
   .modal { background: linear-gradient(145deg, rgba(13, 42, 36, 0.98), rgba(7, 24, 20, 0.98)); border: 1px solid var(--border); border-radius: 24px; padding: 28px; width: min(480px, 100%); max-height: 90vh; overflow-y: auto; animation: modalIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 30px 100px rgba(0, 0, 0, 0.8); position: relative; }
   @keyframes modalIn { from { opacity: 0; transform: scale(0.7) translateY(30px); } 60% { transform: scale(1.02) translateY(-4px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-  .modal h3 { color: var(--primary); font-size: 18px; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+  .modal h3 { color: var(--primary); font-size: 18px; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; justify-content: center; }
   .modal .m-close { position: absolute; top: 16px; left: 16px; width: 34px; height: 34px; background: rgba(255,80,80,0.15); color: #ff8080; border: 1px solid rgba(255,80,80,0.3); border-radius: 10px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
-  .modal .m-close:hover { background: #ff4444; color: #fff; }
   .settings-section { margin-bottom: 24px; }
   .settings-section h4 { color: #fff; font-size: 14px; margin-bottom: 12px; font-weight: 700; }
-
-  /* Profile section */
-  .profile-edit { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
-  .profile-avatar-big { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; cursor: pointer; box-shadow: 0 8px 25px rgba(0,0,0,0.4); position: relative; overflow: hidden; transition: transform 0.2s; }
-  .profile-avatar-big:hover { transform: scale(1.05); }
-  .profile-avatar-big img { width: 100%; height: 100%; object-fit: cover; }
-  .profile-avatar-big::after { content: '📷'; position: absolute; bottom: 0; right: 0; background: var(--primary); color: #fff; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid var(--bg-dark); }
-  .profile-info-input { flex: 1; }
-  .profile-info-input label { display: block; font-size: 12px; color: #aabdd0; margin-bottom: 6px; font-weight: 600; }
-  .profile-info-input textarea { width: 100%; padding: 10px 14px; background: rgba(7, 24, 20, 0.6); border: 1.5px solid var(--border); border-radius: 12px; color: #fff; font-family: inherit; font-size: 13px; outline: none; resize: none; height: 70px; }
-
-  /* Theme */
   .theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .theme-btn { padding: 14px 8px; background: rgba(255,255,255,0.05); border: 2px solid transparent; border-radius: 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: all 0.2s; }
   .theme-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
@@ -238,6 +982,14 @@
   .font-btn { flex: 1; padding: 10px 8px; background: rgba(255,255,255,0.05); border: 2px solid transparent; border-radius: 12px; cursor: pointer; color: #ccc; font-family: inherit; font-size: 13px; font-weight: 600; transition: all 0.2s; }
   .font-btn:hover { background: rgba(255,255,255,0.1); }
   .font-btn.active { border-color: var(--primary); background: rgba(0,217,163,0.1); color: var(--primary); }
+  .profile-edit { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+  .profile-avatar-big { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; cursor: pointer; box-shadow: 0 8px 25px rgba(0,0,0,0.4); position: relative; overflow: hidden; transition: transform 0.2s; }
+  .profile-avatar-big:hover { transform: scale(1.05); }
+  .profile-avatar-big img { width: 100%; height: 100%; object-fit: cover; }
+  .profile-avatar-big::after { content: '📷'; position: absolute; bottom: 0; right: 0; background: var(--primary); color: #fff; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid var(--bg-dark); }
+  .profile-info-input { flex: 1; }
+  .profile-info-input label { display: block; font-size: 12px; color: #aabdd0; margin-bottom: 6px; font-weight: 600; }
+  .profile-info-input textarea { width: 100%; padding: 10px 14px; background: rgba(7, 24, 20, 0.6); border: 1.5px solid var(--border); border-radius: 12px; color: #fff; font-family: inherit; font-size: 13px; outline: none; resize: none; height: 70px; }
 
   /* PM */
   .pm-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); display: none; z-index: 200; backdrop-filter: blur(8px); }
@@ -247,19 +999,12 @@
   .pm-head { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; background: rgba(0,217,163,0.05); }
   .pm-head b { flex: 1; font-size: 15px; font-weight: 700; }
   .pm-close { width: 34px; height: 34px; border-radius: 10px; background: rgba(255, 80, 80, 0.15); color: #ff8080; border: 1px solid rgba(255, 80, 80, 0.3); cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
-  .pm-close:hover { background: #ff4444; color: #fff; transform: rotate(90deg); }
+  .pm-close:hover { background: #ff4444; color: #fff; }
   .pm-messages { flex: 1; overflow-y: auto; padding: 20px; }
 
-  /* User menu */
-  .user-menu { position: fixed; background: linear-gradient(145deg, rgba(30, 45, 40, 0.98), rgba(15, 30, 25, 0.98)); border: 1px solid var(--border); border-radius: 16px; padding: 8px; display: none; z-index: 300; box-shadow: 0 15px 40px rgba(0,0,0,0.7); min-width: 200px; animation: pickerPop 0.25s; }
-  .user-menu.on { display: block; }
-  .user-menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 14px; background: none; border: none; color: #fff; font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; border-radius: 10px; text-align: right; transition: all 0.15s; }
-  .user-menu button:hover { background: rgba(0,217,163,0.15); color: var(--primary); }
-
   /* Games */
-  #gameModal .modal, #tttModal .modal { text-align: center; }
   .game-arena { display: flex; justify-content: space-around; align-items: center; padding: 20px 0; margin: 20px 0; }
-  .game-player { flex: 1; }
+  .game-player { flex: 1; text-align: center; }
   .game-player .gp-avatar { width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; box-shadow: 0 8px 20px rgba(0,0,0,0.4); overflow: hidden; }
   .game-player .gp-avatar img { width: 100%; height: 100%; object-fit: cover; }
   .game-player .gp-name { font-size: 13px; color: #ccc; margin-bottom: 12px; }
@@ -272,20 +1017,46 @@
   .game-choice-btns button { width: 80px; height: 80px; background: rgba(0,217,163,0.1); border: 2px solid var(--border); border-radius: 20px; font-size: 38px; cursor: pointer; transition: all 0.25s; }
   .game-choice-btns button:hover { background: var(--msg-mine); transform: translateY(-6px) scale(1.1); }
   .game-choice-btns button.selected { background: var(--msg-mine); border-color: #fff; transform: scale(1.15); }
-  .game-status { color: #ccc; font-size: 14px; margin-top: 12px; min-height: 24px; font-weight: 600; }
-  .game-round { color: var(--accent); font-size: 13px; font-weight: 700; margin-top: 4px; }
+  .game-status { color: #ccc; font-size: 14px; margin-top: 12px; min-height: 24px; font-weight: 600; text-align: center; }
+  .game-round { color: var(--accent); font-size: 13px; font-weight: 700; margin-top: 4px; text-align: center; }
 
-  /* Tic-Tac-Toe */
   .ttt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(300px, 80vw); margin: 20px auto; }
   .ttt-cell { aspect-ratio: 1; background: rgba(0,217,163,0.08); border: 2px solid var(--border); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 800; cursor: pointer; transition: all 0.25s; user-select: none; }
   .ttt-cell:hover:not(.taken) { background: rgba(0,217,163,0.2); transform: scale(1.05); }
   .ttt-cell.taken { cursor: not-allowed; }
-  .ttt-cell.x { color: #4fc3f7; }
-  .ttt-cell.o { color: #ff6b6b; }
   .ttt-cell.win { background: rgba(255,193,7,0.3); border-color: var(--accent); animation: winPulse 0.6s ease; }
   @keyframes winPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
-  .ttt-cell.marked { animation: tttMark 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-  @keyframes tttMark { from { transform: scale(0) rotate(-180deg); opacity: 0; } }
+
+  /* Name-Family game */
+  .nf-letter-box { text-align: center; margin: 16px 0; padding: 18px; background: rgba(0,217,163,0.1); border-radius: 16px; border: 2px solid var(--border); }
+  .nf-letter-box .nf-letter { font-size: 60px; font-weight: 900; color: var(--primary); display: block; line-height: 1; }
+  .nf-letter-box small { color: #ccc; font-size: 12px; display: block; margin-top: 6px; }
+  .nf-timer { text-align: center; color: var(--accent); font-size: 22px; font-weight: 800; margin-bottom: 12px; }
+  .nf-timer.warning { animation: nfWarn 0.6s infinite; color: #ff4444; }
+  @keyframes nfWarn { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+  .nf-fields { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .nf-field label { display: block; font-size: 11.5px; color: var(--primary); margin-bottom: 4px; font-weight: 700; }
+  .nf-field input { width: 100%; padding: 9px 12px; background: rgba(7,24,20,0.6); border: 1.5px solid var(--border); border-radius: 10px; color: #fff; font-family: inherit; font-size: 13px; outline: none; }
+  .nf-field input:focus { border-color: var(--primary); }
+  .nf-field input.match { border-color: var(--accent); background: rgba(255,152,0,0.1); }
+  .nf-field input.unique { border-color: var(--green); background: rgba(0,255,136,0.08); }
+  .nf-result { margin-top: 14px; padding: 14px; background: rgba(0,217,163,0.08); border-radius: 12px; font-size: 13px; line-height: 2; }
+  .nf-result b { color: var(--primary); }
+  .nf-btn { width: 100%; padding: 14px; border: none; border-radius: 14px; font-family: inherit; font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.2s; margin-top: 14px; }
+  .nf-btn.primary { background: var(--msg-mine); color: #fff; }
+  .nf-btn.primary:hover { transform: translateY(-2px); }
+  .nf-btn.primary:disabled { opacity: 0.5; cursor: wait; }
+
+  /* Poll creator */
+  .poll-create-field { margin-bottom: 14px; }
+  .poll-create-field label { display: block; font-size: 12px; color: #aabdd0; margin-bottom: 6px; font-weight: 600; }
+  .poll-create-field input { width: 100%; padding: 11px 14px; background: rgba(7,24,20,0.6); border: 1.5px solid var(--border); border-radius: 12px; color: #fff; font-family: inherit; font-size: 13.5px; outline: none; }
+  .poll-create-field input:focus { border-color: var(--primary); }
+  .poll-options-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .poll-opt-row { display: flex; gap: 8px; align-items: center; }
+  .poll-opt-row input { flex: 1; }
+  .poll-opt-row button { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,80,80,0.15); color: #ff8080; border: 1px solid rgba(255,80,80,0.3); cursor: pointer; font-size: 16px; flex-shrink: 0; }
+  .poll-add-opt { width: 100%; padding: 10px; border: 1.5px dashed var(--border); background: none; color: var(--primary); border-radius: 12px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 700; margin-bottom: 14px; }
 
   /* Game invite toast */
   .game-invite-toast { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); background: linear-gradient(145deg, rgba(30, 45, 40, 0.98), rgba(15, 30, 25, 0.98)); border: 1px solid var(--border); border-radius: 20px; padding: 20px 24px; z-index: 500; min-width: 300px; box-shadow: 0 30px 80px rgba(0,0,0,0.8); animation: inviteIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); text-align: center; }
@@ -321,11 +1092,17 @@
 <body>
 
 <div id="loginScreen">
+  <div class="login-particles" id="loginParticles"></div>
+  <div class="login-rings">
+    <div class="ring r1"></div>
+    <div class="ring r2"></div>
+    <div class="ring r3"></div>
+  </div>
   <div class="login-card">
     <div class="login-inner">
-      <div class="login-icon">💬</div>
+      <div class="login-icon-wrap"><div class="login-icon">💬</div></div>
       <h1>چت آنلاین</h1>
-      <p>با دوستات گپ بزن، استیکر و عکس بفرست!</p>
+      <p>با دوستات گپ بزن، استیکر بفرست، بازی کن!</p>
       <form id="loginForm">
         <div class="field">
           <label for="nameInput">اسمت چیه؟</label>
@@ -362,10 +1139,7 @@
 
   <div class="main">
     <aside class="sidebar">
-      <div class="sidebar-head">
-        👥 آنلاین‌ها
-        <span class="count-badge" id="sidebarCount">۱</span>
-      </div>
+      <div class="sidebar-head">👥 آنلاین‌ها <span class="count-badge" id="sidebarCount">۱</span></div>
       <div class="user-list" id="userList"></div>
     </aside>
 
@@ -413,6 +1187,7 @@
           <button type="button" class="icon-btn" id="stickerBtn" title="استیکر">🎨</button>
           <button type="button" class="icon-btn" id="imageBtn" title="عکس">📷</button>
           <button type="button" class="icon-btn" id="voiceBtn" title="ویس">🎤</button>
+          <button type="button" class="icon-btn" id="pollBtn" title="نظرسنجی">📊</button>
           <input type="file" id="imageInput" accept="image/*" style="display:none">
           <input type="text" id="chatInput" maxlength="500" placeholder="پیامت رو بنویس...">
           <button type="submit" class="send-btn" id="sendBtn" title="ارسال">📤</button>
@@ -422,7 +1197,6 @@
   </div>
 </div>
 
-<!-- PM -->
 <div class="pm-overlay" id="pmOverlay"></div>
 <div class="pm-window" id="pmWindow">
   <div class="pm-head">
@@ -437,21 +1211,20 @@
   </form>
 </div>
 
-<!-- User menu -->
 <div class="user-menu" id="userMenu">
   <button id="umChat">💬 چت خصوصی</button>
   <button id="umRPS">✊ سنگ کاغذ قیچی</button>
   <button id="umTTT">❌⭕ دوز</button>
+  <button id="umNF">📝 اسم فامیل</button>
+  <button id="umUNO">🎴 UNO</button>
 </div>
 
-<!-- Message menu -->
 <div class="msg-menu" id="msgMenu">
   <button id="mmReply">↩️ پاسخ</button>
   <button id="mmReact">😀 واکنش</button>
   <button id="mmDelete" class="danger">🗑️ حذف</button>
 </div>
 
-<!-- Settings -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal">
     <button class="m-close" onclick="document.getElementById('settingsModal').classList.remove('on')">✕</button>
@@ -459,7 +1232,7 @@
     <div class="settings-section">
       <h4>👤 پروفایل</h4>
       <div class="profile-edit">
-        <div class="profile-avatar-big" id="profileAvatarBig" title="کلیک کن عکس بذاری"></div>
+        <div class="profile-avatar-big" id="profileAvatarBig"></div>
         <div class="profile-info-input">
           <label>بیوگرافی</label>
           <textarea id="profileBio" maxlength="120" placeholder="یه جمله درباره خودت..."></textarea>
@@ -483,10 +1256,9 @@
   </div>
 </div>
 
-<!-- RPS Game -->
 <div class="modal-overlay" id="gameModal">
   <div class="modal">
-    <h3 style="justify-content:center">✊✋✌️ سنگ کاغذ قیچی</h3>
+    <h3>✊✋✌️ سنگ کاغذ قیچی</h3>
     <div class="game-arena">
       <div class="game-player">
         <div class="gp-avatar" id="gameMeAvatar">م</div>
@@ -512,25 +1284,82 @@
   </div>
 </div>
 
-<!-- Tic-Tac-Toe Game -->
 <div class="modal-overlay" id="tttModal">
   <div class="modal">
-    <h3 style="justify-content:center">❌⭕ دوز</h3>
-    <div class="game-arena" style="padding:10px 0;margin:10px 0">
-      <div class="game-player">
-        <div class="gp-avatar" id="tttMeAvatar">م</div>
-        <div class="gp-name" id="tttMeName">من</div>
-        <div class="game-score" id="tttMeScore">❌</div>
-      </div>
-      <div class="game-vs">VS</div>
-      <div class="game-player">
-        <div class="gp-avatar" id="tttOpAvatar">ح</div>
-        <div class="gp-name" id="tttOpName">حریف</div>
-        <div class="game-score" id="tttOpScore">⭕</div>
-      </div>
-    </div>
+    <h3>❌⭕ دوز</h3>
     <div class="game-status" id="tttStatus">نوبت توئه!</div>
     <div class="ttt-grid" id="tttGrid"></div>
+  </div>
+</div>
+
+<!-- Name-Family Game -->
+<div class="modal-overlay" id="nfModal">
+  <div class="modal">
+    <h3>📝 اسم فامیل</h3>
+    <div class="nf-letter-box" id="nfLetterBox">
+      <span class="nf-letter" id="nfLetter">؟</span>
+      <small>حرف انتخابی</small>
+    </div>
+    <div class="nf-timer" id="nfTimer">⏱️ ۹۰</div>
+    <div class="nf-fields">
+      <div class="nf-field"><label>اسم</label><input id="nfName" maxlength="20"></div>
+      <div class="nf-field"><label>فامیل</label><input id="nfFamily" maxlength="20"></div>
+      <div class="nf-field"><label>شهر</label><input id="nfCity" maxlength="20"></div>
+      <div class="nf-field"><label>کشور</label><input id="nfCountry" maxlength="20"></div>
+      <div class="nf-field"><label>غذا</label><input id="nfFood" maxlength="20"></div>
+      <div class="nf-field"><label>حیوان</label><input id="nfAnimal" maxlength="20"></div>
+    </div>
+    <button class="nf-btn primary" id="nfSubmit">✅ ارسال پاسخ</button>
+    <div class="nf-result" id="nfResult" style="display:none"></div>
+  </div>
+</div>
+
+<!-- Poll Creator -->
+<div class="modal-overlay" id="pollModal">
+  <div class="modal">
+    <button class="m-close" onclick="document.getElementById('pollModal').classList.remove('on')">✕</button>
+    <h3>📊 نظرسنجی جدید</h3>
+    <div class="poll-create-field">
+      <label>سوال</label>
+      <input id="pollQuestion" maxlength="150" placeholder="سوالت چیه؟">
+    </div>
+    <label style="display:block;font-size:12px;color:#aabdd0;margin-bottom:6px;font-weight:600">گزینه‌ها</label>
+    <div class="poll-options-list" id="pollOptionsList"></div>
+    <button class="poll-add-opt" id="pollAddOpt">+ افزودن گزینه</button>
+    <button class="nf-btn primary" id="pollCreate">📊 ساخت نظرسنجی</button>
+  </div>
+</div>
+<!-- UNO Game -->
+<div class="modal-overlay" id="unoModal">
+  <div class="modal" style="width:min(560px,100%)">
+    <h3>🎴 UNO</h3>
+    <div class="uno-table">
+      <div>
+        <div class="uno-pile-label">حریف (<span id="unoOpCount">۰</span>)</div>
+        <div class="uno-opponent-hand" id="unoOpHand"></div>
+      </div>
+      <div class="uno-piles">
+        <div class="uno-pile">
+          <div class="uno-pile-label">دسته</div>
+          <div class="uno-deck" id="unoDeck" onclick="unoDraw()">🎴</div>
+        </div>
+        <div class="uno-pile">
+          <div class="uno-pile-label">رو میز</div>
+          <div class="uno-current" id="unoCurrent">-</div>
+        </div>
+      </div>
+      <div class="uno-status" id="unoStatus">منتظر...</div>
+      <div>
+        <div class="uno-pile-label">دست تو (<span id="unoMyCount">۰</span>)</div>
+        <div class="uno-my-hand" id="unoMyHand"></div>
+      </div>
+      <div class="uno-color-picker" id="unoColorPicker" style="display:none">
+        <button class="c-red" onclick="unoChooseColor('red')"></button>
+        <button class="c-blue" onclick="unoChooseColor('blue')"></button>
+        <button class="c-green" onclick="unoChooseColor('green')"></button>
+        <button class="c-yellow" onclick="unoChooseColor('yellow')"></button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -552,6 +1381,8 @@ const MAX_VOICE_SIZE = 1500 * 1024;
 const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🔥'];
 const GAME_MOVES = { rock: '✊', paper: '✋', scissors: '✌️' };
 const GAME_BEATS = { rock: 'scissors', paper: 'rock', scissors: 'paper' };
+const NF_CATEGORIES = ['name', 'family', 'city', 'country', 'food', 'animal'];
+const NF_LABELS = { name: 'اسم', family: 'فامیل', city: 'شهر', country: 'کشور', food: 'غذا', animal: 'حیوان' };
 
 const STICKERS = [
   'https://static.cdn.asset.aparat.com/agf/emoji-5570-732905-b.png',
@@ -583,13 +1414,21 @@ const STICKERS = [
   'https://static.cdn.asset.aparat.com/agf/emoji-14041-477979-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-13695-649275-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-11393-990557-b.png',
-  'https://static.cdn.asset.aparat.com/agf/emoji-11344-617167-b.png'
+  'https://static.cdn.asset.aparat.com/agf/emoji-11344-617167-b.png',
+  // ⭐️ ۸ تای جدید
+  'https://static.cdn.asset.aparat.com/agf/emoji-29624-151164-b.png',
+  'https://static.cdn.asset.aparat.com/agf/emoji-29620-147496-b.png',
+  'https://static.cdn.asset.aparat.com/agf/emoji-29618-152219-b.png',
+  'https://static.cdn.asset.aparat.com/agf/emoji-29615-48183-b.png',
+  'https://static.cdn.asset.aparat.com/agf/emoji-38386-125941-b.png',
+  'https://static.cdn.asset.aparat.com/agf/emoji-38385-192779-b.png',
+  'https://static.cdn.asset.aparat.com/agf/emoji-40920-39584-b.png',
+  'https://static.cdn.asset.aparat.com/agf/emoji-2269-541198-b.png'
 ];
 
 const EMOJIS = ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','❤️','🧡','💛','💚','💙','💜','🖤','🤍','👍','👎','👏','🙌','🤝','🙏','💪','✌️'];
 
 const AVATAR_COLORS = [['#00d9a3','#fff'],['#26c6da','#fff'],['#00ff88','#000'],['#4dd0e1','#000'],['#00bfa5','#fff'],['#80cbc4','#000'],['#b2dfdb','#000'],['#66bb6a','#fff'],['#26a69a','#fff'],['#00acc1','#fff'],['#aed581','#000'],['#4db6ac','#fff']];
-
 const THEMES = [
   { id: 'emerald', name: 'زمرد', color: 'linear-gradient(135deg, #00d9a3, #26c6da)' },
   { id: 'ocean', name: 'اقیانوس', color: 'linear-gradient(135deg, #4fc3f7, #2b8bc7)' },
@@ -607,11 +1446,11 @@ const state = {
   joinResolve: null, pendingBootstrap: new Set(),
   joinTimer: null, replyTo: null, pendingImage: null,
   myProfile: { avatar: null, bio: '' },
-  typingTimers: new Map(),       // peerId -> timeout
+  typingTimers: new Map(),
   myTypingTimeout: null,
   isRecording: false, mediaRecorder: null, audioChunks: [], recStartTime: 0,
   recInterval: null, recShouldSend: false,
-  game: null, ttt: null,
+  game: null, ttt: null, nf: null,
   msgMenuTarget: null
 };
 
@@ -625,13 +1464,28 @@ function slugify(str) { const t = str.trim().toLowerCase(); if (/^[a-z0-9][a-z0-
 function avatarFor(name) { let h = 0; for (const c of name) h = (h * 31 + c.codePointAt(0)) >>> 0; return AVATAR_COLORS[h % AVATAR_COLORS.length]; }
 function genId() { return 'm-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8); }
 function toast(text) {
-  const t = document.createElement('div');
-  t.className = 'toast'; t.textContent = text;
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = text;
   $('toasts').appendChild(t);
   setTimeout(() => { t.style.transition = 'all 0.4s'; t.style.opacity = '0'; t.style.transform = 'translateY(-30px) scale(0.8)'; setTimeout(() => t.remove(), 400); }, 3200);
 }
 
-// ---------- Settings/Profile ----------
+// Login particles
+function spawnLoginParticles() {
+  const box = $('loginParticles');
+  for (let i = 0; i < 25; i++) {
+    const p = document.createElement('div');
+    p.className = 'p';
+    const size = 4 + Math.random() * 12;
+    p.style.width = size + 'px'; p.style.height = size + 'px';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDuration = (6 + Math.random() * 10) + 's';
+    p.style.animationDelay = (Math.random() * 8) + 's';
+    box.appendChild(p);
+  }
+}
+spawnLoginParticles();
+
+// Settings
 function loadSettings() {
   try {
     const s = JSON.parse(localStorage.getItem('chatSettings') || '{}');
@@ -648,8 +1502,7 @@ function saveSettings() {
 loadSettings();
 
 function buildThemeGrid() {
-  const grid = $('themeGrid');
-  const cur = document.documentElement.getAttribute('data-theme') || 'emerald';
+  const grid = $('themeGrid'); const cur = document.documentElement.getAttribute('data-theme') || 'emerald';
   grid.innerHTML = '';
   THEMES.forEach(t => {
     const b = document.createElement('button');
@@ -667,60 +1520,31 @@ function buildFontOptions() {
   });
 }
 function renderMyAvatar() {
-  const el = $('meAvatar');
-  const [bg, fg] = avatarFor(state.myName);
-  if (state.myProfile.avatar) {
-    el.style.background = 'transparent';
-    el.innerHTML = `<img src="${state.myProfile.avatar}" alt="">`;
-  } else {
-    el.style.background = bg; el.style.color = fg;
-    el.textContent = state.myName[0] || '?';
-  }
+  const el = $('meAvatar'); const [bg, fg] = avatarFor(state.myName);
+  if (state.myProfile.avatar) { el.style.background = 'transparent'; el.innerHTML = `<img src="${state.myProfile.avatar}" alt="">`; }
+  else { el.style.background = bg; el.style.color = fg; el.textContent = state.myName[0] || '?'; el.innerHTML = state.myName[0] || '?'; }
 }
 function renderProfileModal() {
-  const big = $('profileAvatarBig');
-  const [bg, fg] = avatarFor(state.myName);
-  if (state.myProfile.avatar) {
-    big.style.background = 'transparent';
-    big.innerHTML = `<img src="${state.myProfile.avatar}" alt="">`;
-  } else {
-    big.style.background = bg; big.style.color = fg;
-    big.textContent = state.myName[0] || '?';
-    big.innerHTML = state.myName[0] || '?';
-  }
+  const big = $('profileAvatarBig'); const [bg, fg] = avatarFor(state.myName);
+  if (state.myProfile.avatar) { big.style.background = 'transparent'; big.innerHTML = `<img src="${state.myProfile.avatar}" alt="">`; }
+  else { big.style.background = bg; big.style.color = fg; big.textContent = state.myName[0] || '?'; }
   $('profileBio').value = state.myProfile.bio || '';
 }
 buildThemeGrid(); buildFontOptions();
-
-$('settingsBtn').onclick = () => {
-  buildThemeGrid(); buildFontOptions(); renderProfileModal();
-  $('settingsModal').classList.add('on');
-};
-$('meChip').onclick = () => {
-  buildThemeGrid(); buildFontOptions(); renderProfileModal();
-  $('settingsModal').classList.add('on');
-};
+$('settingsBtn').onclick = () => { buildThemeGrid(); buildFontOptions(); renderProfileModal(); $('settingsModal').classList.add('on'); };
+$('meChip').onclick = () => { buildThemeGrid(); buildFontOptions(); renderProfileModal(); $('settingsModal').classList.add('on'); };
 $('profileAvatarBig').onclick = () => $('profilePicInput').click();
 $('profilePicInput').onchange = async e => {
   const file = e.target.files[0]; if (!file) return;
   if (!file.type.startsWith('image/')) { toast('❌ فقط عکس'); return; }
   const small = await resizeImage(file, 200, 0.85);
-  state.myProfile.avatar = small;
-  saveSettings();
-  renderMyAvatar();
-  renderProfileModal();
+  state.myProfile.avatar = small; saveSettings(); renderMyAvatar(); renderProfileModal();
   broadcastProfile();
   toast('✅ عکس پروفایل ذخیره شد');
   e.target.value = '';
 };
-$('profileBio').oninput = function() {
-  state.myProfile.bio = this.value.slice(0, 120);
-  saveSettings();
-  broadcastProfile();
-};
-function broadcastProfile() {
-  broadcast({ type: 'profile', name: state.myName, avatar: state.myProfile.avatar, bio: state.myProfile.bio });
-}
+$('profileBio').oninput = function() { state.myProfile.bio = this.value.slice(0, 120); saveSettings(); broadcastProfile(); };
+function broadcastProfile() { broadcast({ type: 'profile', name: state.myName, avatar: state.myProfile.avatar, bio: state.myProfile.bio }); }
 function resizeImage(file, maxSize, quality) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -735,16 +1559,13 @@ function resizeImage(file, maxSize, quality) {
         c.getContext('2d').drawImage(img, 0, 0, width, height);
         resolve(c.toDataURL('image/jpeg', quality));
       };
-      img.onerror = reject;
-      img.src = e.target.result;
+      img.onerror = reject; img.src = e.target.result;
     };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+    reader.onerror = reject; reader.readAsDataURL(file);
   });
 }
 function compressImage(file) { return resizeImage(file, 800, 0.75); }
 
-// ---------- Audio notification ----------
 let audioCtx = null;
 function playNotif() {
   try {
@@ -758,7 +1579,6 @@ function playNotif() {
   } catch (_) {}
 }
 
-// ---------- PeerJS ----------
 function openPeer(id) {
   return new Promise((res, rej) => {
     let p; try { p = new Peer(id); } catch (e) { rej(e); return; }
@@ -778,8 +1598,7 @@ async function claimSlot(slug) {
 async function joinChat(name) {
   if (typeof Peer === 'undefined') { toast('❌ PeerJS لود نشد'); return; }
   state.myName = name;
-  const btn = $('loginBtn');
-  btn.disabled = true; btn.classList.add('loading');
+  const btn = $('loginBtn'); btn.disabled = true; btn.classList.add('loading');
   const slug = slugify(ROOM_NAME);
   try {
     const { peer, slot } = await claimSlot(slug);
@@ -787,7 +1606,7 @@ async function joinChat(name) {
     wirePeer(peer);
     await discover(slug);
     $('loginScreen').classList.add('leaving');
-    setTimeout(() => finishJoin(), 500);
+    setTimeout(() => finishJoin(), 700);
   } catch (err) {
     btn.disabled = false; btn.classList.remove('loading');
     toast(err && err.type === 'room-full' ? '❌ ظرفیت پر است' : '❌ اتصال برقرار نشد');
@@ -809,8 +1628,7 @@ function wirePeer(peer) {
 }
 function discover(slug) {
   return new Promise(resolve => {
-    state.joinResolve = resolve;
-    state.pendingBootstrap = new Set();
+    state.joinResolve = resolve; state.pendingBootstrap = new Set();
     const targets = [];
     for (let s = 0; s < MAX_SLOTS; s++) { if (s !== state.mySlot) targets.push(SLOT_PREFIX + slug + '-' + s); }
     if (!targets.length) { finishDiscover(); return; }
@@ -826,9 +1644,9 @@ function finishJoin() {
   $('meName').textContent = state.myName;
   renderMyAvatar();
   renderUsers(); updateStatus('online');
-  setTimeout(() => addSystemMsg('👋 ' + state.myName + ' وارد چت شد'), 600);
+  setTimeout(() => addSystemMsg('👋 ' + state.myName + ' وارد چت شد'), 800);
   toast('🎉 به چت خوش آمدی، ' + state.myName + '!');
-  setTimeout(() => $('chatInput').focus(), 800);
+  setTimeout(() => $('chatInput').focus(), 1000);
 }
 function updateStatus(mode) {
   const pill = $('statusPill'), txt = $('statusText');
@@ -880,6 +1698,11 @@ function handleData(conn, msg) {
     case 'ttt-invite': onTTTInvite(conn, msg); break;
     case 'ttt-response': onTTTResponse(conn, msg); break;
     case 'ttt-move': onTTTMove(conn, msg); break;
+    case 'nf-invite': onNFInvite(conn, msg); break;
+    case 'nf-response': onNFResponse(conn, msg); break;
+    case 'nf-ready': onNFReady(conn, msg); break;
+    case 'nf-answers': onNFAnswers(conn, msg); break;
+    case 'poll-vote': onPollVote(conn, msg); break;
   }
 }
 
@@ -890,9 +1713,7 @@ function onHello(conn, msg) {
   if (!e.name) e.name = msg.name || 'کاربر';
   if (e.isNew && state.joined) { addSystemMsg('👋 ' + e.name + ' وارد چت شد'); toast('👋 ' + e.name + ' وارد شد'); e.isNew = false; }
   safeSend(conn, { type: 'user-list', members: roster() });
-  if (state.myProfile.avatar || state.myProfile.bio) {
-    safeSend(conn, { type: 'profile', name: state.myName, avatar: state.myProfile.avatar, bio: state.myProfile.bio });
-  }
+  if (state.myProfile.avatar || state.myProfile.bio) safeSend(conn, { type: 'profile', name: state.myName, avatar: state.myProfile.avatar, bio: state.myProfile.bio });
   renderUsers();
 }
 function onProfile(conn, msg) {
@@ -914,12 +1735,10 @@ function onUserList(conn, msg) {
 function onPublicMsg(conn, msg) {
   const e = state.peers.get(conn.peer);
   const name = (e && e.name) || msg.name || 'کاربر';
-  const entry = { id: msg.id, name, text: msg.text, sticker: msg.sticker, image: msg.image, voice: msg.voice, voiceDur: msg.voiceDur, reply: msg.reply, ts: msg.ts || Date.now(), mine: false, reactions: {} };
+  const entry = { id: msg.id, name, text: msg.text, sticker: msg.sticker, image: msg.image, voice: msg.voice, voiceDur: msg.voiceDur, reply: msg.reply, poll: msg.poll, ts: msg.ts || Date.now(), mine: false, reactions: {} };
   addMessage(entry);
-  // delivered
   if (msg.id) safeSend(conn, { type: 'delivered', msgId: msg.id });
   if (!document.hasFocus() || document.hidden) playNotif();
-  // clear typing
   clearTypingTimer(conn.peer);
 }
 function onPrivateMsg(conn, msg) {
@@ -927,7 +1746,7 @@ function onPrivateMsg(conn, msg) {
   const id = conn.peer; const e = state.peers.get(id); if (!e) return;
   safeSend(conn, { type: 'delivered', msgId: msg.id, to: conn.peer });
   let arr = state.pm.get(id) || [];
-  arr.push({ id: msg.id, from: e.name, text: msg.text, sticker: msg.sticker, image: msg.image, voice: msg.voice, voiceDur: msg.voiceDur, reply: msg.reply, ts: msg.ts || Date.now(), mine: false, delivered: false, seen: false, reactions: {} });
+  arr.push({ id: msg.id, from: e.name, text: msg.text, sticker: msg.sticker, image: msg.image, voice: msg.voice, voiceDur: msg.voiceDur, reply: msg.reply, poll: msg.poll, ts: msg.ts || Date.now(), mine: false, delivered: false, seen: false, reactions: {} });
   state.pm.set(id, arr);
   if (state.pmOpenFor === id) { renderPM(); setTimeout(() => sendSeen(id), 300); }
   else { state.unread.set(id, (state.unread.get(id) || 0) + 1); toast('💬 پیام خصوصی از ' + e.name); playNotif(); renderUsers(); }
@@ -956,16 +1775,12 @@ function onReaction(conn, msg) {
 function onDelivered(conn, msg) {
   const el = document.querySelector(`.msg[data-msgid="${msg.msgId}"]`);
   if (el) { const t = el.querySelector('.ticks'); if (t) { t.textContent = '✓✓'; t.classList.add('delivered'); } }
-  const id = conn.peer;
-  const arr = state.pm.get(id);
+  const id = conn.peer; const arr = state.pm.get(id);
   if (arr) { const m = arr.find(x => x.id === msg.msgId); if (m) m.delivered = true; }
 }
 function onSeen(conn, msg) {
-  const id = conn.peer;
-  const arr = state.pm.get(id);
-  if (arr) {
-    msg.msgIds.forEach(mid => { const m = arr.find(x => x.id === mid); if (m) { m.seen = true; m.delivered = true; } });
-  }
+  const id = conn.peer; const arr = state.pm.get(id);
+  if (arr) msg.msgIds.forEach(mid => { const m = arr.find(x => x.id === mid); if (m) { m.seen = true; m.delivered = true; } });
   msg.msgIds.forEach(mid => {
     const el = document.querySelector(`.msg[data-msgid="${mid}"]`);
     if (el) { const t = el.querySelector('.ticks'); if (t) { t.textContent = '✓✓'; t.classList.add('seen'); } }
@@ -986,20 +1801,26 @@ function clearTypingTimer(peerId) {
   const e = state.peers.get(peerId); if (e) e.typing = false;
 }
 function onDeleteMsg(conn, msg) {
-  // msgId
-  // check PM
-  const id = conn.peer;
-  const arr = state.pm.get(id);
-  if (arr) {
-    const idx = arr.findIndex(x => x.id === msg.msgId);
-    if (idx >= 0) {
-      arr.splice(idx, 1);
-      if (state.pmOpenFor === id) renderPM();
-    }
-  }
-  // check public
+  const id = conn.peer; const arr = state.pm.get(id);
+  if (arr) { const idx = arr.findIndex(x => x.id === msg.msgId); if (idx >= 0) { arr.splice(idx, 1); if (state.pmOpenFor === id) renderPM(); } }
   const el = document.querySelector(`.msg[data-msgid="${msg.msgId}"]`);
   if (el) el.remove();
+}
+function onPollVote(conn, msg) {
+  // msg: { msgId, optionIndex, from }
+  const el = document.querySelector(`.msg[data-msgid="${msg.msgId}"]`);
+  if (!el) return;
+  const pollEl = el.querySelector('.poll-card');
+  if (!pollEl) return;
+  // find poll object
+  // We store poll data on the message element
+  if (!el._pollData) return;
+  const poll = el._pollData;
+  if (!poll.voters[msg.from]) {
+    poll.voters[msg.from] = msg.optionIndex;
+    poll.options[msg.optionIndex].votes++;
+    updatePollUI(el, poll);
+  }
 }
 function onBye(conn) { removePeerById(conn.peer); }
 
@@ -1009,8 +1830,7 @@ function roster() {
   return arr;
 }
 
-// ---------- Rendering ----------
-function buildBubbleContent(bubble, o, isPM) {
+function buildBubbleContent(bubble, o) {
   if (o.reply) {
     const q = document.createElement('div'); q.className = 'reply-quote';
     const n = document.createElement('div'); n.className = 'rq-name'; n.textContent = o.reply.name; q.appendChild(n);
@@ -1018,51 +1838,114 @@ function buildBubbleContent(bubble, o, isPM) {
     if (o.reply.isSticker) t.textContent = '🎨 استیکر';
     else if (o.reply.isImage) t.textContent = '📷 عکس';
     else if (o.reply.isVoice) t.textContent = '🎤 پیام صوتی';
+    else if (o.reply.isPoll) t.textContent = '📊 نظرسنجی';
     else t.textContent = o.reply.text || '';
-    q.appendChild(t); bubble.appendChild(q);
+    q.appendChild(t);
+    if (o.reply.msgId) q.onclick = (e) => { e.stopPropagation(); scrollToMessage(o.reply.msgId); };
+    bubble.appendChild(q);
   }
   if (o.sticker) { bubble.classList.add('sticker'); const img = document.createElement('img'); img.src = o.sticker; bubble.appendChild(img); }
   else if (o.image) { bubble.classList.add('image-bubble'); const img = document.createElement('img'); img.src = o.image; img.onclick = () => openImagePreview(o.image); bubble.appendChild(img); }
   else if (o.voice) { buildVoiceBubble(bubble, o.voice, o.voiceDur || 0); }
+  else if (o.poll) { buildPollCard(bubble, o.poll, o.id); }
   else if (o.text && o.text.length <= 3 && /\p{Emoji}/u.test(o.text)) { bubble.classList.add('big-emoji'); bubble.textContent = o.text; }
   else { bubble.textContent = o.text || ''; }
 }
+function buildPollCard(bubble, poll, msgId) {
+  bubble.classList.add('sticker'); // remove bg
+  const card = document.createElement('div');
+  card.className = 'poll-card';
+  const q = document.createElement('div');
+  q.className = 'poll-q'; q.textContent = '📊 ' + poll.question;
+  card.appendChild(q);
+  poll.options.forEach((opt, i) => {
+    const optEl = document.createElement('div');
+    optEl.className = 'poll-option';
+    optEl.dataset.idx = i;
+    const bar = document.createElement('div'); bar.className = 'poll-bar'; bar.style.width = '0%';
+    const content = document.createElement('div'); content.className = 'poll-content';
+    const txt = document.createElement('span'); txt.textContent = opt.text;
+    const pct = document.createElement('span'); pct.className = 'poll-percent'; pct.textContent = '0%';
+    content.appendChild(txt); content.appendChild(pct);
+    optEl.appendChild(bar); optEl.appendChild(content);
+    optEl.onclick = (e) => { e.stopPropagation(); voteOnPoll(msgId, i, optEl); };
+    card.appendChild(optEl);
+  });
+  const info = document.createElement('div');
+  info.className = 'poll-info';
+  info.textContent = 'مجموع: ۰ رأی';
+  card.appendChild(info);
+  bubble.appendChild(card);
+  // store poll data on bubble for later updates
+  bubble.closest('.msg')._pollData = poll;
+  updatePollUI(bubble.closest('.msg'), poll);
+}
+function updatePollUI(msgEl, poll) {
+  if (!msgEl) return;
+  const card = msgEl.querySelector('.poll-card'); if (!card) return;
+  const total = poll.options.reduce((s, o) => s + o.votes, 0);
+  const myVote = poll.voters[state.myPeerId];
+  const opts = card.querySelectorAll('.poll-option');
+  opts.forEach((optEl, i) => {
+    const pct = total > 0 ? Math.round((poll.options[i].votes / total) * 100) : 0;
+    optEl.querySelector('.poll-bar').style.width = pct + '%';
+    optEl.querySelector('.poll-percent').textContent = pct + '%';
+    optEl.classList.toggle('voted', myVote === i);
+    optEl.style.opacity = myVote !== undefined ? '1' : '0.95';
+  });
+  const info = card.querySelector('.poll-info');
+  if (info) info.textContent = 'مجموع: ' + faNum(total) + ' رأی' + (myVote !== undefined ? ' · رأی دادی' : '');
+}
+function voteOnPoll(msgId, idx, optEl) {
+  // find message
+  const msgEl = document.querySelector(`.msg[data-msgid="${msgId}"]`);
+  if (!msgEl || !msgEl._pollData) return;
+  const poll = msgEl._pollData;
+  if (poll.voters[state.myPeerId] !== undefined) { toast('❗ قبلاً رأی دادی'); return; }
+  poll.voters[state.myPeerId] = idx;
+  poll.options[idx].votes++;
+  updatePollUI(msgEl, poll);
+  // broadcast
+  broadcast({ type: 'poll-vote', msgId, optionIndex: idx, from: state.myPeerId });
+  // if PM
+  if (state.pmOpenFor) {
+    const e = state.peers.get(state.pmOpenFor);
+    if (e && e.conn) safeSend(e.conn, { type: 'poll-vote', msgId, optionIndex: idx, from: state.myPeerId });
+  }
+}
+function scrollToMessage(msgId) {
+  const el = document.querySelector(`.msg[data-msgid="${msgId}"]`);
+  if (!el) { toast('❌ پیام اصلی پیدا نشد'); return; }
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.remove('highlighted'); void el.offsetWidth;
+  el.classList.add('highlighted');
+  setTimeout(() => el.classList.remove('highlighted'), 2000);
+}
 function buildVoiceBubble(bubble, dataUrl, dur) {
-  const wrap = document.createElement('div');
-  wrap.className = 'voice-msg';
-  const btn = document.createElement('button');
-  btn.className = 'voice-play-btn'; btn.innerHTML = '▶️';
-  const wave = document.createElement('div');
-  wave.className = 'voice-wave';
+  const wrap = document.createElement('div'); wrap.className = 'voice-msg';
+  const btn = document.createElement('button'); btn.className = 'voice-play-btn'; btn.innerHTML = '▶️';
+  const wave = document.createElement('div'); wave.className = 'voice-wave';
   for (let i = 0; i < 20; i++) {
-    const bar = document.createElement('div');
-    bar.className = 'bar';
+    const bar = document.createElement('div'); bar.className = 'bar';
     bar.style.height = (20 + Math.random() * 70) + '%';
     bar.style.animationDelay = (Math.random() * 0.4) + 's';
     wave.appendChild(bar);
   }
-  const durEl = document.createElement('div');
-  durEl.className = 'voice-dur'; durEl.textContent = faDur(dur);
+  const durEl = document.createElement('div'); durEl.className = 'voice-dur'; durEl.textContent = faDur(dur);
   wrap.appendChild(btn); wrap.appendChild(wave); wrap.appendChild(durEl);
   bubble.appendChild(wrap);
   const audio = new Audio(dataUrl);
   audio.onended = () => { btn.innerHTML = '▶️'; wave.classList.remove('playing'); };
-  audio.onerror = () => { toast('❌ خطا در پخش صدا'); };
   btn.onclick = () => {
-    if (audio.paused) {
-      document.querySelectorAll('audio').forEach(a => a.pause());
-      audio.play(); btn.innerHTML = '⏸️'; wave.classList.add('playing');
-    } else {
-      audio.pause(); btn.innerHTML = '▶️'; wave.classList.remove('playing');
-    }
+    if (audio.paused) { document.querySelectorAll('audio').forEach(a => a.pause()); audio.play(); btn.innerHTML = '⏸️'; wave.classList.add('playing'); }
+    else { audio.pause(); btn.innerHTML = '▶️'; wave.classList.remove('playing'); }
   };
 }
 
 function renderReactions(o) {
   const arr = Object.entries(o.reactions || {}).filter(([_, users]) => users.length > 0);
   if (!arr.length) return null;
-  const wrap = document.createElement('div');
-  wrap.className = 'reactions-row';
+  const wrap = document.createElement('div'); wrap.className = 'reactions-row';
   arr.forEach(([emoji, users]) => {
     const chip = document.createElement('div');
     chip.className = 'reaction-chip' + (users.includes(state.myPeerId) ? ' mine' : '');
@@ -1089,11 +1972,10 @@ function addMessage(o, animType) {
   w.classList.add(animClass);
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
-  buildBubbleContent(bubble, o, false);
+  buildBubbleContent(bubble, o);
   w.appendChild(bubble);
   const rx = renderReactions(o); if (rx) w.appendChild(rx);
-  const meta = document.createElement('div');
-  meta.className = 'meta';
+  const meta = document.createElement('div'); meta.className = 'meta';
   const mText = document.createElement('span');
   mText.textContent = (o.mine ? 'شما' : o.name) + ' · ' + faTime(o.ts);
   meta.appendChild(mText);
@@ -1114,8 +1996,7 @@ function addMessage(o, animType) {
 function addSystemMsg(text) {
   const box = $('messages');
   clearLastHighlight();
-  const w = document.createElement('div');
-  w.className = 'msg system'; w.textContent = text;
+  const w = document.createElement('div'); w.className = 'msg system'; w.textContent = text;
   box.appendChild(w);
   while (box.children.length > 300) box.firstChild.remove();
   box.scrollTop = box.scrollHeight;
@@ -1124,8 +2005,7 @@ function addSystemMsg(text) {
 }
 
 function renderUsers() {
-  const list = $('userList');
-  list.innerHTML = '';
+  const list = $('userList'); list.innerHTML = '';
   const others = [...state.peers.entries()].filter(([, e]) => e.name);
   const total = others.length + 1;
   $('onlineCount').textContent = faNum(total) + ' نفر';
@@ -1138,7 +2018,6 @@ function renderUsers() {
 function userRow(u) {
   const row = document.createElement('div');
   row.className = 'user-item' + (u.me ? ' me' : '');
-  if (!u.me) row.dataset.peerId = u.id;
   const [bg, fg] = avatarFor(u.name);
   const wrap = document.createElement('div'); wrap.className = 'u-avatar-wrap';
   const av = document.createElement('div'); av.className = 'u-avatar';
@@ -1161,21 +2040,19 @@ function userRow(u) {
   row.appendChild(main);
   if (u.unread > 0) { const b = document.createElement('div'); b.className = 'badge-unread'; b.textContent = faNum(u.unread); row.appendChild(b); }
   if (!u.me) {
-    row.addEventListener('click', (e) => { const rect = row.getBoundingClientRect(); showUserMenu(u.id, rect.right, rect.top); });
+    row.addEventListener('click', () => { const rect = row.getBoundingClientRect(); showUserMenu(u.id, rect.right, rect.top); });
   } else {
     row.addEventListener('click', () => { $('settingsBtn').click(); });
   }
   return row;
 }
 
-// User menu
 let menuTargetId = null;
 function showUserMenu(id, x, y) {
   menuTargetId = id;
   const m = $('userMenu');
   m.style.top = (y) + 'px';
-  m.style.right = '20px';
-  m.style.left = 'auto';
+  m.style.right = '20px'; m.style.left = 'auto';
   m.classList.add('on');
   setTimeout(() => { document.addEventListener('click', closeUserMenu, { once: true }); }, 50);
 }
@@ -1183,33 +2060,26 @@ function closeUserMenu() { $('userMenu').classList.remove('on'); }
 $('umChat').onclick = () => { if (menuTargetId) { openPM(menuTargetId); closeUserMenu(); } };
 $('umRPS').onclick = () => { if (menuTargetId) { inviteToGame(menuTargetId); closeUserMenu(); } };
 $('umTTT').onclick = () => { if (menuTargetId) { inviteToTTT(menuTargetId); closeUserMenu(); } };
+$('umNF').onclick = () => { if (menuTargetId) { inviteToNF(menuTargetId); closeUserMenu(); } };
 
-// Msg menu
 function showMsgMenu(x, y, o, isPM) {
   state.msgMenuTarget = { o, isPM };
   const m = $('msgMenu');
   m.style.top = y + 'px';
   m.style.left = Math.min(x, window.innerWidth - 200) + 'px';
   m.classList.add('on');
-  // enable/disable delete
   $('mmDelete').style.display = o.mine ? 'flex' : 'none';
   setTimeout(() => { document.addEventListener('click', closeMsgMenu, { once: true }); }, 50);
 }
 function closeMsgMenu() { $('msgMenu').classList.remove('on'); }
 $('mmReply').onclick = () => { if (state.msgMenuTarget) { setReplyTo(state.msgMenuTarget.o); closeMsgMenu(); } };
 $('mmReact').onclick = () => { if (state.msgMenuTarget) { showReactionPicker($('msgMenu'), state.msgMenuTarget.o, state.msgMenuTarget.isPM); closeMsgMenu(); } };
-$('mmDelete').onclick = () => {
-  if (!state.msgMenuTarget) return;
-  const { o, isPM } = state.msgMenuTarget;
-  deleteMessage(o, isPM);
-  closeMsgMenu();
-};
+$('mmDelete').onclick = () => { if (!state.msgMenuTarget) return; const { o, isPM } = state.msgMenuTarget; deleteMessage(o, isPM); closeMsgMenu(); };
 
 function deleteMessage(o, isPM) {
   if (!o.id) return;
   if (isPM) {
-    const id = state.pmOpenFor;
-    const e = state.peers.get(id);
+    const id = state.pmOpenFor; const e = state.peers.get(id);
     if (e && e.conn) safeSend(e.conn, { type: 'delete-msg', msgId: o.id });
     const arr = state.pm.get(id) || [];
     const idx = arr.findIndex(x => x.id === o.id);
@@ -1221,7 +2091,6 @@ function deleteMessage(o, isPM) {
   }
 }
 
-// PM
 function openPM(id) {
   if (id === state.myPeerId) return;
   const e = state.peers.get(id); if (!e || !e.name) return;
@@ -1236,14 +2105,10 @@ function openPM(id) {
   setTimeout(() => { $('pmInput').focus(); sendSeen(id); }, 400);
 }
 function sendSeen(peerId) {
-  const e = state.peers.get(peerId);
-  if (!e || !e.conn) return;
+  const e = state.peers.get(peerId); if (!e || !e.conn) return;
   const arr = state.pm.get(peerId) || [];
   const unseen = arr.filter(m => !m.mine && !m.seen).map(m => m.id);
-  if (unseen.length) {
-    unseen.forEach(mid => { const m = arr.find(x => x.id === mid); if (m) m.seen = true; });
-    safeSend(e.conn, { type: 'seen', msgIds: unseen });
-  }
+  if (unseen.length) { unseen.forEach(mid => { const m = arr.find(x => x.id === mid); if (m) m.seen = true; }); safeSend(e.conn, { type: 'seen', msgIds: unseen }); }
 }
 function closePM() { state.pmOpenFor = null; $('pmOverlay').classList.remove('on'); $('pmWindow').classList.remove('on'); }
 function renderPM() {
@@ -1256,7 +2121,7 @@ function renderPM() {
     const w = document.createElement('div'); w.className = 'msg ' + (m.mine ? 'mine' : 'theirs');
     if (m.id) w.setAttribute('data-msgid', m.id);
     w.classList.add(m.mine ? 'flying-in' : 'anim-in');
-    const b = document.createElement('div'); b.className = 'bubble'; buildBubbleContent(b, m, true); w.appendChild(b);
+    const b = document.createElement('div'); b.className = 'bubble'; buildBubbleContent(b, m); w.appendChild(b);
     const rx = renderReactions(m); if (rx) w.appendChild(rx);
     const meta = document.createElement('div'); meta.className = 'meta';
     const ts = document.createElement('span'); ts.textContent = faTime(m.ts); meta.appendChild(ts);
@@ -1272,12 +2137,10 @@ function renderPM() {
   box.scrollTop = box.scrollHeight;
 }
 
-// Reaction picker
 let reactionPicker = null;
 function showReactionPicker(target, o, isPM) {
   if (reactionPicker) reactionPicker.remove();
-  const picker = document.createElement('div');
-  picker.className = 'reaction-picker';
+  const picker = document.createElement('div'); picker.className = 'reaction-picker';
   REACTION_EMOJIS.forEach(em => {
     const b = document.createElement('div'); b.className = 'rp-emoji'; b.textContent = em;
     b.onclick = (e) => { e.stopPropagation(); toggleReaction(o, em, isPM); picker.remove(); reactionPicker = null; };
@@ -1305,20 +2168,22 @@ function toggleReaction(o, emoji, isPM) {
   } else {
     broadcast({ type: 'reaction', msgId: o.id, emoji, from: state.myPeerId, action });
     const el = document.querySelector(`.msg[data-msgid="${o.id}"]`);
-    if (el) {
-      const oldRx = el.querySelector('.reactions-row');
-      if (oldRx) oldRx.remove();
-      const rx = renderReactions(o);
-      if (rx) { const bubble = el.querySelector('.bubble'); bubble.after(rx); }
-    }
+    if (el) { const oldRx = el.querySelector('.reactions-row'); if (oldRx) oldRx.remove(); const rx = renderReactions(o); if (rx) { const bubble = el.querySelector('.bubble'); bubble.after(rx); } }
   }
 }
 
-// Reply
 function setReplyTo(o) {
-  state.replyTo = { name: o.mine ? state.myName : o.name, text: o.text || '', isSticker: !!o.sticker, isImage: !!o.image, isVoice: !!o.voice };
+  state.replyTo = {
+    name: o.mine ? state.myName : o.name,
+    text: o.text || '',
+    isSticker: !!o.sticker,
+    isImage: !!o.image,
+    isVoice: !!o.voice,
+    isPoll: !!o.poll,
+    msgId: o.id
+  };
   $('rpName').textContent = '↩️ پاسخ به ' + state.replyTo.name;
-  $('rpText').textContent = state.replyTo.isSticker ? '🎨 استیکر' : state.replyTo.isImage ? '📷 عکس' : state.replyTo.isVoice ? '🎤 پیام صوتی' : state.replyTo.text;
+  $('rpText').textContent = state.replyTo.isSticker ? '🎨 استیکر' : state.replyTo.isImage ? '📷 عکس' : state.replyTo.isVoice ? '🎤 پیام صوتی' : state.replyTo.isPoll ? '📊 نظرسنجی' : state.replyTo.text;
   $('replyPreview').classList.add('on');
   $('chatInput').focus();
 }
@@ -1363,6 +2228,12 @@ function sendVoice(dataUrl, dur) {
   addMessage({ id, name: state.myName, voice: dataUrl, voiceDur: dur, ts, mine: true, reactions: {} });
   broadcast({ type: 'public-msg', id, name: state.myName, voice: dataUrl, voiceDur: dur, ts });
 }
+function sendPoll(poll) {
+  const ts = Date.now(); const id = genId();
+  animateSendBtn();
+  addMessage({ id, name: state.myName, poll, ts, mine: true, reactions: {} });
+  broadcast({ type: 'public-msg', id, name: state.myName, poll, ts });
+}
 function sendPM(text) {
   const id = state.pmOpenFor; if (!id) return;
   const e = state.peers.get(id); if (!e || !e.conn) { toast('❌ کاربر آفلاین است'); return; }
@@ -1376,38 +2247,22 @@ function sendPM(text) {
   sendTyping(false);
 }
 
-// Typing indicator
-function sendTyping(isTyping) {
-  broadcast({ type: 'typing', typing: !!isTyping });
-}
+function sendTyping(isTyping) { broadcast({ type: 'typing', typing: !!isTyping }); }
 $('chatInput').addEventListener('input', function() {
   if (state.myTypingTimeout) return;
   sendTyping(true);
   state.myTypingTimeout = setTimeout(() => { state.myTypingTimeout = null; sendTyping(false); }, 2500);
 });
-$('pmInput').addEventListener('input', function() {
-  const id = state.pmOpenFor; if (!id) return;
-  const e = state.peers.get(id); if (!e || !e.conn) return;
-  if (state.myTypingTimeout) return;
-  safeSend(e.conn, { type: 'typing', typing: true });
-  state.myTypingTimeout = setTimeout(() => { state.myTypingTimeout = null; safeSend(e.conn, { type: 'typing', typing: false }); }, 2500);
-});
 
 // Voice recording
 $('voiceBtn').onclick = toggleRecording;
 async function toggleRecording() {
-  if (state.isRecording) {
-    if (state.mediaRecorder && state.mediaRecorder.state === 'recording') state.mediaRecorder.stop();
-    return;
-  }
+  if (state.isRecording) { if (state.mediaRecorder && state.mediaRecorder.state === 'recording') state.mediaRecorder.stop(); return; }
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const mr = new MediaRecorder(stream);
-    state.mediaRecorder = mr;
-    state.audioChunks = [];
-    state.recStartTime = Date.now();
-    state.isRecording = true;
-    state.recShouldSend = false;
+    state.mediaRecorder = mr; state.audioChunks = []; state.recStartTime = Date.now();
+    state.isRecording = true; state.recShouldSend = false;
     mr.ondataavailable = e => { if (e.data.size > 0) state.audioChunks.push(e.data); };
     mr.onstop = async () => {
       clearInterval(state.recInterval);
@@ -1433,14 +2288,61 @@ async function toggleRecording() {
       $('recTime').textContent = faDur(s);
       if (s >= 60) { state.recShouldSend = true; mr.stop(); }
     }, 500);
-  } catch (err) {
-    toast('❌ اجازه میکروفون رد شد');
-  }
+  } catch (err) { toast('❌ اجازه میکروفون رد شد'); }
 }
 $('recCancel').onclick = () => { state.recShouldSend = false; if (state.mediaRecorder && state.mediaRecorder.state === 'recording') state.mediaRecorder.stop(); };
 $('recSend').onclick = () => { state.recShouldSend = true; if (state.mediaRecorder && state.mediaRecorder.state === 'recording') state.mediaRecorder.stop(); };
 
-// Games - RPS
+// Poll Creator
+let pollOptsCount = 2;
+function initPollCreator() {
+  pollOptsCount = 2;
+  $('pollQuestion').value = '';
+  renderPollOpts();
+}
+function renderPollOpts() {
+  const list = $('pollOptionsList'); list.innerHTML = '';
+  for (let i = 0; i < pollOptsCount; i++) {
+    const row = document.createElement('div'); row.className = 'poll-opt-row';
+    const inp = document.createElement('input');
+    inp.className = 'poll-create-field';
+    inp.placeholder = 'گزینه ' + (i+1);
+    inp.maxLength = 60;
+    inp.style.padding = '11px 14px';
+    inp.style.background = 'rgba(7,24,20,0.6)';
+    inp.style.border = '1.5px solid var(--border)';
+    inp.style.borderRadius = '12px';
+    inp.style.color = '#fff';
+    inp.style.fontFamily = 'inherit';
+    inp.style.fontSize = '13.5px';
+    inp.style.outline = 'none';
+    inp.dataset.idx = i;
+    row.appendChild(inp);
+    if (pollOptsCount > 2) {
+      const del = document.createElement('button');
+      del.textContent = '✕';
+      del.onclick = () => { pollOptsCount--; renderPollOpts(); };
+      row.appendChild(del);
+    }
+    list.appendChild(row);
+  }
+}
+$('pollBtn').onclick = () => { initPollCreator(); $('pollModal').classList.add('on'); };
+$('pollAddOpt').onclick = () => { if (pollOptsCount < 6) { pollOptsCount++; renderPollOpts(); } else toast('❗ حداکثر ۶ گزینه'); };
+$('pollCreate').onclick = () => {
+  const q = $('pollQuestion').value.trim();
+  if (!q) { toast('❗ سوال رو بنویس'); return; }
+  const inputs = $('pollOptionsList').querySelectorAll('input');
+  const opts = [];
+  inputs.forEach(inp => { const v = inp.value.trim(); if (v) opts.push({ text: v, votes: 0 }); });
+  if (opts.length < 2) { toast('❗ حداقل ۲ گزینه'); return; }
+  const poll = { question: q, options: opts, voters: {} };
+  poll.voters[state.myPeerId] = undefined;
+  sendPoll(poll);
+  $('pollModal').classList.remove('on');
+};
+
+// RPS
 function inviteToGame(peerId) {
   const e = state.peers.get(peerId);
   if (!e || !e.conn) { toast('❌ کاربر آفلاین'); return; }
@@ -1467,7 +2369,7 @@ function onGameResponse(conn, msg) {
   if (!state.game || state.game.id !== msg.gameId) return;
   const e = state.peers.get(conn.peer);
   if (msg.accepted) { toast('✅ ' + (e ? e.name : 'حریف') + ' قبول کرد!'); startGameUI(); }
-  else { toast('❌ ' + (e ? e.name : 'حریف') + ' رد کرد'); state.game = null; }
+  else { toast('❌ رد شد'); state.game = null; }
 }
 function startGameUI() {
   const g = state.game; if (!g) return;
@@ -1539,13 +2441,12 @@ function checkGameResult() {
   }, 1800);
 }
 
-// Tic-Tac-Toe
+// TTT
 function inviteToTTT(peerId) {
-  const e = state.peers.get(peerId);
-  if (!e || !e.conn) { toast('❌ کاربر آفلاین'); return; }
+  const e = state.peers.get(peerId); if (!e || !e.conn) { toast('❌ آفلاین'); return; }
   const id = 'ttt-' + Date.now();
   state.ttt = { id, opponent: peerId, board: Array(9).fill(null), mySymbol: 'X', theirSymbol: 'O', myTurn: true, host: true };
-  safeSend(e.conn, { type: 'ttt-invite', id, from: state.myPeerId, name: state.myName });
+  safeSend(e.conn, { type: 'ttt-invite', id });
   toast('⏳ دعوت دوز ارسال شد...');
 }
 function onTTTInvite(conn, msg) {
@@ -1553,47 +2454,22 @@ function onTTTInvite(conn, msg) {
   const t = document.createElement('div'); t.className = 'game-invite-toast';
   t.innerHTML = `<h4>❌⭕ دعوت به دوز</h4><p><b>${e.name}</b> می‌خواد دوز بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
   document.body.appendChild(t);
-  t.querySelector('.gi-accept').onclick = () => {
-    t.remove();
-    state.ttt = { id: msg.id, opponent: conn.peer, board: Array(9).fill(null), mySymbol: 'O', theirSymbol: 'X', myTurn: false, host: false };
-    safeSend(conn, { type: 'ttt-response', id: msg.id, accepted: true });
-    startTTTUI();
-  };
+  t.querySelector('.gi-accept').onclick = () => { t.remove(); state.ttt = { id: msg.id, opponent: conn.peer, board: Array(9).fill(null), mySymbol: 'O', theirSymbol: 'X', myTurn: false, host: false }; safeSend(conn, { type: 'ttt-response', id: msg.id, accepted: true }); startTTTUI(); };
   t.querySelector('.gi-decline').onclick = () => { t.remove(); safeSend(conn, { type: 'ttt-response', id: msg.id, accepted: false }); };
   setTimeout(() => { if (t.parentNode) t.remove(); }, 20000);
 }
 function onTTTResponse(conn, msg) {
   if (!state.ttt || state.ttt.id !== msg.id) return;
-  const e = state.peers.get(conn.peer);
-  if (msg.accepted) { toast('✅ ' + (e ? e.name : 'حریف') + ' قبول کرد!'); startTTTUI(); }
-  else { toast('❌ رد شد'); state.ttt = null; }
+  if (msg.accepted) { toast('✅ قبول شد'); startTTTUI(); } else { toast('❌ رد شد'); state.ttt = null; }
 }
-function startTTTUI() {
-  const t = state.ttt; if (!t) return;
-  const e = state.peers.get(t.opponent);
-  const opName = e ? e.name : 'حریف';
-  const meAv = $('tttMeAvatar');
-  const [bgMe, fgMe] = avatarFor(state.myName);
-  if (state.myProfile.avatar) { meAv.innerHTML = `<img src="${state.myProfile.avatar}" alt="">`; meAv.style.background = 'transparent'; }
-  else { meAv.style.background = bgMe; meAv.style.color = fgMe; meAv.textContent = state.myName[0] || '?'; }
-  const opAv = $('tttOpAvatar');
-  const [bgOp, fgOp] = avatarFor(opName);
-  if (e && e.avatar) { opAv.innerHTML = `<img src="${e.avatar}" alt="">`; opAv.style.background = 'transparent'; }
-  else { opAv.style.background = bgOp; opAv.style.color = fgOp; opAv.textContent = opName[0] || '?'; }
-  $('tttMeName').textContent = state.myName + ' (' + t.mySymbol + ')';
-  $('tttOpName').textContent = opName + ' (' + t.theirSymbol + ')';
-  $('tttMeScore').textContent = t.mySymbol;
-  $('tttOpScore').textContent = t.theirSymbol;
-  renderTTT();
-  $('tttModal').classList.add('on');
-}
+function startTTTUI() { renderTTT(); $('tttModal').classList.add('on'); }
 function renderTTT() {
   const t = state.ttt; if (!t) return;
   const grid = $('tttGrid'); grid.innerHTML = '';
   t.board.forEach((v, i) => {
     const cell = document.createElement('div');
-    cell.className = 'ttt-cell' + (v ? ' taken ' + v.toLowerCase() : '');
-    if (v) cell.textContent = v === 'X' ? '❌' : '⭕';
+    cell.className = 'ttt-cell' + (v ? ' taken' : '');
+    if (v) { cell.textContent = v === 'X' ? '❌' : '⭕'; cell.classList.add(v.toLowerCase()); }
     cell.onclick = () => { if (!v && t.myTurn) makeTTTMove(i); };
     grid.appendChild(cell);
   });
@@ -1601,19 +2477,15 @@ function renderTTT() {
 }
 function makeTTTMove(idx) {
   const t = state.ttt; if (!t || t.board[idx]) return;
-  t.board[idx] = t.mySymbol;
-  t.myTurn = false;
+  t.board[idx] = t.mySymbol; t.myTurn = false;
   const e = state.peers.get(t.opponent);
   if (e && e.conn) safeSend(e.conn, { type: 'ttt-move', id: t.id, idx, symbol: t.mySymbol });
-  renderTTT();
-  checkTTTWin();
+  renderTTT(); checkTTTWin();
 }
 function onTTTMove(conn, msg) {
   const t = state.ttt; if (!t || t.id !== msg.id) return;
-  t.board[msg.idx] = msg.symbol;
-  t.myTurn = true;
-  renderTTT();
-  checkTTTWin();
+  t.board[msg.idx] = msg.symbol; t.myTurn = true;
+  renderTTT(); checkTTTWin();
 }
 function checkTTTWin() {
   const t = state.ttt; if (!t) return;
@@ -1621,11 +2493,9 @@ function checkTTTWin() {
   for (const l of lines) {
     const [a,b,c] = l;
     if (t.board[a] && t.board[a] === t.board[b] && t.board[b] === t.board[c]) {
-      const winner = t.board[a];
-      // highlight
+      const w = t.board[a];
       l.forEach(i => { const cells = $('tttGrid').children; if (cells[i]) cells[i].classList.add('win'); });
-      if (winner === t.mySymbol) $('tttStatus').textContent = '🏆 بردی! 🎉';
-      else $('tttStatus').textContent = '😢 باختی!';
+      $('tttStatus').textContent = w === t.mySymbol ? '🏆 بردی! 🎉' : '😢 باختی!';
       setTimeout(() => { $('tttModal').classList.remove('on'); state.ttt = null; }, 3000);
       return;
     }
@@ -1634,6 +2504,125 @@ function checkTTTWin() {
     $('tttStatus').textContent = '🤝 مساوی!';
     setTimeout(() => { $('tttModal').classList.remove('on'); state.ttt = null; }, 3000);
   }
+}
+
+// Name-Family
+function inviteToNF(peerId) {
+  const e = state.peers.get(peerId); if (!e || !e.conn) { toast('❌ آفلاین'); return; }
+  const id = 'nf-' + Date.now();
+  state.nf = { id, opponent: peerId, host: true, letter: null, myAnswers: null, theirAnswers: null, timer: null };
+  safeSend(e.conn, { type: 'nf-invite', id });
+  toast('⏳ دعوت اسم فامیل ارسال شد...');
+}
+function onNFInvite(conn, msg) {
+  const e = state.peers.get(conn.peer); if (!e) return;
+  const t = document.createElement('div'); t.className = 'game-invite-toast';
+  t.innerHTML = `<h4>📝 دعوت به اسم فامیل</h4><p><b>${e.name}</b> می‌خواد اسم فامیل بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
+  document.body.appendChild(t);
+  t.querySelector('.gi-accept').onclick = () => { t.remove(); state.nf = { id: msg.id, opponent: conn.peer, host: false, letter: null, myAnswers: null, theirAnswers: null, timer: null }; safeSend(conn, { type: 'nf-response', id: msg.id, accepted: true }); toast('⏳ منتظر شروع بازی...'); };
+  t.querySelector('.gi-decline').onclick = () => { t.remove(); safeSend(conn, { type: 'nf-response', id: msg.id, accepted: false }); };
+  setTimeout(() => { if (t.parentNode) t.remove(); }, 20000);
+}
+function onNFResponse(conn, msg) {
+  if (!state.nf || state.nf.id !== msg.id) return;
+  if (!msg.accepted) { toast('❌ رد شد'); state.nf = null; return; }
+  toast('✅ قبول شد!');
+  // Host picks a random letter and starts
+  const letters = 'ابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی';
+  const letter = letters[Math.floor(Math.random() * letters.length)];
+  state.nf.letter = letter;
+  safeSend(conn, { type: 'nf-ready', id: state.nf.id, letter });
+  startNFUI(letter);
+}
+function onNFReady(conn, msg) {
+  if (!state.nf || state.nf.id !== msg.id) return;
+  state.nf.letter = msg.letter;
+  startNFUI(msg.letter);
+}
+function startNFUI(letter) {
+  $('nfLetter').textContent = letter;
+  ['nfName','nfFamily','nfCity','nfCountry','nfFood','nfAnimal'].forEach(id => { $(id).value = ''; $(id).classList.remove('match','unique'); $(id).disabled = false; });
+  $('nfResult').style.display = 'none';
+  $('nfSubmit').disabled = false;
+  $('nfSubmit').textContent = '✅ ارسال پاسخ';
+  $('nfModal').classList.add('on');
+  // timer 90s
+  let timeLeft = 90;
+  $('nfTimer').textContent = '⏱️ ' + faNum(timeLeft);
+  $('nfTimer').classList.remove('warning');
+  if (state.nf.timer) clearInterval(state.nf.timer);
+  state.nf.timer = setInterval(() => {
+    timeLeft--;
+    $('nfTimer').textContent = '⏱️ ' + faNum(timeLeft);
+    if (timeLeft <= 10) $('nfTimer').classList.add('warning');
+    if (timeLeft <= 0) {
+      clearInterval(state.nf.timer);
+      submitNF(true);
+    }
+  }, 1000);
+}
+$('nfSubmit').onclick = () => submitNF(false);
+function submitNF(auto) {
+  if (!state.nf) return;
+  const answers = {};
+  NF_CATEGORIES.forEach(cat => {
+    const id = 'nf' + cat.charAt(0).toUpperCase() + cat.slice(1);
+    answers[cat] = $('nf' + ({name:'Name', family:'Family', city:'City', country:'Country', food:'Food', animal:'Animal'}[cat])).value.trim();
+  });
+  state.nf.myAnswers = answers;
+  state.nf.myName = state.myName;
+  ['nfName','nfFamily','nfCity','nfCountry','nfFood','nfAnimal'].forEach(id => { $(id).disabled = true; });
+  $('nfSubmit').disabled = true;
+  $('nfSubmit').textContent = '⏳ منتظر حریف...';
+  if (state.nf.timer) clearInterval(state.nf.timer);
+  const e = state.peers.get(state.nf.opponent);
+  if (e && e.conn) safeSend(e.conn, { type: 'nf-answers', id: state.nf.id, answers });
+  if (state.nf.theirAnswers) compareNF();
+}
+function onNFAnswers(conn, msg) {
+  if (!state.nf || state.nf.id !== msg.id) return;
+  state.nf.theirAnswers = msg.answers;
+  if (state.nf.timer) clearInterval(state.nf.timer);
+  if (state.nf.myAnswers) compareNF();
+}
+function compareNF() {
+  const nf = state.nf; if (!nf) return;
+  const mine = nf.myAnswers, theirs = nf.theirAnswers;
+  let myScore = 0, theirScore = 0;
+  let html = '<div style="margin-bottom:8px;font-weight:800;color:var(--primary)">🏆 نتیجه:</div>';
+  NF_CATEGORIES.forEach(cat => {
+    const m = (mine[cat] || '').toLowerCase().trim();
+    const t = (theirs[cat] || '').toLowerCase().trim();
+    let myPts = 0, theirPts = 0, status = '';
+    const myEl = $('nf' + ({name:'Name', family:'Family', city:'City', country:'Country', food:'Food', animal:'Animal'}[cat]));
+    myEl.classList.remove('match', 'unique');
+    if (!m && !t) { status = '⬜ خالی'; }
+    else if (!m) { theirPts = 10; status = '❌ ننوشتی'; }
+    else if (!t) { myPts = 10; myEl.classList.add('unique'); status = '✅ حریف ننوشت'; }
+    else if (m === t) { myPts = 5; theirPts = 5; myEl.classList.add('match'); status = '🤝 یکسان'; }
+    else { myPts = 10; theirPts = 10; myEl.classList.add('unique'); status = '✅ متفاوت'; }
+    myScore += myPts; theirScore += theirPts;
+    html += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed rgba(255,255,255,0.1)"><span><b>${NF_LABELS[cat]}:</b> تو "${mine[cat]||'—'}" / حریف "${theirs[cat]||'—'}"</span><span style="color:var(--accent);font-weight:700">${myPts} / ${theirPts} — ${status}</span></div>`;
+  });
+  const winner = myScore > theirScore ? '🏆 بردی!' : myScore < theirScore ? '😢 باختی!' : '🤝 مساوی!';
+  html += `<div style="text-align:center;margin-top:12px;font-size:20px;font-weight:900;color:var(--primary)">${winner}</div>`;
+  html += `<div style="text-align:center;margin-top:6px;font-size:13px">امتیاز: <b>${myScore}</b> - <b>${theirScore}</b></div>`;
+  $('nfResult').innerHTML = html;
+  $('nfResult').style.display = 'block';
+  $('nfSubmit').textContent = '🔄 دوباره';
+  $('nfSubmit').disabled = false;
+  $('nfSubmit').onclick = () => { closeNF(); };
+  setTimeout(() => {
+    toast(winner);
+  }, 500);
+}
+function closeNF() {
+  $('nfModal').classList.remove('on');
+  state.nf = null;
+  // reset button
+  $('nfSubmit').textContent = '✅ ارسال پاسخ';
+  $('nfSubmit').disabled = false;
+  $('nfSubmit').onclick = () => submitNF(false);
 }
 
 // Panels
@@ -1656,7 +2645,6 @@ function buildStickerPanel() {
 }
 function closePanels() { $('emojiPanel').classList.remove('on'); $('stickerPanel').classList.remove('on'); $('uploadPreview').classList.remove('on'); }
 
-// Image
 $('imageBtn').onclick = () => $('imageInput').click();
 $('imageInput').addEventListener('change', async e => {
   const file = e.target.files[0]; if (!file) return;
@@ -1672,7 +2660,6 @@ $('upCancel').onclick = () => { state.pendingImage = null; $('uploadPreview').cl
 function openImagePreview(src) { $('imagePreviewBig').src = src; $('imagePreviewModal').classList.add('on'); }
 $('imagePreviewModal').onclick = () => $('imagePreviewModal').classList.remove('on');
 
-// Events
 $('loginForm').addEventListener('submit', e => {
   e.preventDefault();
   const name = $('nameInput').value.trim().slice(0, 20);
@@ -1697,6 +2684,454 @@ $('pmForm').addEventListener('submit', e => {
 });
 $('pmClose').onclick = closePM;
 $('pmOverlay').onclick = closePM;
+// ═══════════════════════════════════════════
+//   ANIMATIONS EXTRAS
+// ═══════════════════════════════════════════
+
+document.addEventListener('click', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  const r = document.createElement('div');
+  r.className = 'ripple';
+  r.style.left = e.clientX + 'px';
+  r.style.top = e.clientY + 'px';
+  r.style.transform = 'translate(-50%,-50%)';
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 700);
+});
+
+function emojiBurst(x, y, emoji) {
+  for (let i = 0; i < 8; i++) {
+    const el = document.createElement('div');
+    el.className = 'emoji-burst';
+    el.textContent = emoji;
+    const angle = (Math.PI * 2 * i) / 8;
+    const dist = 80 + Math.random() * 60;
+    el.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+    el.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+  }
+}
+
+function showConfetti() {
+  const colors = ['#00d9a3', '#26c6da', '#ffc107', '#ff5252', '#b388ff', '#4caf50'];
+  for (let i = 0; i < 80; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.animationDuration = (2 + Math.random() * 2) + 's';
+    c.style.animationDelay = (Math.random() * 0.5) + 's';
+    c.style.transform = `rotate(${Math.random() * 360}deg)`;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4000);
+  }
+}
+
+function shakeScreen() {
+  document.body.classList.remove('loser-shake');
+  void document.body.offsetWidth;
+  document.body.classList.add('loser-shake');
+  setTimeout(() => document.body.classList.remove('loser-shake'), 700);
+}
+
+function playVsIntro() {
+  const arena = document.querySelector('#gameModal .game-arena');
+  const vs = document.querySelector('#gameModal .game-vs');
+  if (arena) { arena.classList.remove('vs-intro'); void arena.offsetWidth; arena.classList.add('vs-intro'); }
+  if (vs) { vs.classList.remove('vs-shake'); void vs.offsetWidth; vs.classList.add('vs-shake'); }
+}
+
+function animateScore(el, target) {
+  const start = parseInt(el.dataset.val || '0');
+  const dur = 500;
+  const startT = performance.now();
+  el.classList.remove('count-up'); void el.offsetWidth; el.classList.add('count-up');
+  function step(t) {
+    const p = Math.min(1, (t - startT) / dur);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = faNum(Math.round(start + (target - start) * ease));
+    if (p < 1) requestAnimationFrame(step);
+    else { el.dataset.val = target; }
+  }
+  requestAnimationFrame(step);
+}
+
+function drawTTTLine(cells) {
+  const grid = $('tttGrid');
+  if (!grid) return;
+  const gridRect = grid.getBoundingClientRect();
+  const c0 = cells[0], c1 = cells[2];
+  const el0 = grid.children[c0], el1 = grid.children[c1];
+  if (!el0 || !el1) return;
+  const r0 = el0.getBoundingClientRect();
+  const r1 = el1.getBoundingClientRect();
+  const x1 = r0.left + r0.width/2 - gridRect.left;
+  const y1 = r0.top + r0.height/2 - gridRect.top;
+  const x2 = r1.left + r1.width/2 - gridRect.left;
+  const y2 = r1.top + r1.height/2 - gridRect.top;
+  const len = Math.hypot(x2-x1, y2-y1);
+  const angle = Math.atan2(y2-y1, x2-x1) * 180 / Math.PI;
+  const line = document.createElement('div');
+  line.className = 'ttt-win-line';
+  line.style.left = x1 + 'px';
+  line.style.top = (y1 - 3) + 'px';
+  line.style.width = len + 'px';
+  line.style.transform = `rotate(${angle}deg)`;
+  grid.appendChild(line);
+}
+
+const _origRenderUsers = renderUsers;
+renderUsers = function() {
+  _origRenderUsers();
+  document.querySelectorAll('.user-item').forEach(row => {
+    const sub = row.querySelector('.u-sub');
+    if (sub && sub.classList.contains('typing')) row.dataset.typing = '1';
+    else delete row.dataset.typing;
+  });
+};
+
+const _origAddMessage = addMessage;
+addMessage = function(o, animType) {
+  _origAddMessage(o, animType);
+  const box = $('messages');
+  const last = box.lastElementChild;
+  if (!last) return;
+  if (o.mine) {
+    last.classList.add('sent-trail');
+    setTimeout(() => last.classList.remove('sent-trail'), 900);
+    if (!o.sticker && !o.image && !o.voice && !o.poll) {
+      last.classList.add('bubble-morph');
+      setTimeout(() => last.classList.remove('bubble-morph'), 700);
+    }
+  }
+};
+
+const _origCheckTTTWin = checkTTTWin;
+checkTTTWin = function() {
+  const t = state.ttt; if (!t) return;
+  const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  for (const l of lines) {
+    const [a,b,c] = l;
+    if (t.board[a] && t.board[a] === t.board[b] && t.board[b] === t.board[c]) {
+      const w = t.board[a];
+      l.forEach(i => { const cells = $('tttGrid').children; if (cells[i]) cells[i].classList.add('win'); });
+      drawTTTLine(l);
+      if (w === t.mySymbol) { $('tttStatus').textContent = '🏆 بردی! 🎉'; showConfetti(); }
+      else { $('tttStatus').textContent = '😢 باختی!'; shakeScreen(); }
+      setTimeout(() => { $('tttModal').classList.remove('on'); state.ttt = null; }, 3000);
+      return;
+    }
+  }
+  if (t.board.every(c => c)) {
+    $('tttStatus').textContent = '🤝 مساوی!';
+    setTimeout(() => { $('tttModal').classList.remove('on'); state.ttt = null; }, 3000);
+  }
+};
+
+const _origCheckGameResult = checkGameResult;
+checkGameResult = function() {
+  const g = state.game; if (!g || !g.myMove || !g.theirMove) return;
+  $('gameOpMove').textContent = GAME_MOVES[g.theirMove];
+  $('gameOpMove').classList.add('reveal-3d');
+  $('gameMeMove').classList.add('reveal-3d');
+  setTimeout(() => { $('gameOpMove').classList.remove('reveal-3d'); $('gameMeMove').classList.remove('reveal-3d'); }, 1000);
+  let w;
+  if (g.myMove === g.theirMove) w = 'tie';
+  else if (GAME_BEATS[g.myMove] === g.theirMove) w = 'me';
+  else w = 'them';
+  if (w === 'me') { g.myScore++; $('gameStatus').textContent = '🎉 بردی!'; showConfetti(); }
+  else if (w === 'them') { g.theirScore++; $('gameStatus').textContent = '😢 باختی'; shakeScreen(); }
+  else $('gameStatus').textContent = '🤝 مساوی';
+  animateScore($('gameMeScore'), g.myScore);
+  animateScore($('gameOpScore'), g.theirScore);
+  setTimeout(() => {
+    if (g.myScore >= 2 || g.theirScore >= 2) {
+      $('gameStatus').textContent = g.myScore >= 2 ? '🏆 برنده شدی!' : '😢 باختی';
+      if (g.myScore >= 2) showConfetti(); else shakeScreen();
+      setTimeout(() => { $('gameModal').classList.remove('on'); state.game = null; }, 3000);
+      return;
+    }
+    g.round++; g.myMove = null; g.theirMove = null;
+    $('gameMeMove').textContent = '❔'; $('gameOpMove').textContent = '❔';
+    $('gameRound').textContent = 'دور ' + g.round + ' از ۳';
+    $('gameStatus').textContent = 'حرکت بعدی رو انتخاب کن!';
+    document.querySelectorAll('.game-choice-btns button').forEach(b => { b.classList.remove('selected'); b.disabled = false; });
+  }, 2000);
+};
+
+const _origVoteOnPoll = voteOnPoll;
+voteOnPoll = function(msgId, idx, optEl) {
+  const msgEl = document.querySelector(`.msg[data-msgid="${msgId}"]`);
+  if (!msgEl || !msgEl._pollData) return;
+  const poll = msgEl._pollData;
+  if (poll.voters[state.myPeerId] !== undefined) { toast('❗ قبلاً رأی دادی'); return; }
+  poll.voters[state.myPeerId] = idx;
+  poll.options[idx].votes++;
+  optEl.classList.add('vote-burst');
+  setTimeout(() => optEl.classList.remove('vote-burst'), 700);
+  updatePollUI(msgEl, poll);
+  broadcast({ type: 'poll-vote', msgId, optionIndex: idx, from: state.myPeerId });
+  if (state.pmOpenFor) {
+    const e = state.peers.get(state.pmOpenFor);
+    if (e && e.conn) safeSend(e.conn, { type: 'poll-vote', msgId, optionIndex: idx, from: state.myPeerId });
+  }
+};
+
+const _origStartGameUI = startGameUI;
+startGameUI = function() {
+  _origStartGameUI();
+  setTimeout(playVsIntro, 100);
+};
+
+// ═══════════════════════════════════════════
+//   UNO GAME
+// ═══════════════════════════════════════════
+const UNO_COLORS = ['red', 'blue', 'green', 'yellow'];
+const UNO_SPECIALS = ['skip', 'reverse', 'draw2'];
+const UNO_SYMBOLS = { skip: '🚫', reverse: '🔄', draw2: '+2', wild: '🌈' };
+if (typeof state.uno === 'undefined') state.uno = null;
+
+function unoBuildDeck() {
+  const deck = [];
+  UNO_COLORS.forEach(color => {
+    deck.push({ color, value: '0', type: 'number' });
+    for (let n = 1; n <= 9; n++) {
+      deck.push({ color, value: String(n), type: 'number' });
+      deck.push({ color, value: String(n), type: 'number' });
+    }
+    UNO_SPECIALS.forEach(s => {
+      deck.push({ color, value: s, type: 'special' });
+      deck.push({ color, value: s, type: 'special' });
+    });
+  });
+  for (let i = 0; i < 4; i++) deck.push({ color: 'wild', value: 'wild', type: 'wild' });
+  return unoShuffle(deck);
+}
+function unoShuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function unoCardLabel(card) {
+  if (card.type === 'wild') return '🌈';
+  if (card.type === 'special') return UNO_SYMBOLS[card.value] || '?';
+  return card.value;
+}
+function unoCardCanPlay(card, current) {
+  if (card.type === 'wild') return true;
+  if (card.color === current.color) return true;
+  if (card.type === 'number' && current.type === 'number' && card.value === current.value) return true;
+  if (card.type === 'special' && current.type === 'special' && card.value === current.value) return true;
+  return false;
+}
+
+function inviteToUNO(peerId) {
+  const e = state.peers.get(peerId);
+  if (!e || !e.conn) { toast('❌ کاربر آفلاین'); return; }
+  const id = 'uno-' + Date.now();
+  state.uno = { id, opponent: peerId, host: true, myHand: [], opHand: [], deck: [], current: null, myTurn: true, pendingWild: null };
+  safeSend(e.conn, { type: 'uno-invite', id, name: state.myName });
+  toast('⏳ دعوت UNO ارسال شد...');
+}
+function onUNOInvite(conn, msg) {
+  const e = state.peers.get(conn.peer); if (!e) return;
+  const t = document.createElement('div'); t.className = 'game-invite-toast';
+  t.innerHTML = `<h4>🎴 دعوت به UNO</h4><p><b>${e.name}</b> می‌خواد UNO بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
+  document.body.appendChild(t);
+  t.querySelector('.gi-accept').onclick = () => {
+    t.remove();
+    state.uno = { id: msg.id, opponent: conn.peer, host: false, myHand: [], opHand: [], deck: [], current: null, myTurn: false, pendingWild: null };
+    safeSend(conn, { type: 'uno-response', id: msg.id, accepted: true });
+    toast('⏳ در حال شروع...');
+  };
+  t.querySelector('.gi-decline').onclick = () => { t.remove(); safeSend(conn, { type: 'uno-response', id: msg.id, accepted: false }); };
+  setTimeout(() => { if (t.parentNode) t.remove(); }, 20000);
+}
+function onUNOResponse(conn, msg) {
+  if (!state.uno || state.uno.id !== msg.id) return;
+  if (!msg.accepted) { toast('❌ رد شد'); state.uno = null; return; }
+  toast('✅ شروع UNO!');
+  const deck = unoBuildDeck();
+  const myHand = deck.splice(0, 7);
+  const opHand = deck.splice(0, 7);
+  let current = deck.pop();
+  while (current.type === 'wild') { deck.unshift(current); current = deck.pop(); }
+  state.uno.deck = deck;
+  state.uno.myHand = myHand;
+  state.uno.opHand = opHand;
+  state.uno.current = current;
+  state.uno.myTurn = true;
+  const e = state.peers.get(state.uno.opponent);
+  if (e && e.conn) {
+    safeSend(e.conn, {
+      type: 'uno-start', id: state.uno.id, deck,
+      myHand: opHand, current, myTurn: false, opponentHand: myHand
+    });
+  }
+  startUNOUI();
+}
+function onUNOStart(conn, msg) {
+  if (!state.uno || state.uno.id !== msg.id) return;
+  state.uno.deck = msg.deck;
+  state.uno.myHand = msg.myHand;
+  state.uno.current = msg.current;
+  state.uno.myTurn = msg.myTurn;
+  state.uno.opHand = new Array(msg.opponentHand ? msg.opponentHand.length : 7).fill({});
+  startUNOUI();
+}
+function startUNOUI() {
+  $('unoModal').classList.add('on');
+  renderUNO();
+}
+function closeUNO() {
+  $('unoModal').classList.remove('on');
+  state.uno = null;
+}
+function renderUNO() {
+  const u = state.uno; if (!u) return;
+  const opHand = $('unoOpHand'); opHand.innerHTML = '';
+  const opCount = u.opHand ? u.opHand.length : 0;
+  for (let i = 0; i < opCount; i++) {
+    const c = document.createElement('div');
+    c.className = 'uno-card opponent';
+    opHand.appendChild(c);
+  }
+  $('unoOpCount').textContent = faNum(opCount);
+  const myHand = $('unoMyHand'); myHand.innerHTML = '';
+  u.myHand.forEach((card, i) => {
+    const canPlay = u.myTurn && unoCardCanPlay(card, u.current);
+    const c = document.createElement('div');
+    c.className = 'uno-card ' + card.color + (canPlay ? '' : ' disabled') + ' dealing';
+    c.innerHTML = `<span class="uno-card-num">${unoCardLabel(card)}</span>`;
+    c.style.animationDelay = (i * 0.05) + 's';
+    if (canPlay) c.onclick = () => unoPlayCard(i);
+    myHand.appendChild(c);
+  });
+  $('unoMyCount').textContent = faNum(u.myHand.length);
+  const cur = $('unoCurrent');
+  cur.className = 'uno-current ' + u.current.color;
+  cur.textContent = unoCardLabel(u.current);
+  $('unoStatus').textContent = u.myTurn ? '🎯 نوبت توئه!' : '⏳ منتظر حریف...';
+}
+function unoPlayCard(idx) {
+  const u = state.uno; if (!u || !u.myTurn) return;
+  const card = u.myHand[idx];
+  if (!unoCardCanPlay(card, u.current)) { toast('❌ این کارت رو نمی‌تونی بازی کنی'); return; }
+  if (card.type === 'wild') {
+    u.pendingWild = idx;
+    $('unoColorPicker').style.display = 'flex';
+    return;
+  }
+  applyUNOPlay(idx);
+}
+function unoChooseColor(color) {
+  const u = state.uno; if (!u || u.pendingWild === null) return;
+  const idx = u.pendingWild;
+  u.myHand[idx].color = color;
+  u.pendingWild = null;
+  $('unoColorPicker').style.display = 'none';
+  applyUNOPlay(idx, color);
+}
+function applyUNOPlay(idx, wildColor) {
+  const u = state.uno; if (!u) return;
+  const card = u.myHand.splice(idx, 1)[0];
+  if (wildColor) card.color = wildColor;
+  const cur = $('unoCurrent');
+  cur.classList.add('flying');
+  setTimeout(() => cur.classList.remove('flying'), 500);
+  u.current = card;
+  u.myTurn = false;
+  if (u.myHand.length === 0) {
+    const e = state.peers.get(u.opponent);
+    if (e && e.conn) safeSend(e.conn, { type: 'uno-end', id: u.id, iWon: true });
+    renderUNO();
+    $('unoStatus').textContent = '🏆 بردی! 🎉';
+    showConfetti();
+    setTimeout(closeUNO, 3000);
+    return;
+  }
+  renderUNO();
+  const e = state.peers.get(u.opponent);
+  if (e && e.conn) {
+    safeSend(e.conn, { type: 'uno-move', id: u.id, card: u.current, myHandCount: u.myHand.length, myTurn: true });
+  }
+  if (card.type === 'special') {
+    if (card.value === 'skip') {
+      setTimeout(() => { u.myTurn = true; renderUNO(); }, 700);
+    } else if (card.value === 'draw2') {
+      setTimeout(() => {
+        for (let i = 0; i < 2 && u.deck.length; i++) u.opHand.push(u.deck.pop());
+        u.myTurn = true; renderUNO();
+      }, 700);
+    } else if (card.value === 'reverse') {
+      setTimeout(() => { u.myTurn = true; renderUNO(); }, 700);
+    }
+  }
+}
+function onUNOMove(conn, msg) {
+  const u = state.uno; if (!u || u.id !== msg.id) return;
+  u.current = msg.card;
+  u.myTurn = true;
+  if (msg.myHandCount !== undefined && u.opHand) {
+    while (u.opHand.length > msg.myHandCount) u.opHand.pop();
+    while (u.opHand.length < msg.myHandCount) u.opHand.push({});
+  }
+  if (msg.card.type === 'special') {
+    if (msg.card.value === 'draw2') {
+      for (let i = 0; i < 2 && u.deck.length; i++) u.myHand.push(u.deck.pop());
+      u.myTurn = false;
+      toast('+2 گرفتی!');
+    } else if (msg.card.value === 'skip') {
+      u.myTurn = false;
+      toast('🚫 نوبتت سوخت!');
+      setTimeout(() => { u.myTurn = true; renderUNO(); }, 1000);
+    }
+  }
+  renderUNO();
+}
+function onUNOEnd(conn, msg) {
+  const u = state.uno; if (!u || u.id !== msg.id) return;
+  renderUNO();
+  $('unoStatus').textContent = msg.iWon ? '😢 باختی!' : '🏆 بردی!';
+  if (!msg.iWon) showConfetti(); else shakeScreen();
+  setTimeout(closeUNO, 3000);
+}
+function unoDraw() {
+  const u = state.uno; if (!u || !u.myTurn) return;
+  if (!u.deck.length) { toast('❌ دسته خالی'); return; }
+  const card = u.deck.pop();
+  u.myHand.push(card);
+  renderUNO();
+  u.myTurn = false;
+  const e = state.peers.get(u.opponent);
+  if (e && e.conn) {
+    safeSend(e.conn, { type: 'uno-move', id: u.id, card: u.current, myHandCount: u.myHand.length, myTurn: true, drew: true });
+  }
+  setTimeout(() => { u.myTurn = true; renderUNO(); }, 500);
+}
+
+document.addEventListener('click', e => {
+  if (e.target.id === 'umUNO') {
+    if (menuTargetId) { inviteToUNO(menuTargetId); closeUserMenu(); }
+  }
+});
+
+const _origHandleData = handleData;
+handleData = function(conn, msg) {
+  if (!msg || typeof msg !== 'object') return;
+  if (msg.type === 'uno-invite') return onUNOInvite(conn, msg);
+  if (msg.type === 'uno-response') return onUNOResponse(conn, msg);
+  if (msg.type === 'uno-start') return onUNOStart(conn, msg);
+  if (msg.type === 'uno-move') return onUNOMove(conn, msg);
+  if (msg.type === 'uno-end') return onUNOEnd(conn, msg);
+  _origHandleData(conn, msg);
+};
 
 buildEmojiPanel();
 buildStickerPanel();
