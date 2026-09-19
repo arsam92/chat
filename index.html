@@ -10,15 +10,11 @@
   :root {
     --primary: #00d9a3;
     --primary-dark: #00a87e;
-    --primary-glow: rgba(0, 217, 163, 0.4);
     --secondary: #26c6da;
     --accent: #ff9800;
-    --accent-glow: rgba(255, 152, 0, 0.5);
     --text-dim: #7a9ba8;
     --green: #00ff88;
     --border: rgba(0, 217, 163, 0.25);
-    --bg-1: #071814;
-    --bg-2: #0a1f1a;
   }
   html, body {
     height: 100%;
@@ -32,23 +28,17 @@
                 radial-gradient(ellipse at bottom, #0a1f2a 0%, transparent 60%);
   }
 
-  /* ================================================================
-     صفحه ورود
-     ================================================================ */
+  /* ========== صفحه ورود ========== */
   #loginScreen {
     height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     padding: 20px;
     background: radial-gradient(circle at 30% 20%, rgba(0,217,163,0.18), transparent 50%),
                 radial-gradient(circle at 70% 80%, rgba(38,198,218,0.18), transparent 50%);
     transition: all 0.6s cubic-bezier(0.7, 0, 0.3, 1);
   }
   #loginScreen.leaving {
-    opacity: 0;
-    transform: scale(1.1);
-    filter: blur(20px);
+    opacity: 0; transform: scale(1.1); filter: blur(20px);
   }
   .login-card {
     width: min(420px, 100%);
@@ -58,79 +48,51 @@
     padding: 40px 32px;
     box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(0, 217, 163, 0.2) inset;
     backdrop-filter: blur(30px);
-    position: relative;
-    overflow: hidden;
+    position: relative; overflow: hidden;
     animation: cardEnter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  @keyframes cardEnter {
-    from { opacity: 0; transform: translateY(60px) scale(0.9); }
-  }
+  @keyframes cardEnter { from { opacity: 0; transform: translateY(60px) scale(0.9); } }
   .login-card::before {
     content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
+    position: absolute; top: -50%; right: -50%;
+    width: 200%; height: 200%;
     background: conic-gradient(from 0deg, transparent, rgba(0,217,163,0.15), transparent 30%);
-    animation: rotate 6s linear infinite;
-    pointer-events: none;
+    animation: rotate 6s linear infinite; pointer-events: none;
   }
   @keyframes rotate { to { transform: rotate(360deg); } }
   .login-inner { position: relative; z-index: 1; }
   .login-icon {
-    width: 80px;
-    height: 80px;
+    width: 80px; height: 80px;
     margin: 0 auto 24px;
     border-radius: 24px;
     background: linear-gradient(135deg, #00d9a3, #26c6da);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 40px;
     box-shadow: 0 15px 40px rgba(0,217,163,0.5);
-    animation: iconFloat 3s ease-in-out infinite;
-  }
-  @keyframes iconFloat {
-    0%, 100% { transform: translateY(0) rotate(0); }
-    50% { transform: translateY(-8px) rotate(-5deg); }
   }
   .login-card h1 {
-    font-size: 30px;
-    font-weight: 800;
-    text-align: center;
-    margin-bottom: 8px;
+    font-size: 30px; font-weight: 800;
+    text-align: center; margin-bottom: 8px;
     background: linear-gradient(135deg, #00d9a3, #26c6da);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   .login-card p {
-    color: var(--text-dim);
-    font-size: 13.5px;
-    text-align: center;
-    margin-bottom: 32px;
-    line-height: 1.7;
+    color: var(--text-dim); font-size: 13.5px;
+    text-align: center; margin-bottom: 32px; line-height: 1.7;
   }
   .field { margin-bottom: 20px; }
   .field label {
-    display: block;
-    font-size: 13px;
-    color: #aabdd0;
-    margin-bottom: 8px;
-    font-weight: 600;
+    display: block; font-size: 13px;
+    color: #aabdd0; margin-bottom: 8px; font-weight: 600;
   }
   .field input {
-    width: 100%;
-    padding: 15px 20px;
+    width: 100%; padding: 15px 20px;
     background: rgba(7, 24, 20, 0.6);
     border: 1.5px solid var(--border);
-    border-radius: 16px;
-    color: #fff;
-    font-family: inherit;
-    font-size: 15px;
-    outline: none;
-    transition: all 0.3s;
+    border-radius: 16px; color: #fff;
+    font-family: inherit; font-size: 15px;
+    outline: none; transition: all 0.3s;
   }
   .field input:focus {
     border-color: var(--primary);
@@ -138,25 +100,15 @@
     background: rgba(7, 24, 20, 0.9);
     transform: translateY(-2px);
   }
-
   .btn-primary {
-    width: 100%;
-    padding: 16px;
+    width: 100%; padding: 16px;
     background: linear-gradient(135deg, #00d9a3, #26c6da);
-    color: #fff;
-    border: none;
-    border-radius: 16px;
-    font-family: inherit;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.3s;
+    color: #fff; border: none; border-radius: 16px;
+    font-family: inherit; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: all 0.3s;
     box-shadow: 0 10px 30px rgba(0,217,163,0.4);
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
     min-height: 54px;
   }
   .btn-primary:hover:not(:disabled) {
@@ -167,30 +119,22 @@
   .btn-primary.loading { background: linear-gradient(135deg, #00a87e, #1a8a9a); }
   .btn-primary.loading .btn-text { opacity: 0; }
   .btn-primary.loading .btn-spinner {
-    opacity: 1;
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
+    opacity: 1; position: absolute;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
   }
   .btn-spinner {
     width: 24px; height: 24px;
     border: 3px solid rgba(255,255,255,0.3);
-    border-top-color: #fff;
-    border-radius: 50%;
-    opacity: 0;
-    animation: spin 0.8s linear infinite;
+    border-top-color: #fff; border-radius: 50%;
+    opacity: 0; animation: spin 0.8s linear infinite;
   }
   @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
 
-  /* ================================================================
-     صفحه چت
-     ================================================================ */
+  /* ========== صفحه چت ========== */
   #chatScreen {
-    display: none;
-    height: 100vh;
+    display: none; height: 100vh;
     flex-direction: column;
-    opacity: 0;
-    transform: scale(0.95);
+    opacity: 0; transform: scale(0.95);
   }
   #chatScreen.on {
     display: flex;
@@ -199,20 +143,15 @@
   @keyframes chatEnter { to { opacity: 1; transform: scale(1); } }
 
   .topbar {
-    display: flex;
-    align-items: center;
-    gap: 14px;
+    display: flex; align-items: center; gap: 14px;
     padding: 14px 22px;
     background: linear-gradient(180deg, rgba(13, 42, 36, 0.95), rgba(7, 24, 20, 0.9));
     border-bottom: 1px solid var(--border);
-    backdrop-filter: blur(20px);
-    flex-shrink: 0;
+    backdrop-filter: blur(20px); flex-shrink: 0;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     animation: slideDown 0.6s 0.2s both cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  @keyframes slideDown {
-    from { transform: translateY(-100%); opacity: 0; }
-  }
+  @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } }
   .logo {
     width: 44px; height: 44px;
     border-radius: 14px;
@@ -220,11 +159,6 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 22px;
     box-shadow: 0 8px 25px rgba(0,217,163,0.5);
-    animation: logoPulse 2s ease-in-out infinite;
-  }
-  @keyframes logoPulse {
-    0%, 100% { box-shadow: 0 8px 25px rgba(0,217,163,0.5); }
-    50% { box-shadow: 0 8px 35px rgba(0,217,163,0.8); }
   }
   .topbar-info h1 { font-size: 16px; font-weight: 800; margin-bottom: 2px; }
   .topbar-info small { color: var(--text-dim); font-size: 11px; display: flex; align-items: center; gap: 6px; }
@@ -232,28 +166,20 @@
     width: 7px; height: 7px; border-radius: 50%;
     background: var(--green);
     box-shadow: 0 0 8px var(--green);
-    animation: pulse 2s infinite;
   }
-  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.85); } }
   .online-badge {
     display: flex; align-items: center; gap: 8px;
     background: linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,255,136,0.08));
-    color: var(--green);
-    padding: 7px 16px;
-    border-radius: 999px;
-    font-size: 12.5px;
-    font-weight: 700;
+    color: var(--green); padding: 7px 16px; border-radius: 999px;
+    font-size: 12.5px; font-weight: 700;
     border: 1px solid rgba(0,255,136,0.25);
   }
   .topbar-spacer { flex: 1; }
   .status-pill {
     display: flex; align-items: center; gap: 8px;
-    padding: 7px 16px;
-    border-radius: 999px;
+    padding: 7px 16px; border-radius: 999px;
     background: rgba(0, 255, 136, 0.12);
-    color: var(--green);
-    font-size: 12.5px;
-    font-weight: 600;
+    color: var(--green); font-size: 12.5px; font-weight: 600;
     border: 1px solid rgba(0,255,136,0.25);
   }
   .status-pill.reconnecting { background: rgba(255, 190, 0, 0.15); color: #ffbe00; }
@@ -262,16 +188,13 @@
     display: flex; align-items: center; gap: 10px;
     background: rgba(0, 217, 163, 0.12);
     padding: 6px 16px 6px 6px;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 600;
+    border-radius: 999px; font-size: 13px; font-weight: 600;
     border: 1px solid var(--border);
   }
   .me-avatar {
     width: 30px; height: 30px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-weight: 800; font-size: 13px;
-    color: #fff;
   }
 
   .main { flex: 1; display: grid; grid-template-columns: 260px 1fr; min-height: 0; }
@@ -280,44 +203,30 @@
   .sidebar {
     background: linear-gradient(180deg, rgba(10, 31, 26, 0.92), rgba(7, 24, 20, 0.95));
     border-left: 1px solid var(--border);
-    display: flex; flex-direction: column;
-    min-height: 0;
+    display: flex; flex-direction: column; min-height: 0;
     animation: slideRight 0.6s 0.3s both cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  @keyframes slideRight {
-    from { transform: translateX(100%); opacity: 0; }
-  }
+  @keyframes slideRight { from { transform: translateX(100%); opacity: 0; } }
   .sidebar-head {
-    padding: 16px 20px;
-    font-size: 13px;
-    font-weight: 800;
-    color: var(--primary);
-    border-bottom: 1px solid var(--border);
+    padding: 16px 20px; font-size: 13px; font-weight: 800;
+    color: var(--primary); border-bottom: 1px solid var(--border);
     display: flex; align-items: center; gap: 10px;
   }
   .sidebar-head .count-badge {
     margin-right: auto;
     background: linear-gradient(135deg, rgba(0,217,163,0.25), rgba(0,217,163,0.1));
-    padding: 3px 12px;
-    border-radius: 999px;
-    font-size: 11px;
-    color: var(--primary);
-    border: 1px solid rgba(0,217,163,0.3);
+    padding: 3px 12px; border-radius: 999px; font-size: 11px;
+    color: var(--primary); border: 1px solid rgba(0,217,163,0.3);
   }
   .user-list { flex: 1; overflow-y: auto; padding: 10px; }
   .user-item {
     display: flex; align-items: center; gap: 12px;
-    padding: 10px 14px;
-    border-radius: 14px;
-    cursor: pointer;
-    margin-bottom: 4px;
+    padding: 10px 14px; border-radius: 14px;
+    cursor: pointer; margin-bottom: 4px;
     transition: all 0.25s;
-    position: relative;
     animation: userIn 0.4s both cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  @keyframes userIn {
-    from { opacity: 0; transform: translateX(30px); }
-  }
+  @keyframes userIn { from { opacity: 0; transform: translateX(30px); } }
   .user-item:hover {
     background: linear-gradient(135deg, rgba(0,217,163,0.12), rgba(0,217,163,0.05));
     transform: translateX(-3px);
@@ -333,112 +242,76 @@
   }
   .u-status {
     position: absolute; bottom: 0; right: 0;
-    width: 11px; height: 11px;
-    border-radius: 50%;
+    width: 11px; height: 11px; border-radius: 50%;
     background: var(--green);
     border: 2px solid #071814;
     box-shadow: 0 0 8px var(--green);
-    animation: pulse 2s infinite;
   }
   .u-name { flex: 1; font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .u-name .you { color: var(--text-dim); font-size: 11px; font-weight: 500; }
   .badge-unread {
-    min-width: 22px; height: 22px;
-    border-radius: 999px;
+    min-width: 22px; height: 22px; border-radius: 999px;
     background: linear-gradient(135deg, #ff4444, #cc0000);
     color: #fff; font-size: 11px; font-weight: 800;
     display: flex; align-items: center; justify-content: center;
     padding: 0 7px;
     box-shadow: 0 3px 10px rgba(255,68,68,0.5);
-    animation: badgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  @keyframes badgePop { from { transform: scale(0) rotate(-180deg); } }
 
-  /* ================================================================
-     Chat area
-     ================================================================ */
+  /* ========== Chat area ========== */
   .chat-area {
-    display: flex; flex-direction: column;
-    min-height: 0;
+    display: flex; flex-direction: column; min-height: 0;
     position: relative;
-    background:
-      radial-gradient(ellipse at top, rgba(0,217,163,0.05), transparent 50%),
-      linear-gradient(to bottom, #071814, #0a1f1a);
+    background: radial-gradient(ellipse at top, rgba(0,217,163,0.05), transparent 50%),
+                linear-gradient(to bottom, #071814, #0a1f1a);
   }
   .messages {
     flex: 1; overflow-y: auto;
     padding: 24px 20px;
     display: flex; flex-direction: column;
-    gap: 12px;
-    scroll-behavior: smooth;
+    gap: 12px; scroll-behavior: smooth;
   }
   .msg {
     max-width: 68%;
     display: flex; flex-direction: column;
-    gap: 5px;
-    position: relative;
-    transition: all 0.3s;
+    gap: 5px; position: relative;
   }
   .msg.mine { align-self: flex-start; align-items: flex-start; }
   .msg.theirs { align-self: flex-end; align-items: flex-end; }
 
-  /* ✨ هایلایت آخرین پیام با نارنجی */
+  /* ⭐️ هایلایت آخرین پیام — ثابت و ملایم */
   .msg.last-message .bubble {
-    box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.7),
-                0 0 25px rgba(255, 152, 0, 0.5),
-                0 0 50px rgba(255, 152, 0, 0.25);
-    animation: lastGlow 2s ease-in-out infinite;
-  }
-  @keyframes lastGlow {
-    0%, 100% {
-      box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.7),
-                  0 0 25px rgba(255, 152, 0, 0.5),
-                  0 0 50px rgba(255, 152, 0, 0.25);
-    }
-    50% {
-      box-shadow: 0 0 0 2px rgba(255, 152, 0, 1),
-                  0 0 35px rgba(255, 152, 0, 0.7),
-                  0 0 70px rgba(255, 152, 0, 0.4);
-    }
+    box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.6),
+                0 0 20px rgba(255, 152, 0, 0.35);
   }
   .msg.last-message .bubble::after {
     content: '';
     position: absolute;
-    inset: -4px;
-    border-radius: inherit;
-    border: 1.5px dashed rgba(255, 152, 0, 0.6);
+    inset: -4px; border-radius: inherit;
+    border: 1.5px dashed rgba(255, 152, 0, 0.5);
     pointer-events: none;
-    animation: dashedRotate 8s linear infinite;
-  }
-  @keyframes dashedRotate {
-    to { transform: rotate(360deg); }
   }
   .msg.last-message::before {
     content: 'آخرین پیام';
     position: absolute;
-    top: -22px;
-    font-size: 10px;
+    top: -22px; font-size: 10px;
     color: var(--accent);
     background: rgba(255, 152, 0, 0.15);
-    padding: 2px 8px;
-    border-radius: 6px;
+    padding: 2px 8px; border-radius: 6px;
     border: 1px solid rgba(255, 152, 0, 0.4);
     font-weight: 700;
-    animation: labelFloat 2s ease-in-out infinite;
   }
   .msg.last-message.mine::before { right: 0; }
   .msg.last-message.theirs::before { left: 0; }
-  @keyframes labelFloat {
-    0%, 100% { transform: translateY(0); opacity: 0.9; }
-    50% { transform: translateY(-3px); opacity: 1; }
-  }
 
+  /* انیمیشن ورود پیام‌های دیگران */
   .msg.anim-in { animation: msgBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
   @keyframes msgBounce {
     0% { opacity: 0; transform: translateY(20px) scale(0.85); }
     60% { transform: translateY(-4px) scale(1.02); }
     100% { opacity: 1; transform: none; }
   }
+  /* انیمیشن پیام‌های خودمون */
   .msg.flying-in { animation: flyIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
   @keyframes flyIn {
     0% { opacity: 0; transform: translateY(60px) scale(0.7) rotate(-8deg); }
@@ -458,34 +331,23 @@
   }
 
   .bubble {
-    padding: 12px 16px;
-    border-radius: 18px;
-    font-size: 14.5px;
-    line-height: 1.75;
-    word-wrap: break-word;
-    max-width: 100%;
+    padding: 12px 16px; border-radius: 18px;
+    font-size: 14.5px; line-height: 1.75;
+    word-wrap: break-word; max-width: 100%;
     position: relative;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    transition: transform 0.2s;
   }
-  .bubble:hover { transform: translateY(-1px); }
-
-  /* پیام‌های من — سبز-آبی */
   .mine .bubble {
     background: linear-gradient(135deg, #00d9a3, #00a87e);
-    color: #fff;
-    border-end-start-radius: 6px;
+    color: #fff; border-end-start-radius: 6px;
     box-shadow: 0 6px 20px rgba(0,217,163,0.35);
   }
-  /* پیام‌های دیگران — آبی فیروزه‌ای */
   .theirs .bubble {
     background: linear-gradient(135deg, rgba(20, 60, 70, 0.95), rgba(15, 45, 55, 0.95));
-    color: #fff;
-    border: 1px solid rgba(38, 198, 218, 0.25);
+    color: #fff; border: 1px solid rgba(38, 198, 218, 0.25);
     border-end-end-radius: 6px;
     box-shadow: 0 6px 20px rgba(38,198,218,0.15);
   }
-
   .bubble.sticker { background: none !important; padding: 0 !important; border: none !important; box-shadow: none !important; }
   .bubble.sticker img {
     width: 130px; height: 130px;
@@ -503,17 +365,13 @@
   .bubble.image-bubble img {
     max-width: 300px; max-height: 340px;
     border-radius: 14px; display: block; cursor: pointer;
-    transition: transform 0.3s;
   }
-  .bubble.image-bubble img:hover { transform: scale(1.03); }
 
   .reply-quote {
     padding: 8px 12px;
     border-right: 3px solid rgba(255,255,255,0.6);
-    border-radius: 8px;
-    margin-bottom: 8px;
-    background: rgba(0,0,0,0.25);
-    font-size: 12.5px;
+    border-radius: 8px; margin-bottom: 8px;
+    background: rgba(0,0,0,0.25); font-size: 12.5px;
   }
   .reply-quote .rq-name { color: #fff; font-weight: 800; font-size: 12px; }
   .reply-quote .rq-text { color: rgba(255,255,255,0.8); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; font-size: 12px; }
@@ -521,52 +379,37 @@
   .theirs .reply-quote .rq-name { color: var(--secondary); }
 
   .meta {
-    font-size: 11px;
-    color: var(--text-dim);
-    padding: 0 6px;
-    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--text-dim);
+    padding: 0 6px; display: flex; align-items: center; gap: 6px;
   }
   .reply-btn {
-    opacity: 0;
-    background: none; border: none;
-    color: var(--primary);
-    cursor: pointer;
-    font-size: 15px;
-    padding: 2px 6px;
-    border-radius: 6px;
+    opacity: 0; background: none; border: none;
+    color: var(--primary); cursor: pointer;
+    font-size: 15px; padding: 2px 6px; border-radius: 6px;
     transition: all 0.2s;
   }
   .reply-btn:hover { background: rgba(0,217,163,0.15); }
   .msg:hover .reply-btn { opacity: 1; }
 
   .msg.system {
-    align-self: center;
-    max-width: 90%;
+    align-self: center; max-width: 90%;
     background: linear-gradient(135deg, rgba(0, 217, 163, 0.15), rgba(38, 198, 218, 0.1));
-    color: #a0d8d0;
-    font-size: 12.5px;
-    padding: 7px 18px;
-    border-radius: 999px;
+    color: #a0d8d0; font-size: 12.5px;
+    padding: 7px 18px; border-radius: 999px;
     border: 1px solid rgba(0,217,163,0.25);
     font-weight: 500;
     animation: systemIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  @keyframes systemIn {
-    from { opacity: 0; transform: scale(0.7) translateY(-10px); }
-  }
+  @keyframes systemIn { from { opacity: 0; transform: scale(0.7) translateY(-10px); } }
 
-  /* ================================================================
-     Composer
-     ================================================================ */
+  /* ========== Composer ========== */
   .composer-wrap {
     background: linear-gradient(180deg, rgba(10, 31, 26, 0.9), rgba(13, 42, 36, 0.98));
     border-top: 1px solid var(--border);
-    flex-shrink: 0;
-    backdrop-filter: blur(20px);
+    flex-shrink: 0; backdrop-filter: blur(20px);
   }
   .reply-preview {
-    display: none;
-    padding: 12px 20px;
+    display: none; padding: 12px 20px;
     background: linear-gradient(90deg, rgba(0, 217, 163, 0.12), rgba(0, 217, 163, 0.04));
     border-bottom: 1px solid var(--border);
     align-items: center; gap: 12px;
@@ -584,49 +427,38 @@
   .reply-preview .rp-name { color: var(--primary); font-size: 12.5px; font-weight: 800; margin-bottom: 2px; }
   .reply-preview .rp-text { color: #8ab8b0; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .reply-preview .rp-close {
-    background: rgba(255,80,80,0.15);
-    color: #ff8080;
+    background: rgba(255,80,80,0.15); color: #ff8080;
     border: 1px solid rgba(255,80,80,0.3);
-    width: 30px; height: 30px;
-    border-radius: 10px;
+    width: 30px; height: 30px; border-radius: 10px;
     cursor: pointer; font-size: 15px;
     display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
   }
-  .reply-preview .rp-close:hover { background: #ff4444; color: #fff; transform: rotate(90deg); }
+  .reply-preview .rp-close:hover { background: #ff4444; color: #fff; }
 
   .composer { padding: 14px 18px; display: flex; gap: 10px; align-items: center; }
   .composer input[type="text"] {
-    flex: 1;
-    padding: 13px 20px;
+    flex: 1; padding: 13px 20px;
     background: rgba(7, 24, 20, 0.7);
     border: 1.5px solid var(--border);
-    border-radius: 16px;
-    color: #fff;
-    font-family: inherit;
-    font-size: 14.5px;
-    outline: none;
-    min-width: 0;
-    transition: all 0.25s;
+    border-radius: 16px; color: #fff;
+    font-family: inherit; font-size: 14.5px;
+    outline: none; min-width: 0; transition: all 0.25s;
   }
   .composer input[type="text"]:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 4px rgba(0,217,163,0.15);
     background: rgba(7, 24, 20, 0.95);
-    transform: translateY(-2px);
   }
   .composer input::placeholder { color: #4a7070; }
 
   .icon-btn {
-    width: 46px; height: 46px;
-    border-radius: 14px;
+    width: 46px; height: 46px; border-radius: 14px;
     background: rgba(0, 217, 163, 0.12);
     color: var(--primary);
     border: 1px solid var(--border);
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; font-size: 22px;
-    flex-shrink: 0;
-    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    flex-shrink: 0; transition: all 0.25s;
   }
   .icon-btn:hover {
     background: linear-gradient(135deg, #00d9a3, #26c6da);
@@ -634,27 +466,24 @@
     transform: translateY(-3px) scale(1.1);
     box-shadow: 0 8px 20px rgba(0,217,163,0.4);
   }
-  .icon-btn:active { transform: translateY(0) scale(0.95); }
 
   .send-btn {
-    width: 46px; height: 46px;
-    border-radius: 14px;
+    width: 46px; height: 46px; border-radius: 14px;
     background: linear-gradient(135deg, #00d9a3, #26c6da);
-    color: #fff;
-    border: none;
+    color: #fff; border: none;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; font-size: 20px;
-    flex-shrink: 0;
-    transition: all 0.25s;
+    flex-shrink: 0; transition: all 0.25s;
     box-shadow: 0 6px 20px rgba(0,217,163,0.4);
-    position: relative;
-    overflow: hidden;
+    position: relative; overflow: hidden;
   }
   .send-btn:hover {
     transform: translateY(-3px) scale(1.08);
     box-shadow: 0 10px 28px rgba(0,217,163,0.6);
   }
   .send-btn:active { transform: scale(0.9); }
+
+  /* ⭐️ انیمیشن دکمه ارسال — فقط بار اول */
   .send-btn.spinning { animation: sendSpin 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
   @keyframes sendSpin {
     0% { transform: rotate(0) scale(1); }
@@ -667,36 +496,17 @@
     50% { transform: translate(-30px, -15px) rotate(-25deg) scale(1.4); }
     100% { transform: translate(0, 0) rotate(0); }
   }
-  .send-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 14px;
-    background: radial-gradient(circle, rgba(255,255,255,0.5), transparent 70%);
-    opacity: 0;
-    pointer-events: none;
-  }
-  .send-btn.spinning::before { animation: sendWave 0.6s ease; }
-  @keyframes sendWave {
-    0% { opacity: 1; transform: scale(0); }
-    100% { opacity: 0; transform: scale(2); }
-  }
 
-  /* ================================================================
-     پنل‌ها
-     ================================================================ */
+  /* ========== پنل‌ها ========== */
   .emoji-panel, .sticker-panel {
     position: absolute;
     bottom: 100px; right: 20px;
-    width: 380px;
-    max-height: 460px;
+    width: 400px; max-height: 480px;
     overflow-y: auto;
     background: linear-gradient(145deg, rgba(13, 42, 36, 0.98), rgba(7, 24, 20, 0.98));
     border: 1px solid rgba(0, 217, 163, 0.4);
-    border-radius: 20px;
-    padding: 16px;
-    display: none;
-    z-index: 50;
+    border-radius: 20px; padding: 16px;
+    display: none; z-index: 50;
     backdrop-filter: blur(30px);
     box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 40px rgba(0, 217, 163, 0.2);
   }
@@ -711,26 +521,20 @@
   }
   .emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
   .emoji-item {
-    aspect-ratio: 1;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px;
-    border-radius: 10px;
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    font-size: 24px; border-radius: 10px;
+    cursor: pointer; user-select: none;
+    transition: all 0.2s;
   }
   .emoji-item:hover { background: rgba(0, 217, 163, 0.25); transform: scale(1.3) rotate(8deg); }
-  .emoji-item:active { transform: scale(0.9); }
   .sticker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .sticker-item {
     aspect-ratio: 1;
     background: linear-gradient(145deg, rgba(0, 217, 163, 0.08), rgba(0, 217, 163, 0.02));
     border: 1px solid rgba(0, 217, 163, 0.15);
-    border-radius: 14px;
-    cursor: pointer;
+    border-radius: 14px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    padding: 8px;
-    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    padding: 8px; transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .sticker-item:hover {
     background: linear-gradient(145deg, rgba(0, 217, 163, 0.2), rgba(0, 217, 163, 0.1));
@@ -738,35 +542,26 @@
     transform: scale(1.1) rotate(-4deg);
     box-shadow: 0 8px 20px rgba(0,217,163,0.4);
   }
-  .sticker-item:active { transform: scale(0.95); }
   .sticker-item img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3)); }
   .panel-title {
-    font-size: 13px;
-    color: var(--primary);
-    font-weight: 800;
-    padding: 4px 8px 12px;
+    font-size: 13px; color: var(--primary);
+    font-weight: 800; padding: 4px 8px 12px;
     display: flex; align-items: center; gap: 8px;
   }
   .panel-title .count {
     margin-right: auto;
     background: rgba(0,217,163,0.15);
-    padding: 2px 10px;
-    border-radius: 999px;
-    font-size: 11px;
+    padding: 2px 10px; border-radius: 999px; font-size: 11px;
     color: var(--primary);
     border: 1px solid rgba(0,217,163,0.25);
   }
-  .panel-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(0,217,163,0.3), transparent); margin: 16px 0; }
 
   .image-preview-modal {
-    position: fixed;
-    inset: 0;
+    position: fixed; inset: 0;
     background: rgba(0, 0, 0, 0.92);
-    display: none;
-    z-index: 300;
+    display: none; z-index: 300;
     align-items: center; justify-content: center;
-    padding: 30px;
-    backdrop-filter: blur(10px);
+    padding: 30px; backdrop-filter: blur(10px);
   }
   .image-preview-modal.on { display: flex; animation: fadeIn 0.3s ease; }
   @keyframes fadeIn { from { opacity: 0; } }
@@ -781,13 +576,10 @@
   .upload-preview {
     position: absolute;
     bottom: 100px; right: 20px;
-    width: 240px;
-    padding: 14px;
+    width: 240px; padding: 14px;
     background: linear-gradient(145deg, rgba(13, 42, 36, 0.98), rgba(7, 24, 20, 0.98));
     border: 1px solid rgba(0, 217, 163, 0.4);
-    border-radius: 20px;
-    display: none;
-    z-index: 60;
+    border-radius: 20px; display: none; z-index: 60;
     box-shadow: 0 20px 60px rgba(0,0,0,0.6);
   }
   .upload-preview.on {
@@ -795,24 +587,15 @@
     animation: panelPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .upload-preview img {
-    width: 100%;
-    border-radius: 12px;
-    display: block;
-    max-height: 200px;
-    object-fit: contain;
+    width: 100%; border-radius: 12px;
+    display: block; max-height: 200px; object-fit: contain;
     background: rgba(0,0,0,0.3);
   }
   .upload-preview .up-btns { display: flex; gap: 8px; margin-top: 12px; }
   .upload-preview .up-btns button {
-    flex: 1;
-    padding: 10px;
-    border-radius: 10px;
-    font-family: inherit;
-    font-size: 12.5px;
-    font-weight: 700;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
+    flex: 1; padding: 10px; border-radius: 10px;
+    font-family: inherit; font-size: 12.5px; font-weight: 700;
+    cursor: pointer; border: none; transition: all 0.2s;
   }
   .up-send { background: linear-gradient(135deg, #00d9a3, #26c6da); color: #fff; }
   .up-send:hover { transform: translateY(-2px); }
@@ -821,23 +604,19 @@
   .pm-overlay {
     position: fixed; inset: 0;
     background: rgba(0, 0, 0, 0.7);
-    display: none;
-    z-index: 200;
+    display: none; z-index: 200;
     backdrop-filter: blur(8px);
   }
   .pm-overlay.on { display: block; animation: fadeIn 0.3s ease; }
   .pm-window {
-    position: fixed;
-    top: 50%; left: 50%;
+    position: fixed; top: 50%; left: 50%;
     transform: translate(-50%, -50%) scale(0.5) rotate(-10deg);
     width: min(460px, calc(100vw - 32px));
     height: min(620px, calc(100vh - 40px));
     background: linear-gradient(145deg, rgba(13, 42, 36, 0.98), rgba(7, 24, 20, 0.98));
     border: 1px solid rgba(0, 217, 163, 0.4);
-    border-radius: 24px;
-    display: none;
-    flex-direction: column;
-    z-index: 201;
+    border-radius: 24px; display: none;
+    flex-direction: column; z-index: 201;
     overflow: hidden;
     box-shadow: 0 30px 100px rgba(0, 0, 0, 0.8), 0 0 60px rgba(0,217,163,0.2);
     opacity: 0;
@@ -856,39 +635,29 @@
   }
   .pm-head b { flex: 1; font-size: 15px; font-weight: 700; }
   .pm-close {
-    width: 34px; height: 34px;
-    border-radius: 10px;
+    width: 34px; height: 34px; border-radius: 10px;
     background: rgba(255, 80, 80, 0.15);
     color: #ff8080;
     border: 1px solid rgba(255, 80, 80, 0.3);
-    cursor: pointer;
-    font-size: 18px;
+    cursor: pointer; font-size: 18px;
     display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
   }
-  .pm-close:hover { background: #ff4444; color: #fff; transform: rotate(90deg); }
+  .pm-close:hover { background: #ff4444; color: #fff; }
   .pm-messages { flex: 1; overflow-y: auto; padding: 20px; }
 
   .toasts {
-    position: fixed;
-    top: 24px; left: 50%;
+    position: fixed; top: 24px; left: 50%;
     transform: translateX(-50%);
-    display: flex; flex-direction: column;
-    gap: 10px;
-    z-index: 500;
-    pointer-events: none;
+    display: flex; flex-direction: column; gap: 10px;
+    z-index: 500; pointer-events: none;
   }
   .toast {
     background: linear-gradient(135deg, rgba(13, 42, 36, 0.98), rgba(7, 24, 20, 0.98));
     border: 1px solid rgba(0, 217, 163, 0.4);
-    color: #fff;
-    padding: 12px 22px;
-    border-radius: 14px;
-    font-size: 13.5px;
-    font-weight: 600;
+    color: #fff; padding: 12px 22px; border-radius: 14px;
+    font-size: 13.5px; font-weight: 600;
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 217, 163, 0.25);
     animation: toastIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    backdrop-filter: blur(20px);
   }
   @keyframes toastIn { from { opacity: 0; transform: translateY(-40px) scale(0.8); } }
 
@@ -959,10 +728,7 @@
       </div>
 
       <div class="sticker-panel" id="stickerPanel">
-        <div class="panel-title">😂 میم‌ها <span class="count" id="memeCount">0</span></div>
-        <div class="sticker-grid" id="memeGrid"></div>
-        <div class="panel-divider"></div>
-        <div class="panel-title">🎨 استیکرها <span class="count" id="stickerCount">0</span></div>
+        <div class="panel-title">🎨 استیکر و میم‌ها <span class="count" id="stickerCount">0</span></div>
         <div class="sticker-grid" id="stickerGrid"></div>
       </div>
 
@@ -986,7 +752,7 @@
 
         <form class="composer" id="chatForm" autocomplete="off">
           <button type="button" class="icon-btn" id="emojiBtn" title="ایموجی">😀</button>
-          <button type="button" class="icon-btn" id="stickerBtn" title="میم و استیکر">🎨</button>
+          <button type="button" class="icon-btn" id="stickerBtn" title="استیکر و میم">🎨</button>
           <button type="button" class="icon-btn" id="imageBtn" title="ارسال عکس">📷</button>
           <input type="file" id="imageInput" accept="image/*" style="display:none">
           <input type="text" id="chatInput" maxlength="500" placeholder="پیامت رو بنویس...">
@@ -1027,9 +793,10 @@ const MAX_SLOTS = 20;
 const MAX_IMAGE_SIZE = 800 * 1024;
 
 // ============================================================
-//   😂 میم‌ها — ۱۳ تا (۹ تا قبلی + ۴ تا جدید)
+//   🎨 استیکر و میم‌ها (همه با هم — ۳۰ تا)
 // ============================================================
-const MEMES = [
+const STICKERS = [
+  // میم‌های قبلی (۱۳ تا)
   'https://static.cdn.asset.aparat.com/agf/emoji-5570-732905-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-5571-325491-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-2167-949041-b.png',
@@ -1042,13 +809,8 @@ const MEMES = [
   'https://static.cdn.asset.aparat.com/agf/emoji-4633-707906-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-4636-727700-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-4635-243901-b.png',
-  'https://static.cdn.asset.aparat.com/agf/emoji-43857-462556-b.png'
-];
-
-// ============================================================
-//   🎨 استیکرها — ۱۰ تا
-// ============================================================
-const STICKERS = [
+  'https://static.cdn.asset.aparat.com/agf/emoji-43857-462556-b.png',
+  // استیکرهای قبلی (۱۰ تا)
   'https://static.cdn.asset.aparat.com/agf/emoji-2780-505412-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-4760-33812-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-2784-795559-b.png',
@@ -1058,7 +820,15 @@ const STICKERS = [
   'https://static.cdn.asset.aparat.com/agf/emoji-10897-333195-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-10895-41831-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-10893-133194-b.png',
-  'https://static.cdn.asset.aparat.com/agf/emoji-10892-185623-b.png'
+  'https://static.cdn.asset.aparat.com/agf/emoji-10892-185623-b.png',
+  // میم‌های جدید (۷ تا)
+  'https://static.cdn.asset.aparat.com/agf/emoji-47666-650706-b.png',
+  'https://static.cdn.asset.aparat.com/agf/emoji-47654-511582-b.png',
+  'https://static.cdn.asset.aparat.com/agf/emoji-5493-729624-b.png',
+  'https://static.cdn.asset.aparat.com/agf/emoji-14041-477979-b.png',
+  'https://static.cdn.asset.aparat.com/agf/emoji-13695-649275-b.png',
+  'https://static.cdn.asset.aparat.com/agf/emoji-11393-990557-b.png',
+  'https://static.cdn.asset.aparat.com/agf/emoji-11344-617167-b.png'
 ];
 
 const EMOJIS = ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','❤️','🧡','💛','💚','💙','💜','🖤','🤍','👍','👎','👏','🙌','🤝','🙏','💪','✌️'];
@@ -1076,8 +846,7 @@ const state = {
   pm: new Map(), unread: new Map(),
   pmOpenFor: null, joined: false,
   joinResolve: null, pendingBootstrap: new Set(),
-  joinTimer: null, replyTo: null, pendingImage: null,
-  lastMsgEl: null
+  joinTimer: null, replyTo: null, pendingImage: null
 };
 
 const $ = id => document.getElementById(id);
@@ -1325,7 +1094,6 @@ function buildBubbleContent(bubble, o) {
   else { bubble.textContent = o.text || ''; }
 }
 
-// ⭐️ حذف هایلایت از همه‌ی پیام‌ها
 function clearLastHighlight() {
   document.querySelectorAll('.msg.last-message').forEach(el => el.classList.remove('last-message'));
 }
@@ -1333,10 +1101,7 @@ function clearLastHighlight() {
 function addMessage(o, animType) {
   const box = $('messages');
   const near = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
-
-  // حذف هایلایت قبلی
   clearLastHighlight();
-
   const w = document.createElement('div');
   w.className = 'msg ' + (o.mine ? 'mine' : 'theirs');
 
@@ -1369,10 +1134,8 @@ function addMessage(o, animType) {
   box.appendChild(w);
   while (box.children.length > 300) box.firstChild.remove();
 
-  // ⭐️ اضافه کردن هایلایت به آخرین پیام
   setTimeout(() => {
     w.classList.add('last-message');
-    state.lastMsgEl = w;
   }, 100);
 
   if (near || o.mine) box.scrollTop = box.scrollHeight;
@@ -1387,11 +1150,8 @@ function addSystemMsg(text) {
   box.appendChild(w);
   while (box.children.length > 300) box.firstChild.remove();
   box.scrollTop = box.scrollHeight;
-  // هایلایت روی آخرین پیام غیرسیستمی
   const lastNonSystem = [...box.querySelectorAll('.msg:not(.system)')].pop();
-  if (lastNonSystem) {
-    setTimeout(() => lastNonSystem.classList.add('last-message'), 100);
-  }
+  if (lastNonSystem) setTimeout(() => lastNonSystem.classList.add('last-message'), 100);
 }
 
 function renderUsers() {
@@ -1473,19 +1233,12 @@ function buildEmojiPanel() {
 }
 
 function buildStickerPanel() {
-  const memeGrid = $('memeGrid'); $('memeCount').textContent = MEMES.length;
-  MEMES.forEach(url => {
-    const d = document.createElement('div'); d.className = 'sticker-item';
-    const img = document.createElement('img'); img.src = url; d.appendChild(img);
-    d.addEventListener('click', () => { sendSticker(url); closePanels(); });
-    memeGrid.appendChild(d);
-  });
-  const stickerGrid = $('stickerGrid'); $('stickerCount').textContent = STICKERS.length;
+  const grid = $('stickerGrid'); $('stickerCount').textContent = STICKERS.length;
   STICKERS.forEach(url => {
     const d = document.createElement('div'); d.className = 'sticker-item';
     const img = document.createElement('img'); img.src = url; d.appendChild(img);
     d.addEventListener('click', () => { sendSticker(url); closePanels(); });
-    stickerGrid.appendChild(d);
+    grid.appendChild(d);
   });
 }
 
@@ -1506,10 +1259,12 @@ function setReplyTo(o) {
 function clearReply() { state.replyTo = null; $('replyPreview').classList.remove('on'); }
 $('rpClose').addEventListener('click', clearReply);
 
+// ⭐️ انیمیشن دکمه ارسال — فقط بار اول
+let sendBtnAnimated = false;
 function animateSendBtn() {
+  if (sendBtnAnimated) return;
+  sendBtnAnimated = true;
   const btn = $('sendBtn');
-  btn.classList.remove('spinning', 'fly');
-  void btn.offsetWidth;
   btn.classList.add('spinning');
   setTimeout(() => btn.classList.add('fly'), 200);
   setTimeout(() => btn.classList.remove('spinning', 'fly'), 1000);
