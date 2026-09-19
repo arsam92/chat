@@ -279,39 +279,65 @@
   .msg.mine { align-self: flex-start; align-items: flex-start; }
   .msg.theirs { align-self: flex-end; align-items: flex-end; }
 
-  /* ⭐️ هایلایت آخرین پیام — ثابت و ملایم */
+  /* ⭐️ هایلایت RGB چرخان برای آخرین پیام */
+  @property --rgb-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
   .msg.last-message .bubble {
-    box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.6),
-                0 0 20px rgba(255, 152, 0, 0.35);
+    position: relative;
+    box-shadow: 0 0 25px rgba(0, 217, 163, 0.4);
   }
   .msg.last-message .bubble::after {
     content: '';
     position: absolute;
-    inset: -4px; border-radius: inherit;
-    border: 1.5px dashed rgba(255, 152, 0, 0.5);
+    inset: -3px;
+    border-radius: inherit;
+    padding: 3px;
+    background: conic-gradient(
+      from var(--rgb-angle),
+      #ff0000, #ff8000, #ffff00, #00ff00,
+      #00ffff, #0080ff, #8000ff, #ff00ff, #ff0000
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
     pointer-events: none;
+    animation: rgbRotate 3s linear infinite;
+    filter: blur(0.5px) drop-shadow(0 0 8px rgba(255,255,255,0.4));
   }
-  .msg.last-message::before {
-    content: 'آخرین پیام';
+  @keyframes rgbRotate {
+    to { --rgb-angle: 360deg; }
+  }
+  .msg.last-message .bubble::before {
+    content: '';
     position: absolute;
-    top: -22px; font-size: 10px;
-    color: var(--accent);
-    background: rgba(255, 152, 0, 0.15);
-    padding: 2px 8px; border-radius: 6px;
-    border: 1px solid rgba(255, 152, 0, 0.4);
-    font-weight: 700;
+    inset: -8px;
+    border-radius: inherit;
+    background: conic-gradient(
+      from var(--rgb-angle),
+      #ff000055, #ff800055, #ffff0055, #00ff0055,
+      #00ffff55, #0080ff55, #8000ff55, #ff00ff55, #ff000055
+    );
+    -webkit-mask: radial-gradient(ellipse at center, transparent 40%, #fff 70%);
+    mask: radial-gradient(ellipse at center, transparent 40%, #fff 70%);
+    pointer-events: none;
+    animation: rgbRotate 3s linear infinite;
+    filter: blur(8px);
+    opacity: 0.7;
+    z-index: -1;
   }
-  .msg.last-message.mine::before { right: 0; }
-  .msg.last-message.theirs::before { left: 0; }
 
-  /* انیمیشن ورود پیام‌های دیگران */
+  /* انیمیشن ورود پیام‌ها */
   .msg.anim-in { animation: msgBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
   @keyframes msgBounce {
     0% { opacity: 0; transform: translateY(20px) scale(0.85); }
     60% { transform: translateY(-4px) scale(1.02); }
     100% { opacity: 1; transform: none; }
   }
-  /* انیمیشن پیام‌های خودمون */
   .msg.flying-in { animation: flyIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
   @keyframes flyIn {
     0% { opacity: 0; transform: translateY(60px) scale(0.7) rotate(-8deg); }
@@ -483,7 +509,6 @@
   }
   .send-btn:active { transform: scale(0.9); }
 
-  /* ⭐️ انیمیشن دکمه ارسال — فقط بار اول */
   .send-btn.spinning { animation: sendSpin 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
   @keyframes sendSpin {
     0% { transform: rotate(0) scale(1); }
@@ -793,10 +818,9 @@ const MAX_SLOTS = 20;
 const MAX_IMAGE_SIZE = 800 * 1024;
 
 // ============================================================
-//   🎨 استیکر و میم‌ها (همه با هم — ۳۰ تا)
+//   🎨 استیکر و میم‌ها (۳۰ تا — همه با هم)
 // ============================================================
 const STICKERS = [
-  // میم‌های قبلی (۱۳ تا)
   'https://static.cdn.asset.aparat.com/agf/emoji-5570-732905-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-5571-325491-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-2167-949041-b.png',
@@ -810,7 +834,6 @@ const STICKERS = [
   'https://static.cdn.asset.aparat.com/agf/emoji-4636-727700-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-4635-243901-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-43857-462556-b.png',
-  // استیکرهای قبلی (۱۰ تا)
   'https://static.cdn.asset.aparat.com/agf/emoji-2780-505412-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-4760-33812-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-2784-795559-b.png',
@@ -821,7 +844,6 @@ const STICKERS = [
   'https://static.cdn.asset.aparat.com/agf/emoji-10895-41831-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-10893-133194-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-10892-185623-b.png',
-  // میم‌های جدید (۷ تا)
   'https://static.cdn.asset.aparat.com/agf/emoji-47666-650706-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-47654-511582-b.png',
   'https://static.cdn.asset.aparat.com/agf/emoji-5493-729624-b.png',
@@ -1134,10 +1156,7 @@ function addMessage(o, animType) {
   box.appendChild(w);
   while (box.children.length > 300) box.firstChild.remove();
 
-  setTimeout(() => {
-    w.classList.add('last-message');
-  }, 100);
-
+  setTimeout(() => w.classList.add('last-message'), 100);
   if (near || o.mine) box.scrollTop = box.scrollHeight;
 }
 
@@ -1259,7 +1278,6 @@ function setReplyTo(o) {
 function clearReply() { state.replyTo = null; $('replyPreview').classList.remove('on'); }
 $('rpClose').addEventListener('click', clearReply);
 
-// ⭐️ انیمیشن دکمه ارسال — فقط بار اول
 let sendBtnAnimated = false;
 function animateSendBtn() {
   if (sendBtnAnimated) return;
@@ -1271,8 +1289,7 @@ function animateSendBtn() {
 }
 
 function sendText(text) {
-  const clean = text.trim();
-  if (!clean) return;
+  const clean = text.trim(); if (!clean) return;
   const ts = Date.now();
   const reply = state.replyTo;
   animateSendBtn();
