@@ -1676,6 +1676,9 @@ async function joinChat(name) {
     state.peer = peer; state.myPeerId = peer.id; state.mySlot = slot;
     wirePeer(peer);
     await discover(slug);
+    // A second quick pass catches peers that claimed a slot during the first scan.
+    await new Promise(resolve => setTimeout(resolve, 450));
+    await discover(slug);
     $('loginScreen').classList.add('leaving');
     setTimeout(() => finishJoin(), 700);
   } catch (err) {
@@ -1699,11 +1702,20 @@ function wirePeer(peer) {
 }
 function discover(slug) {
   return new Promise(resolve => {
-    state.joinResolve = resolve; state.pendingBootstrap = new Set();
+    if (state.joinTimer) clearTimeout(state.joinTimer);
+    state.joinResolve = resolve;
+    state.pendingBootstrap = new Set();
     const targets = [];
-    for (let s = 0; s < MAX_SLOTS; s++) { if (s !== state.mySlot) targets.push(SLOT_PREFIX + slug + '-' + s); }
+    for (let slot = 0; slot < MAX_SLOTS; slot++) {
+      if (slot === state.mySlot) continue;
+      const id = SLOT_PREFIX + slug + '-' + slot;
+      const known = state.peers.get(id);
+      if (known && known.conn && known.conn.open) continue;
+      targets.push(id);
+    }
     if (!targets.length) { finishDiscover(); return; }
-    targets.forEach(id => { state.pendingBootstrap.add(id); dial(id); });
+    targets.forEach(id => state.pendingBootstrap.add(id));
+    targets.forEach(id => dial(id));
     state.joinTimer = setTimeout(finishDiscover, 4500);
   });
 }
