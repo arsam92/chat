@@ -1408,6 +1408,66 @@
     }
   }
 
+
+  /* Refined poll card: strong hierarchy, readable results, and precise vote feedback. */
+  .poll-card {
+    width: min(360px, calc(100vw - 110px));
+    min-width: min(245px, calc(100vw - 90px));
+    padding: 16px; border: 1px solid rgba(255,255,255,.13);
+    background: linear-gradient(145deg, rgba(10,30,26,.98), rgba(7,24,20,.97));
+    box-shadow: 0 14px 36px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .poll-q { font-size: 14px; line-height: 1.8; margin-bottom: 14px; padding-bottom: 11px; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+  .poll-option {
+    min-height: 43px; display: flex; flex-direction: column; justify-content: center;
+    gap: 7px; padding: 10px 12px; margin-bottom: 8px; border-radius: 12px;
+    border-color: rgba(255,255,255,.07); background: rgba(255,255,255,.045);
+    transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+  }
+  .poll-option:hover { transform: translateY(-1px); background: rgba(255,255,255,.075); }
+  .poll-option.voted { border-color: var(--primary); background: rgba(0,217,163,.085); }
+  .poll-option .poll-content { order: -1; gap: 10px; line-height: 1.55; }
+  .poll-option .poll-content > span:first-child { overflow-wrap: anywhere; }
+  .poll-option .poll-percent { min-width: 38px; text-align: left; font-variant-numeric: tabular-nums; color: var(--primary); }
+  .poll-option .poll-bar { position: relative; height: 4px; flex: 0 0 4px; width: 0; max-width: 100%; border-radius: 999px; opacity: .95; box-shadow: 0 0 10px rgba(0,217,163,.12); transition: width 360ms cubic-bezier(.2,.7,.2,1); }
+  .poll-info { border-top: 1px solid rgba(255,255,255,.08); padding-top: 11px; margin-top: 9px; line-height: 1.6; }
+  .poll-option.vote-burst { animation: voteBurst 260ms cubic-bezier(.2,.7,.2,1); }
+  @keyframes voteBurst { 0%,100% { transform: scale(1); } 45% { transform: scale(1.012); box-shadow: 0 0 0 2px var(--border); } }
+  @media (max-width: 480px) { .poll-card { width: min(310px, calc(100vw - 90px)); padding: 12px; } .poll-option { padding: 9px 10px; } }
+
+
+  .nf-field input { transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease; }
+  .nf-field input.nf-valid-letter { border-color: rgba(0,255,136,.85); box-shadow: 0 0 0 2px rgba(0,255,136,.08); }
+  .nf-field input.nf-invalid-letter { border-color: rgba(255,82,82,.9); box-shadow: 0 0 0 2px rgba(255,82,82,.08); }
+  .nf-result { display: grid; gap: 10px; }
+  .nf-result-heading { color: var(--primary); font-weight: 900; font-size: 16px; margin-bottom: 2px; }
+  .nf-result-row { padding: 11px 12px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; }
+  .nf-result-category { color: var(--primary); font-weight: 800; margin-bottom: 5px; }
+  .nf-result-answers { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; overflow-wrap: anywhere; }
+  .nf-answer-valid { color: #9cf4c9; }
+  .nf-answer-invalid { color: #ff9696; text-decoration: underline wavy rgba(255,82,82,.7); }
+  .nf-result-status { margin-top: 6px; font-size: 12px; color: #c8d8d4; line-height: 1.7; }
+  .nf-result-points { margin-top: 5px; font-size: 12px; color: #c3d5cf; }
+  .nf-result-points b { color: var(--primary); }
+  .nf-result-winner { text-align: center; margin-top: 8px; font-weight: 900; font-size: 21px; color: var(--primary); }
+  .nf-result-total { text-align: center; font-size: 14px; }
+  .nf-result-note { margin-top: 6px; padding: 10px; border-radius: 10px; color: #ffd58a; background: rgba(255,152,0,.08); font-size: 11px; line-height: 1.8; }
+  .nf-letter-box { box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
+  .nf-letter-box .nf-letter { text-shadow: 0 8px 24px rgba(0,217,163,.16); }
+  .uno-status { line-height: 1.8; }
+  .uno-current { transition: transform 220ms ease, box-shadow 220ms ease; }
+  .uno-card { will-change: transform; }
+  .uno-card.disabled { filter: grayscale(.6); opacity: .42; }
+  .uno-card:not(.disabled):focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+  .game-arena { gap: 12px; padding: 16px 0; }
+  .game-player .gp-avatar { border: 2px solid rgba(255,255,255,.12); }
+  .game-player .gp-move { text-shadow: 0 8px 28px rgba(0,217,163,.13); }
+  .game-choice-btns button { box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+  .game-choice-btns button:disabled { opacity: .55; cursor: default; transform: none; }
+  .ttt-cell { box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
+  .ttt-cell.win { box-shadow: 0 0 20px rgba(255,193,7,.16), inset 0 0 0 1px rgba(255,193,7,.3); }
+  @media (max-width: 480px) { .nf-result-answers { grid-template-columns: 1fr; } }
+
 </style>
 </head>
 <body>
@@ -1693,8 +1753,10 @@
 <div class="toasts" id="toasts"></div>
 
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<script src="./game-logic.js"></script>
 <script>
 'use strict';
+const GameLogic = window.ChatGameLogic;
 
 const ROOM_NAME = 'global-chat-2026-' + location.hostname + location.pathname.replace(/\/+$/, '');
 const SLOT_PREFIX = 'chat-';
@@ -1803,13 +1865,7 @@ function safeAudioSource(value) {
   return /^data:audio\/(?:webm|ogg|mp4|mpeg|wav|x-wav)(?:;codecs=[a-z0-9,._-]+)?;base64,[a-z0-9+/=\r\n]+$/i.test(src) ? src : '';
 }
 function safePollPayload(value) {
-  if (!value || typeof value !== 'object' || typeof value.question !== 'string' || !Array.isArray(value.options)) return null;
-  const question = value.question.trim().slice(0, 200);
-  const options = value.options.slice(0, 6)
-    .map(option => ({ text: option && typeof option.text === 'string' ? option.text.trim().slice(0, 120) : '' }))
-    .filter(option => option.text);
-  if (!question || options.length < 2) return null;
-  return { question, options: options.map(option => ({ text: option.text, votes: 0 })), voters: {} };
+  return GameLogic.sanitizePollPayload(value);
 }
 const faNum = n => Number(n || 0).toLocaleString('fa-IR');
 const faTime = ts => new Date(ts).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
@@ -2306,17 +2362,13 @@ function onDeleteMsg(conn, msg) {
 }
 
 function onPollVote(conn, msg) {
-  if (!conn || !msg || typeof msg.msgId !== 'string' || !Number.isInteger(msg.optionIndex)) return;
-  const el = document.querySelectorAll('.msg[data-msgid]');
-  const target = [...el].find(node => node.dataset.msgid === msg.msgId);
-  if (!target || !target._pollData) return;
-  const poll = target._pollData;
-  const idx = msg.optionIndex;
-  if (!Array.isArray(poll.options) || idx < 0 || idx >= poll.options.length) return;
-  if (!poll.voters || typeof poll.voters !== 'object') poll.voters = {};
-  if (poll.voters[conn.peer] !== undefined) return;
-  poll.voters[conn.peer] = idx;
-  poll.options[idx].votes = (Number(poll.options[idx].votes) || 0) + 1;
+  if (!conn || !msg || typeof msg !== 'object' ||
+      typeof msg.msgId !== 'string' || msg.from !== conn.peer) return;
+  const target = findMessageElement(msg.msgId);
+  const poll = target && target._pollData;
+  if (!poll || !GameLogic.canAcceptPollVote(poll, msg.optionIndex, conn.peer)) return;
+  poll.voters[conn.peer] = msg.optionIndex;
+  poll.options[msg.optionIndex].votes = (Number(poll.options[msg.optionIndex].votes) || 0) + 1;
   updatePollUI(target, poll);
 }
 function onBye(conn) { removePeerById(conn.peer, conn, true); }
@@ -2856,14 +2908,13 @@ function renderPollOpts() {
 $('pollBtn').onclick = () => { initPollCreator(); $('pollModal').classList.add('on'); };
 $('pollAddOpt').onclick = () => { if (pollOptsCount < 6) { pollOptsCount++; renderPollOpts(); } else toast('❗ حداکثر ۶ گزینه'); };
 $('pollCreate').onclick = () => {
-  const q = $('pollQuestion').value.trim();
-  if (!q) { toast('❗ سوال رو بنویس'); return; }
+  const question = $('pollQuestion').value.trim();
   const inputs = $('pollOptionsList').querySelectorAll('input');
-  const opts = [];
-  inputs.forEach(inp => { const v = inp.value.trim(); if (v) opts.push({ text: v, votes: 0 }); });
-  if (opts.length < 2) { toast('❗ حداقل ۲ گزینه'); return; }
-  const poll = { question: q, options: opts, voters: {} };
-  poll.voters[state.myPeerId] = undefined;
+  const poll = GameLogic.createPoll(question, [...inputs].map(input => input.value));
+  if (!poll) {
+    toast('❗ سؤال لازم است و حداقل ۲ گزینه متفاوت وارد کن');
+    return;
+  }
   sendPoll(poll);
   $('pollModal').classList.remove('on');
 };
@@ -2873,7 +2924,7 @@ function inviteToGame(peerId) {
   const e = state.peers.get(peerId);
   if (!e || !e.conn) { toast('❌ کاربر آفلاین'); return; }
   const gameId = 'g-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
-  state.game = { id: gameId, opponent: peerId, myMove: null, theirMove: null, myScore: 0, theirScore: 0, round: 1, isHost: true };
+  state.game = { id: gameId, opponent: peerId, myMove: null, theirMove: null, myScore: 0, theirScore: 0, round: 1, isHost: true, roundResolved: false, finished: false, roundTimer: null, closeTimer: null };
   safeSend(e.conn, { type: 'game-invite', gameId, from: state.myPeerId, name: state.myName });
   toast('⏳ دعوت بازی ارسال شد...');
 }
@@ -2884,7 +2935,7 @@ function onGameInvite(conn, msg) {
   document.body.appendChild(t);
   t.querySelector('.gi-accept').onclick = () => {
     t.remove();
-    state.game = { id: msg.gameId, opponent: conn.peer, myMove: null, theirMove: null, myScore: 0, theirScore: 0, round: 1, isHost: false };
+    state.game = { id: msg.gameId, opponent: conn.peer, myMove: null, theirMove: null, myScore: 0, theirScore: 0, round: 1, isHost: false, roundResolved: false, finished: false, roundTimer: null, closeTimer: null };
     safeSend(conn, { type: 'game-response', gameId: msg.gameId, accepted: true });
     startGameUI();
   };
@@ -2892,7 +2943,7 @@ function onGameInvite(conn, msg) {
   setTimeout(() => { if (t.parentNode) t.remove(); }, 20000);
 }
 function onGameResponse(conn, msg) {
-  if (!state.game || state.game.id !== msg.gameId) return;
+  if (!state.game || state.game.id !== msg.gameId || conn.peer !== state.game.opponent || state.game.finished) return;
   const e = state.peers.get(conn.peer);
   if (msg.accepted) { toast('✅ ' + (e ? e.name : 'حریف') + ' قبول کرد!'); startGameUI(); }
   else { toast('❌ رد شد'); state.game = null; }
@@ -2919,9 +2970,10 @@ function startGameUI() {
   $('gameModal').classList.add('on');
 }
 function onGameMove(conn, msg) {
-  if (!state.game || state.game.id !== msg.gameId || conn.peer !== state.game.opponent) return;
+  const g = state.game;
+  if (!g || g.finished || g.roundResolved || g.id !== msg.gameId || conn.peer !== g.opponent || msg.round !== g.round || g.theirMove) return;
   if (!Object.prototype.hasOwnProperty.call(GAME_MOVES, msg.move)) return;
-  state.game.theirMove = msg.move;
+  g.theirMove = msg.move;
   checkGameResult();
 }
 
@@ -2936,7 +2988,7 @@ document.querySelectorAll('.game-choice-btns button').forEach(btn => {
     $('gameMeMove').classList.add('reveal');
     setTimeout(() => $('gameMeMove').classList.remove('reveal'), 700);
     const e = state.peers.get(state.game.opponent);
-    if (e && e.conn) safeSend(e.conn, { type: 'game-move', gameId: state.game.id, move });
+    if (e && e.conn) safeSend(e.conn, { type: 'game-move', gameId: state.game.id, round: state.game.round, move });
     $('gameStatus').textContent = 'منتظر حریف...';
     checkGameResult();
   };
@@ -2973,7 +3025,7 @@ function checkGameResult() {
 function inviteToTTT(peerId) {
   const e = state.peers.get(peerId); if (!e || !e.conn) { toast('❌ آفلاین'); return; }
   const id = 'ttt-' + Date.now();
-  state.ttt = { id, opponent: peerId, board: Array(9).fill(null), mySymbol: 'X', theirSymbol: 'O', myTurn: true, host: true };
+  state.ttt = { id, opponent: peerId, board: Array(9).fill(null), mySymbol: 'X', theirSymbol: 'O', myTurn: true, host: true, finished: false, endTimer: null };
   safeSend(e.conn, { type: 'ttt-invite', id });
   toast('⏳ دعوت دوز ارسال شد...');
 }
@@ -2982,12 +3034,12 @@ function onTTTInvite(conn, msg) {
   const t = document.createElement('div'); t.className = 'game-invite-toast';
   t.innerHTML = `<h4>❌⭕ دعوت به دوز</h4><p><b>${escapeHTML(safePeerName(e.name))}</b> می‌خواد دوز بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
   document.body.appendChild(t);
-  t.querySelector('.gi-accept').onclick = () => { t.remove(); state.ttt = { id: msg.id, opponent: conn.peer, board: Array(9).fill(null), mySymbol: 'O', theirSymbol: 'X', myTurn: false, host: false }; safeSend(conn, { type: 'ttt-response', id: msg.id, accepted: true }); startTTTUI(); };
+  t.querySelector('.gi-accept').onclick = () => { t.remove(); state.ttt = { id: msg.id, opponent: conn.peer, board: Array(9).fill(null), mySymbol: 'O', theirSymbol: 'X', myTurn: false, host: false, finished: false, endTimer: null }; safeSend(conn, { type: 'ttt-response', id: msg.id, accepted: true }); startTTTUI(); };
   t.querySelector('.gi-decline').onclick = () => { t.remove(); safeSend(conn, { type: 'ttt-response', id: msg.id, accepted: false }); };
   setTimeout(() => { if (t.parentNode) t.remove(); }, 20000);
 }
 function onTTTResponse(conn, msg) {
-  if (!state.ttt || state.ttt.id !== msg.id) return;
+  if (!state.ttt || state.ttt.id !== msg.id || conn.peer !== state.ttt.opponent || state.ttt.finished) return;
   if (msg.accepted) { toast('✅ قبول شد'); startTTTUI(); } else { toast('❌ رد شد'); state.ttt = null; }
 }
 function startTTTUI() { renderTTT(); $('tttModal').classList.add('on'); }
@@ -3005,7 +3057,7 @@ function renderTTT() {
 }
 function makeTTTMove(idx) {
   const t = state.ttt;
-  if (!t || !t.myTurn || !Number.isInteger(idx) || idx < 0 || idx > 8 || t.board[idx]) return;
+  if (!t || t.finished || !t.myTurn || !Number.isInteger(idx) || idx < 0 || idx > 8 || t.board[idx]) return;
   t.board[idx] = t.mySymbol;
   t.myTurn = false;
   const entry = state.peers.get(t.opponent);
@@ -3015,7 +3067,7 @@ function makeTTTMove(idx) {
 
 function onTTTMove(conn, msg) {
   const t = state.ttt;
-  if (!t || t.id !== msg.id || conn.peer !== t.opponent || t.myTurn ||
+  if (!t || t.finished || t.id !== msg.id || conn.peer !== t.opponent || t.myTurn ||
       !Number.isInteger(msg.idx) || msg.idx < 0 || msg.idx > 8 || t.board[msg.idx]) return;
   const expected = t.mySymbol === 'X' ? 'O' : 'X';
   if (msg.symbol !== expected) return;
@@ -3047,7 +3099,7 @@ function checkTTTWin() {
 function inviteToNF(peerId) {
   const e = state.peers.get(peerId); if (!e || !e.conn) { toast('❌ آفلاین'); return; }
   const id = 'nf-' + Date.now();
-  state.nf = { id, opponent: peerId, host: true, letter: null, myAnswers: null, theirAnswers: null, timer: null };
+  state.nf = { id, opponent: peerId, host: true, letter: null, myAnswers: null, theirAnswers: null, timer: null, finished: false };
   safeSend(e.conn, { type: 'nf-invite', id });
   toast('⏳ دعوت اسم فامیل ارسال شد...');
 }
@@ -3056,12 +3108,12 @@ function onNFInvite(conn, msg) {
   const t = document.createElement('div'); t.className = 'game-invite-toast';
   t.innerHTML = `<h4>📝 دعوت به اسم فامیل</h4><p><b>${escapeHTML(safePeerName(e.name))}</b> می‌خواد اسم فامیل بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
   document.body.appendChild(t);
-  t.querySelector('.gi-accept').onclick = () => { t.remove(); state.nf = { id: msg.id, opponent: conn.peer, host: false, letter: null, myAnswers: null, theirAnswers: null, timer: null }; safeSend(conn, { type: 'nf-response', id: msg.id, accepted: true }); toast('⏳ منتظر شروع بازی...'); };
+  t.querySelector('.gi-accept').onclick = () => { t.remove(); state.nf = { id: msg.id, opponent: conn.peer, host: false, letter: null, myAnswers: null, theirAnswers: null, timer: null, finished: false }; safeSend(conn, { type: 'nf-response', id: msg.id, accepted: true }); toast('⏳ منتظر شروع بازی...'); };
   t.querySelector('.gi-decline').onclick = () => { t.remove(); safeSend(conn, { type: 'nf-response', id: msg.id, accepted: false }); };
   setTimeout(() => { if (t.parentNode) t.remove(); }, 20000);
 }
 function onNFResponse(conn, msg) {
-  if (!state.nf || state.nf.id !== msg.id) return;
+  if (!state.nf || state.nf.id !== msg.id || conn.peer !== state.nf.opponent || state.nf.finished || state.nf.letter) return;
   if (!msg.accepted) { toast('❌ رد شد'); state.nf = null; return; }
   toast('✅ قبول شد!');
   // Host picks a random letter and starts
@@ -3072,17 +3124,29 @@ function onNFResponse(conn, msg) {
   startNFUI(letter);
 }
 function onNFReady(conn, msg) {
-  if (!state.nf || state.nf.id !== msg.id) return;
-  state.nf.letter = msg.letter;
+  const nf = state.nf;
+  if (!nf || nf.id !== msg.id || conn.peer !== nf.opponent || nf.finished ||
+      typeof msg.letter !== 'string' || !'ابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی'.includes(msg.letter) || nf.letter) return;
+  nf.letter = msg.letter;
   startNFUI(msg.letter);
 }
 function startNFUI(letter) {
+  if (!state.nf || state.nf.finished || typeof letter !== 'string' || !'ابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی'.includes(letter)) return;
+  state.nf.letter = letter;
   $('nfLetter').textContent = letter;
   ['nfName','nfFamily','nfCity','nfCountry','nfFood','nfAnimal'].forEach(id => { $(id).value = ''; $(id).classList.remove('match','unique'); $(id).disabled = false; });
   $('nfResult').style.display = 'none';
   $('nfSubmit').disabled = false;
   $('nfSubmit').textContent = '✅ ارسال پاسخ';
   $('nfModal').classList.add('on');
+  document.querySelectorAll('#nfModal .nf-field input').forEach(input => {
+    input.oninput = () => {
+      const hasText = !!input.value.trim();
+      const validLetter = GameLogic.nfAnswerStartsWithLetter(input.value, letter);
+      input.classList.toggle('nf-valid-letter', hasText && validLetter);
+      input.classList.toggle('nf-invalid-letter', hasText && !validLetter);
+    };
+  });
   // timer 90s
   let timeLeft = 90;
   $('nfTimer').textContent = '⏱️ ' + faNum(timeLeft);
@@ -3100,60 +3164,64 @@ function startNFUI(letter) {
 }
 $('nfSubmit').onclick = () => submitNF(false);
 function submitNF(auto) {
-  if (!state.nf) return;
+  const nf = state.nf;
+  if (!nf || nf.finished || !nf.letter || nf.myAnswers) return;
   const answers = {};
   NF_CATEGORIES.forEach(cat => {
-    const id = 'nf' + cat.charAt(0).toUpperCase() + cat.slice(1);
-    answers[cat] = $('nf' + ({name:'Name', family:'Family', city:'City', country:'Country', food:'Food', animal:'Animal'}[cat])).value.trim();
+    const id = 'nf' + ({name:'Name', family:'Family', city:'City', country:'Country', food:'Food', animal:'Animal'}[cat]);
+    answers[cat] = String($(id).value || '').trim().slice(0, 20);
   });
-  state.nf.myAnswers = answers;
-  state.nf.myName = state.myName;
+  nf.myAnswers = answers; nf.myName = state.myName;
   ['nfName','nfFamily','nfCity','nfCountry','nfFood','nfAnimal'].forEach(id => { $(id).disabled = true; });
   $('nfSubmit').disabled = true;
-  $('nfSubmit').textContent = '⏳ منتظر حریف...';
-  if (state.nf.timer) clearInterval(state.nf.timer);
-  const e = state.peers.get(state.nf.opponent);
-  if (e && e.conn) safeSend(e.conn, { type: 'nf-answers', id: state.nf.id, answers });
-  if (state.nf.theirAnswers) compareNF();
+  $('nfSubmit').textContent = auto ? '⏳ زمان تمام شد؛ منتظر حریف...' : '⏳ منتظر حریف...';
+  if (nf.timer) clearInterval(nf.timer);
+  nf.timer = null;
+  const entry = state.peers.get(nf.opponent);
+  if (entry && entry.conn) safeSend(entry.conn, { type: 'nf-answers', id: nf.id, answers });
+  if (nf.theirAnswers) compareNF();
 }
 function onNFAnswers(conn, msg) {
-  if (!state.nf || state.nf.id !== msg.id) return;
-  state.nf.theirAnswers = msg.answers;
-  if (state.nf.timer) clearInterval(state.nf.timer);
-  if (state.nf.myAnswers) compareNF();
+  const nf = state.nf;
+  if (!nf || nf.finished || nf.id !== msg.id || conn.peer !== nf.opponent || nf.theirAnswers ||
+      !msg.answers || typeof msg.answers !== 'object' || Array.isArray(msg.answers)) return;
+  const answers = {};
+  NF_CATEGORIES.forEach(category => {
+    const value = msg.answers[category];
+    answers[category] = typeof value === 'string' ? value.trim().slice(0, 20) : '';
+  });
+  nf.theirAnswers = answers;
+  // One player's submission must not stop the other player's clock.
+  if (nf.myAnswers) compareNF();
 }
 function compareNF() {
-  const nf = state.nf; if (!nf) return;
-  const mine = nf.myAnswers, theirs = nf.theirAnswers;
-  let myScore = 0, theirScore = 0;
-  let html = '<div style="margin-bottom:8px;font-weight:800;color:var(--primary)">🏆 نتیجه:</div>';
-  NF_CATEGORIES.forEach(cat => {
-    const m = (mine[cat] || '').toLowerCase().trim();
-    const t = (theirs[cat] || '').toLowerCase().trim();
-    let myPts = 0, theirPts = 0, status = '';
-    const myEl = $('nf' + ({name:'Name', family:'Family', city:'City', country:'Country', food:'Food', animal:'Animal'}[cat]));
-    myEl.classList.remove('match', 'unique');
-    if (!m && !t) { status = '⬜ خالی'; }
-    else if (!m) { theirPts = 10; status = '❌ ننوشتی'; }
-    else if (!t) { myPts = 10; myEl.classList.add('unique'); status = '✅ حریف ننوشت'; }
-    else if (m === t) { myPts = 5; theirPts = 5; myEl.classList.add('match'); status = '🤝 یکسان'; }
-    else { myPts = 10; theirPts = 10; myEl.classList.add('unique'); status = '✅ متفاوت'; }
-    myScore += myPts; theirScore += theirPts;
-    html += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed rgba(255,255,255,0.1)"><span><b>${NF_LABELS[cat]}:</b> تو "${escapeHTML(mine[cat]||'—')}" / حریف "${escapeHTML(theirs[cat]||'—')}"</span><span style="color:var(--accent);font-weight:700">${myPts} / ${theirPts} — ${status}</span></div>`;
+  const nf = state.nf;
+  if (!nf || nf.finished || !nf.myAnswers || !nf.theirAnswers) return;
+  nf.finished = true;
+  if (nf.timer) clearInterval(nf.timer);
+  nf.timer = null;
+  const result = GameLogic.scoreNameFamily(nf.myAnswers, nf.theirAnswers, nf.letter, NF_CATEGORIES);
+  let html = '<div class="nf-result-heading">🏆 نتیجهٔ بازی</div>';
+  result.rows.forEach(row => {
+    const mineClass = row.mineValid ? 'nf-answer-valid' : (row.mineRaw ? 'nf-answer-invalid' : '');
+    const theirClass = row.theirsValid ? 'nf-answer-valid' : (row.theirsRaw ? 'nf-answer-invalid' : '');
+    html += '<div class="nf-result-row"><div class="nf-result-category">' + escapeHTML(NF_LABELS[row.category]) + '</div>' +
+      '<div class="nf-result-answers"><span class="' + mineClass + '">تو: ' + escapeHTML(row.mineRaw || '—') + '</span>' +
+      '<span class="' + theirClass + '">حریف: ' + escapeHTML(row.theirsRaw || '—') + '</span></div>' +
+      '<div class="nf-result-status">' + escapeHTML(row.status) + '</div>' +
+      '<div class="nf-result-points">امتیاز تو <b>' + row.myPts + '</b> · حریف <b>' + row.theirPts + '</b></div></div>';
   });
-  const winner = myScore > theirScore ? '🏆 بردی!' : myScore < theirScore ? '😢 باختی!' : '🤝 مساوی!';
-  html += `<div style="text-align:center;margin-top:12px;font-size:20px;font-weight:900;color:var(--primary)">${winner}</div>`;
-  html += `<div style="text-align:center;margin-top:6px;font-size:13px">امتیاز: <b>${myScore}</b> - <b>${theirScore}</b></div>`;
-  $('nfResult').innerHTML = html;
-  $('nfResult').style.display = 'block';
-  $('nfSubmit').textContent = '🔄 دوباره';
-  $('nfSubmit').disabled = false;
-  $('nfSubmit').onclick = () => { closeNF(); };
-  setTimeout(() => {
-    toast(winner);
-  }, 500);
+  const winner = result.winner === 'me' ? '🏆 بردی!' : result.winner === 'them' ? '😢 باختی!' : '🤝 مساوی!';
+  html += '<div class="nf-result-winner">' + winner + '</div>';
+  html += '<div class="nf-result-total">امتیاز نهایی: <b>' + result.myTotal + '</b> - <b>' + result.theirTotal + '</b></div>';
+  html += '<div class="nf-result-note">سیستم خالی‌نبودن و حرف اول را بررسی می‌کند؛ برای جواب‌های متفاوت، درستی معنایی (مثلاً شهر بودن جواب) هنوز نیاز به تأیید بازیکنان دارد.</div>';
+  $('nfResult').innerHTML = html; $('nfResult').style.display = 'block';
+  $('nfSubmit').textContent = 'بستن نتیجه'; $('nfSubmit').disabled = false;
+  $('nfSubmit').onclick = () => closeNF();
+  toast(winner);
 }
 function closeNF() {
+  if (state.nf && state.nf.timer) clearInterval(state.nf.timer);
   $('nfModal').classList.remove('on');
   state.nf = null;
   // reset button
@@ -3348,55 +3416,57 @@ addMessage = function(o, animType) {
 
 const _origCheckTTTWin = checkTTTWin;
 checkTTTWin = function() {
-  const t = state.ttt; if (!t) return;
-  const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-  for (const l of lines) {
-    const [a,b,c] = l;
-    if (t.board[a] && t.board[a] === t.board[b] && t.board[b] === t.board[c]) {
-      const w = t.board[a];
-      l.forEach(i => { const cells = $('tttGrid').children; if (cells[i]) cells[i].classList.add('win'); });
-      drawTTTLine(l);
-      if (w === t.mySymbol) { $('tttStatus').textContent = '🏆 بردی! 🎉'; showConfetti(); }
-      else { $('tttStatus').textContent = '😢 باختی!'; shakeScreen(); }
-      setTimeout(() => { $('tttModal').classList.remove('on'); state.ttt = null; }, 3000);
-      return;
-    }
+  const t = state.ttt;
+  if (!t || t.finished) return;
+  const winningLine = GameLogic.tttWinningLine(t.board);
+  if (winningLine) {
+    t.finished = true; t.myTurn = false;
+    winningLine.forEach(index => { const cell = $('tttGrid').children[index]; if (cell) cell.classList.add('win'); });
+    drawTTTLine(winningLine);
+    if (t.board[winningLine[0]] === t.mySymbol) { $('tttStatus').textContent = '🏆 بردی! 🎉'; showConfetti(); }
+    else { $('tttStatus').textContent = '😢 باختی!'; shakeScreen(); }
+    t.endTimer = setTimeout(() => { if (state.ttt === t) { $('tttModal').classList.remove('on'); state.ttt = null; } }, 2500);
+    return;
   }
-  if (t.board.every(c => c)) {
-    $('tttStatus').textContent = '🤝 مساوی!';
-    setTimeout(() => { $('tttModal').classList.remove('on'); state.ttt = null; }, 3000);
+  if (t.board.every(cell => cell)) {
+    t.finished = true; t.myTurn = false; $('tttStatus').textContent = '🤝 مساوی!';
+    t.endTimer = setTimeout(() => { if (state.ttt === t) { $('tttModal').classList.remove('on'); state.ttt = null; } }, 2200);
   }
 };
 
-const _origCheckGameResult = checkGameResult;
 checkGameResult = function() {
-  const g = state.game; if (!g || !g.myMove || !g.theirMove) return;
+  const g = state.game;
+  if (!g || g.finished || g.roundResolved || !g.myMove || !g.theirMove) return;
+  g.roundResolved = true;
   $('gameOpMove').textContent = GAME_MOVES[g.theirMove];
   $('gameOpMove').classList.add('reveal-3d');
   $('gameMeMove').classList.add('reveal-3d');
-  setTimeout(() => { $('gameOpMove').classList.remove('reveal-3d'); $('gameMeMove').classList.remove('reveal-3d'); }, 1000);
-  let w;
-  if (g.myMove === g.theirMove) w = 'tie';
-  else if (GAME_BEATS[g.myMove] === g.theirMove) w = 'me';
-  else w = 'them';
-  if (w === 'me') { g.myScore++; $('gameStatus').textContent = '🎉 بردی!'; showConfetti(); }
-  else if (w === 'them') { g.theirScore++; $('gameStatus').textContent = '😢 باختی'; shakeScreen(); }
-  else $('gameStatus').textContent = '🤝 مساوی';
+  setTimeout(() => { $('gameOpMove').classList.remove('reveal-3d'); $('gameMeMove').classList.remove('reveal-3d'); }, 380);
+  const result = GameLogic.rpsWinner(g.myMove, g.theirMove, GAME_BEATS);
+  if (result === 'me') { g.myScore++; $('gameStatus').textContent = '🎉 این دور را بردی!'; showConfetti(); }
+  else if (result === 'them') { g.theirScore++; $('gameStatus').textContent = '😢 این دور را باختی'; shakeScreen(); }
+  else $('gameStatus').textContent = '🤝 این دور مساوی شد';
   animateScore($('gameMeScore'), g.myScore);
   animateScore($('gameOpScore'), g.theirScore);
-  setTimeout(() => {
-    if (g.myScore >= 2 || g.theirScore >= 2) {
-      $('gameStatus').textContent = g.myScore >= 2 ? '🏆 برنده شدی!' : '😢 باختی';
-      if (g.myScore >= 2) showConfetti(); else shakeScreen();
-      setTimeout(() => { $('gameModal').classList.remove('on'); state.game = null; }, 3000);
+  g.roundTimer = setTimeout(() => {
+    if (state.game !== g || g.finished) return;
+    const reachedTarget = g.myScore >= 2 || g.theirScore >= 2;
+    if (reachedTarget || g.round >= 3) {
+      g.finished = true;
+      if (g.myScore === g.theirScore) $('gameStatus').textContent = '🤝 بازی مساوی شد';
+      else $('gameStatus').textContent = g.myScore > g.theirScore ? '🏆 برنده شدی!' : '😢 حریف برنده شد';
+      if (g.myScore > g.theirScore) showConfetti(); else if (g.myScore < g.theirScore) shakeScreen();
+      g.closeTimer = setTimeout(() => {
+        if (state.game === g) { $('gameModal').classList.remove('on'); state.game = null; }
+      }, 1800);
       return;
     }
-    g.round++; g.myMove = null; g.theirMove = null;
+    g.round++; g.myMove = null; g.theirMove = null; g.roundResolved = false;
     $('gameMeMove').textContent = '❔'; $('gameOpMove').textContent = '❔';
     $('gameRound').textContent = 'دور ' + g.round + ' از ۳';
     $('gameStatus').textContent = 'حرکت بعدی رو انتخاب کن!';
-    document.querySelectorAll('.game-choice-btns button').forEach(b => { b.classList.remove('selected'); b.disabled = false; });
-  }, 2000);
+    document.querySelectorAll('.game-choice-btns button').forEach(button => { button.classList.remove('selected'); button.disabled = false; });
+  }, 1200);
 };
 
 const _origVoteOnPoll = voteOnPoll;
@@ -3404,17 +3474,18 @@ voteOnPoll = function(msgId, idx, optEl) {
   const msgEl = findMessageElement(msgId);
   if (!msgEl || !msgEl._pollData) return;
   const poll = msgEl._pollData;
-  if (poll.voters[state.myPeerId] !== undefined) { toast('❗ قبلاً رأی دادی'); return; }
+  if (!GameLogic.canAcceptPollVote(poll, idx, state.myPeerId)) {
+    toast('❗ قبلاً رأی دادی یا گزینه نامعتبر است');
+    return;
+  }
   poll.voters[state.myPeerId] = idx;
-  poll.options[idx].votes++;
-  optEl.classList.add('vote-burst');
-  setTimeout(() => optEl.classList.remove('vote-burst'), 700);
+  poll.options[idx].votes = (Number(poll.options[idx].votes) || 0) + 1;
+  if (optEl) {
+    optEl.classList.add('vote-burst');
+    setTimeout(() => optEl.classList.remove('vote-burst'), 360);
+  }
   updatePollUI(msgEl, poll);
   broadcast({ type: 'poll-vote', msgId, optionIndex: idx, from: state.myPeerId });
-  if (state.pmOpenFor) {
-    const e = state.peers.get(state.pmOpenFor);
-    if (e && e.conn) safeSend(e.conn, { type: 'poll-vote', msgId, optionIndex: idx, from: state.myPeerId });
-  }
 };
 
 const _origStartGameUI = startGameUI;
@@ -3461,29 +3532,32 @@ function unoCardLabel(card) {
   return card.value;
 }
 function unoCardCanPlay(card, current) {
-  if (card.type === 'wild') return true;
-  if (card.color === current.color) return true;
-  if (card.type === 'number' && current.type === 'number' && card.value === current.value) return true;
-  if (card.type === 'special' && current.type === 'special' && card.value === current.value) return true;
-  return false;
+  return GameLogic.unoCardCanPlay(card, current);
 }
 
 function inviteToUNO(peerId) {
   const e = state.peers.get(peerId);
-  if (!e || !e.conn) { toast('❌ کاربر آفلاین'); return; }
-  const id = 'uno-' + Date.now();
-  state.uno = { id, opponent: peerId, host: true, myHand: [], opHand: [], deck: [], current: null, myTurn: true, pendingWild: null };
+  if (!e || !e.conn || !e.conn.open) { toast('❌ کاربر آفلاین'); return; }
+  if (state.uno) { toast('❗ یک بازی UNO در جریان است'); return; }
+  const id = 'uno-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+  state.uno = { id, opponent: peerId, host: true, myHand: [], opHand: [], deck: [], current: null, myTurn: false, pendingWild: null, finished: false, endTimer: null };
   safeSend(e.conn, { type: 'uno-invite', id, name: state.myName });
   toast('⏳ دعوت UNO ارسال شد...');
 }
 function onUNOInvite(conn, msg) {
-  const e = state.peers.get(conn.peer); if (!e) return;
+  const e = state.peers.get(conn.peer);
+  if (!e || !msg || typeof msg.id !== 'string' || msg.id.length > 100) return;
+  if (state.uno) {
+    safeSend(conn, { type: 'uno-response', id: msg.id, accepted: false });
+    toast('❗ اول بازی فعلی را تمام کن');
+    return;
+  }
   const t = document.createElement('div'); t.className = 'game-invite-toast';
-  t.innerHTML = `<h4>🎴 دعوت به UNO</h4><p><b>${escapeHTML(safePeerName(e.name))}</b> می‌خواد UNO بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
+  t.innerHTML = '<h4>🎴 دعوت به UNO</h4><p><b>' + escapeHTML(safePeerName(e.name)) + '</b> می‌خواد UNO بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>';
   document.body.appendChild(t);
   t.querySelector('.gi-accept').onclick = () => {
     t.remove();
-    state.uno = { id: msg.id, opponent: conn.peer, host: false, myHand: [], opHand: [], deck: [], current: null, myTurn: false, pendingWild: null };
+    state.uno = { id: msg.id, opponent: conn.peer, host: false, myHand: [], opHand: [], deck: [], current: null, myTurn: false, pendingWild: null, finished: false, endTimer: null };
     safeSend(conn, { type: 'uno-response', id: msg.id, accepted: true });
     toast('⏳ در حال شروع...');
   };
@@ -3491,35 +3565,37 @@ function onUNOInvite(conn, msg) {
   setTimeout(() => { if (t.parentNode) t.remove(); }, 20000);
 }
 function onUNOResponse(conn, msg) {
-  if (!state.uno || state.uno.id !== msg.id) return;
+  const u = state.uno;
+  if (!u || !u.host || u.id !== msg.id || conn.peer !== u.opponent || u.finished) return;
   if (!msg.accepted) { toast('❌ رد شد'); state.uno = null; return; }
   toast('✅ شروع UNO!');
   const deck = unoBuildDeck();
   const myHand = deck.splice(0, 7);
   const opHand = deck.splice(0, 7);
   let current = deck.pop();
-  while (current.type === 'wild') { deck.unshift(current); current = deck.pop(); }
-  state.uno.deck = deck;
-  state.uno.myHand = myHand;
-  state.uno.opHand = opHand;
-  state.uno.current = current;
-  state.uno.myTurn = true;
-  const e = state.peers.get(state.uno.opponent);
-  if (e && e.conn) {
-    safeSend(e.conn, {
-      type: 'uno-start', id: state.uno.id, deck,
-      myHand: opHand, current, myTurn: false, opponentHandCount: myHand.length
-    });
-  }
+  while (current && current.type === 'wild' && deck.length) { deck.unshift(current); current = deck.pop(); }
+  if (!current || current.type !== 'number') { toast('❌ ساخت دسته کارت ناموفق بود'); state.uno = null; return; }
+  Object.assign(u, { deck, myHand, opHand, current, myTurn: true, pendingWild: null, finished: false });
+  // Never expose the remaining deck to the other player.
+  const peer = state.peers.get(u.opponent);
+  if (peer && peer.conn) safeSend(peer.conn, {
+    type: 'uno-start', id: u.id, myHand: opHand, current,
+    opponentHandCount: myHand.length
+  });
   startUNOUI();
 }
 function onUNOStart(conn, msg) {
-  if (!state.uno || state.uno.id !== msg.id) return;
-  state.uno.deck = msg.deck;
-  state.uno.myHand = msg.myHand;
-  state.uno.current = msg.current;
-  state.uno.myTurn = msg.myTurn;
-  state.uno.opHand = new Array(Number.isInteger(msg.opponentHandCount) ? Math.max(0, Math.min(100, msg.opponentHandCount)) : 7).fill({});
+  const u = state.uno;
+  if (!u || u.host || u.id !== msg.id || conn.peer !== u.opponent || u.finished ||
+      !Array.isArray(msg.myHand) || msg.myHand.length !== 7 ||
+      !msg.myHand.every(card => GameLogic.isValidUnoCard(card, false)) ||
+      !GameLogic.isValidUnoCard(msg.current, true) || msg.current.type !== 'number' ||
+      !Number.isInteger(msg.opponentHandCount) || msg.opponentHandCount !== 7) return;
+  u.deck = [];
+  u.myHand = msg.myHand;
+  u.current = msg.current;
+  u.myTurn = false;
+  u.opHand = new Array(msg.opponentHandCount).fill(null);
   startUNOUI();
 }
 function startUNOUI() {
@@ -3527,6 +3603,8 @@ function startUNOUI() {
   renderUNO();
 }
 function closeUNO() {
+  if (state.uno && state.uno.endTimer) clearTimeout(state.uno.endTimer);
+  $('unoColorPicker').style.display = 'none';
   $('unoModal').classList.remove('on');
   state.uno = null;
 }
@@ -3557,102 +3635,176 @@ function renderUNO() {
   $('unoStatus').textContent = u.myTurn ? '🎯 نوبت توئه!' : '⏳ منتظر حریف...';
 }
 function unoPlayCard(idx) {
-  const u = state.uno; if (!u || !u.myTurn) return;
+  const u = state.uno;
+  if (!u || u.finished || !u.myTurn || !Number.isInteger(idx) || idx < 0 || idx >= u.myHand.length) return;
   const card = u.myHand[idx];
   if (!unoCardCanPlay(card, u.current)) { toast('❌ این کارت رو نمی‌تونی بازی کنی'); return; }
-  if (card.type === 'wild') {
-    u.pendingWild = idx;
-    $('unoColorPicker').style.display = 'flex';
-    return;
-  }
+  if (card.type === 'wild') { u.pendingWild = idx; $('unoColorPicker').style.display = 'flex'; return; }
   applyUNOPlay(idx);
 }
 function unoChooseColor(color) {
-  const u = state.uno; if (!u || u.pendingWild === null) return;
+  const u = state.uno;
+  if (!u || u.finished || !u.myTurn || !Number.isInteger(u.pendingWild) || !GameLogic.isValidUnoColor(color)) return;
   const idx = u.pendingWild;
-  u.myHand[idx].color = color;
   u.pendingWild = null;
   $('unoColorPicker').style.display = 'none';
   applyUNOPlay(idx, color);
 }
 function applyUNOPlay(idx, wildColor) {
-  const u = state.uno; if (!u) return;
-  const card = u.myHand.splice(idx, 1)[0];
-  if (wildColor) card.color = wildColor;
-  const cur = $('unoCurrent');
-  cur.classList.add('flying');
-  setTimeout(() => cur.classList.remove('flying'), 500);
-  u.current = card;
-  u.myTurn = false;
+  const u = state.uno;
+  if (!u || u.finished || !u.myTurn || !Number.isInteger(idx) || idx < 0 || idx >= u.myHand.length) return;
+  const card = u.myHand[idx];
+  if (!unoCardCanPlay(card, u.current)) { toast('❌ این کارت با کارت روی میز جور نیست'); return; }
+  if (card.type === 'wild' && !GameLogic.isValidUnoColor(wildColor || card.color)) { toast('❌ رنگ کارت وحشی را انتخاب کن'); return; }
+  const played = { ...card };
+  if (played.type === 'wild') played.color = wildColor || played.color;
+  u.myHand.splice(idx, 1);
+  u.pendingWild = null;
+  $('unoColorPicker').style.display = 'none';
+  u.current = played;
+
+  const keepsTurn = played.type === 'special'; // In two-player mode, Skip/Reverse/Draw Two keep the turn.
+  let penaltyCards = [];
+  if (u.host && played.type === 'special' && played.value === 'draw2') {
+    penaltyCards = u.deck.splice(0, Math.min(2, u.deck.length));
+    u.opHand.push(...penaltyCards);
+  }
+  u.myTurn = keepsTurn;
+
+  const e = state.peers.get(u.opponent);
+  if (e && e.conn) safeSend(e.conn, {
+    type: 'uno-move', id: u.id, card: played, handCount: u.myHand.length,
+    turnOwner: keepsTurn ? (u.host ? 'host' : 'guest') : (u.host ? 'guest' : 'host'),
+    penaltyCards: u.host ? penaltyCards : undefined
+  });
+  renderUNO();
+
   if (u.myHand.length === 0) {
-    const e = state.peers.get(u.opponent);
-    if (e && e.conn) safeSend(e.conn, { type: 'uno-end', id: u.id, iWon: true });
-    renderUNO();
-    $('unoStatus').textContent = '🏆 بردی! 🎉';
-    showConfetti();
-    setTimeout(closeUNO, 3000);
+    finishUNO(state.myPeerId);
+    const peer = state.peers.get(u.opponent);
+    if (peer && peer.conn) safeSend(peer.conn, { type: 'uno-end', id: u.id, winner: state.myPeerId });
     return;
   }
-  renderUNO();
-  const e = state.peers.get(u.opponent);
-  if (e && e.conn) {
-    safeSend(e.conn, { type: 'uno-move', id: u.id, card: u.current, myHandCount: u.myHand.length, myTurn: true });
-  }
-  if (card.type === 'special') {
-    if (card.value === 'skip') {
-      setTimeout(() => { u.myTurn = true; renderUNO(); }, 700);
-    } else if (card.value === 'draw2') {
-      setTimeout(() => {
-        for (let i = 0; i < 2 && u.deck.length; i++) u.opHand.push(u.deck.pop());
-        u.myTurn = true; renderUNO();
-      }, 700);
-    } else if (card.value === 'reverse') {
-      setTimeout(() => { u.myTurn = true; renderUNO(); }, 700);
-    }
+  if (played.type === 'special' && played.value === 'draw2' && !u.host) {
+    $('unoStatus').textContent = '🎯 حریف دو کارت برمی‌دارد؛ نوبت دوباره با توست';
   }
 }
 function onUNOMove(conn, msg) {
-  const u = state.uno; if (!u || u.id !== msg.id) return;
-  u.current = msg.card;
-  u.myTurn = true;
-  if (msg.myHandCount !== undefined && u.opHand) {
-    while (u.opHand.length > msg.myHandCount) u.opHand.pop();
-    while (u.opHand.length < msg.myHandCount) u.opHand.push({});
-  }
-  if (msg.card.type === 'special') {
-    if (msg.card.value === 'draw2') {
-      for (let i = 0; i < 2 && u.deck.length; i++) u.myHand.push(u.deck.pop());
-      u.myTurn = false;
-      toast('+2 گرفتی!');
-    } else if (msg.card.value === 'skip') {
-      u.myTurn = false;
-      toast('🚫 نوبتت سوخت!');
-      setTimeout(() => { u.myTurn = true; renderUNO(); }, 1000);
+  const u = state.uno;
+  if (!u || u.finished || u.id !== msg.id || conn.peer !== u.opponent || u.myTurn ||
+      !GameLogic.isValidUnoCard(msg.card, true) || !unoCardCanPlay(msg.card, u.current) ||
+      !Number.isInteger(msg.handCount) || msg.handCount < 0 || msg.handCount > 100 ||
+      !['host', 'guest'].includes(msg.turnOwner)) return;
+
+  if (u.host) {
+    const cardIndex = u.opHand.findIndex(card => GameLogic.unoCardsMatchInHand(card, msg.card));
+    if (cardIndex < 0 || u.opHand.length - 1 !== msg.handCount) return;
+    u.opHand.splice(cardIndex, 1);
+    u.current = { ...msg.card };
+    const keepsTurn = msg.card.type === 'special';
+    if (msg.card.type === 'special' && msg.card.value === 'draw2') {
+      u.myHand.push(...u.deck.splice(0, Math.min(2, u.deck.length)));
     }
+    u.myTurn = !keepsTurn;
+    if (u.opHand.length === 0) { finishUNO(conn.peer); return; }
+    const peer = state.peers.get(u.opponent);
+    if (peer && peer.conn) safeSend(peer.conn, {
+      type: 'uno-sync', id: u.id, current: u.current,
+      hostHandCount: u.myHand.length, guestHandCount: u.opHand.length,
+      turnOwner: keepsTurn ? 'guest' : 'host'
+    });
+    renderUNO();
+    return;
   }
+
+  const newHostCount = msg.handCount;
+  u.current = { ...msg.card };
+  u.opHand = new Array(newHostCount).fill(null);
+  if (Array.isArray(msg.penaltyCards) && msg.penaltyCards.length <= 2 &&
+      msg.penaltyCards.every(card => GameLogic.isValidUnoCard(card, false))) u.myHand.push(...msg.penaltyCards);
+  u.myTurn = msg.turnOwner === 'guest';
   renderUNO();
+  if (newHostCount === 0) finishUNO(conn.peer);
+}
+function finishUNO(winnerId) {
+  const u = state.uno;
+  if (!u || u.finished) return;
+  u.finished = true; u.myTurn = false;
+  if (u.endTimer) clearTimeout(u.endTimer);
+  const won = winnerId === state.myPeerId;
+  $('unoStatus').textContent = won ? '🏆 بردی! 🎉' : '😢 این دور را باختی';
+  if (won) showConfetti(); else shakeScreen();
+  u.endTimer = setTimeout(() => { if (state.uno === u) closeUNO(); }, 2600);
 }
 function onUNOEnd(conn, msg) {
-  const u = state.uno; if (!u || u.id !== msg.id) return;
+  const u = state.uno;
+  if (!u || u.finished || u.id !== msg.id || conn.peer !== u.opponent || msg.winner !== conn.peer) return;
+  finishUNO(msg.winner);
+}
+function onUNOSync(conn, msg) {
+  const u = state.uno;
+  if (!u || u.host || u.finished || u.id !== msg.id || conn.peer !== u.opponent ||
+      !GameLogic.isValidUnoCard(msg.current, true) ||
+      !Number.isInteger(msg.hostHandCount) || msg.hostHandCount < 0 || msg.hostHandCount > 100 ||
+      !Number.isInteger(msg.guestHandCount) || msg.guestHandCount < 0 || msg.guestHandCount > 100 ||
+      !['host', 'guest'].includes(msg.turnOwner)) return;
+  u.current = { ...msg.current };
+  u.opHand = new Array(msg.hostHandCount).fill(null);
+  u.myTurn = msg.turnOwner === 'guest';
   renderUNO();
-  $('unoStatus').textContent = msg.iWon ? '😢 باختی!' : '🏆 بردی!';
-  if (!msg.iWon) showConfetti(); else shakeScreen();
-  setTimeout(closeUNO, 3000);
+}
+function onUNODrawRequest(conn, msg) {
+  const u = state.uno;
+  if (!u || !u.host || u.finished || u.id !== msg.id || conn.peer !== u.opponent || u.myTurn) return;
+  const card = u.deck.pop();
+  if (card) u.opHand.push(card);
+  u.myTurn = true;
+  const peer = state.peers.get(u.opponent);
+  if (peer && peer.conn) safeSend(peer.conn, {
+    type: 'uno-draw-result', id: u.id, drawnBy: card ? 'guest' : 'none',
+    card: card || null, hostHandCount: u.myHand.length,
+    guestHandCount: u.opHand.length, current: u.current, turnOwner: 'host'
+  });
+  if (!card) toast('❗ دسته کارت تمام شد؛ نوبت به حریف می‌رسد');
+  renderUNO();
+}
+function onUNODrawResult(conn, msg) {
+  const u = state.uno;
+  if (!u || u.host || u.finished || u.id !== msg.id || conn.peer !== u.opponent ||
+      !['host', 'guest', 'none'].includes(msg.drawnBy) ||
+      !Number.isInteger(msg.hostHandCount) || msg.hostHandCount < 0 || msg.hostHandCount > 100 ||
+      !Number.isInteger(msg.guestHandCount) || msg.guestHandCount < 0 || msg.guestHandCount > 100 ||
+      !GameLogic.isValidUnoCard(msg.current, true) || !['host', 'guest'].includes(msg.turnOwner)) return;
+  if (msg.drawnBy === 'guest' && msg.card && GameLogic.isValidUnoCard(msg.card, false)) u.myHand.push(msg.card);
+  u.current = { ...msg.current };
+  u.opHand = new Array(msg.hostHandCount).fill(null);
+  u.myTurn = msg.turnOwner === 'guest';
+  if (!msg.card && msg.drawnBy === 'none') toast('❗ دسته کارت تمام شد؛ نوبت عوض شد');
+  else if (msg.drawnBy === 'guest') toast('🎴 یک کارت برداشتی؛ نوبت حریف است');
+  renderUNO();
 }
 function unoDraw() {
-  const u = state.uno; if (!u || !u.myTurn) return;
-  if (!u.deck.length) { toast('❌ دسته خالی'); return; }
-  const card = u.deck.pop();
-  u.myHand.push(card);
-  renderUNO();
-  u.myTurn = false;
-  const e = state.peers.get(u.opponent);
-  if (e && e.conn) {
-    safeSend(e.conn, { type: 'uno-move', id: u.id, card: u.current, myHandCount: u.myHand.length, myTurn: true, drew: true });
+  const u = state.uno;
+  if (!u || u.finished || !u.myTurn) return;
+  if (u.host) {
+    const card = u.deck.pop();
+    if (card) u.myHand.push(card);
+    u.myTurn = false;
+    const peer = state.peers.get(u.opponent);
+    if (peer && peer.conn) safeSend(peer.conn, {
+      type: 'uno-draw-result', id: u.id, drawnBy: card ? 'host' : 'none',
+      hostHandCount: u.myHand.length, guestHandCount: u.opHand.length,
+      current: u.current, turnOwner: 'guest'
+    });
+    if (!card) toast('❗ دسته کارت تمام شد؛ نوبت عوض شد');
+    renderUNO();
+    return;
   }
-  setTimeout(() => { u.myTurn = true; renderUNO(); }, 500);
+  u.myTurn = false;
+  const peer = state.peers.get(u.opponent);
+  if (peer && peer.conn) safeSend(peer.conn, { type: 'uno-draw-request', id: u.id });
+  $('unoStatus').textContent = '⏳ در حال برداشتن کارت...';
 }
-
 document.addEventListener('click', e => {
   if (e.target.id === 'umUNO') {
     if (menuTargetId) { inviteToUNO(menuTargetId); closeUserMenu(); }
@@ -3667,6 +3819,9 @@ handleData = function(conn, msg) {
   if (msg.type === 'uno-start') return onUNOStart(conn, msg);
   if (msg.type === 'uno-move') return onUNOMove(conn, msg);
   if (msg.type === 'uno-end') return onUNOEnd(conn, msg);
+  if (msg.type === 'uno-sync') return onUNOSync(conn, msg);
+  if (msg.type === 'uno-draw-request') return onUNODrawRequest(conn, msg);
+  if (msg.type === 'uno-draw-result') return onUNODrawResult(conn, msg);
   _origHandleData(conn, msg);
 };
 
