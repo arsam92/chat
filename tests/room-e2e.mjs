@@ -80,9 +80,12 @@ try {
   // Vote from B, then verify the origin receives the vote count update.
   const remotePoll = b.locator('.poll-card').filter({ hasText: 'ROOM TEST: کدام گزینه؟' });
   await remotePoll.locator('.poll-option').nth(0).click();
-  await a.locator('.poll-card').filter({ hasText: 'ROOM TEST: کدام گزینه؟' })
-    .locator('.poll-info').getByText(/1|۱/)
-    .waitFor({ state: 'visible', timeout: 10000 });
+  await a.waitForFunction(() => {
+    const card = [...document.querySelectorAll('.poll-card')]
+      .find(el => el.textContent?.includes('ROOM TEST: کدام گزینه؟'));
+    const info = card?.querySelector('.poll-info')?.textContent || '';
+    return /[1-9۱-۹]/u.test(info);
+  }, null, { timeout: 10000 });
 
   console.log('PASS: two independent browsers joined, created a poll, and exchanged a vote.');
   console.log('A roster:', JSON.stringify(await a.locator('#userList .u-name').allTextContents()));
