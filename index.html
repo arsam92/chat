@@ -1440,7 +1440,7 @@ const THEMES = [
 
 const state = {
   myName: '', myPeerId: null, mySlot: -1,
-  peer: null, peers: new Map(),
+  peer: null, peers: new Map(), publicMessages: new Map(),
   pm: new Map(), unread: new Map(),
   pmOpenFor: null, joined: false,
   joinResolve: null, pendingBootstrap: new Set(),
@@ -1761,25 +1761,36 @@ function onPrivateMsg(conn, msg) {
   clearTypingTimer(conn.peer);
 }
 function onReaction(conn, msg) {
-  const id = conn.peer;
-  let found = false;
-  const arr = state.pm.get(id);
-  if (arr) {
-    const m = arr.find(x => x.id === msg.msgId);
-    if (m) {
-      if (!m.reactions) m.reactions = {};
-      if (!m.reactions[msg.emoji]) m.reactions[msg.emoji] = [];
-      if (msg.action === 'add') { if (!m.reactions[msg.emoji].includes(msg.from)) m.reactions[msg.emoji].push(msg.from); }
-      else { m.reactions[msg.emoji] = m.reactions[msg.emoji].filter(u => u !== msg.from); if (!m.reactions[msg.emoji].length) delete m.reactions[msg.emoji]; }
-      found = true;
-      if (state.pmOpenFor === id) renderPM();
-    }
+  if (!conn || !msg || typeof msg.msgId !== 'string' ||
+      !REACTION_EMOJIS.includes(msg.emoji) || !['add', 'remove'].includes(msg.action)) return;
+  const peerId = conn.peer;
+  const pmArr = state.pm.get(peerId);
+  const privateMessage = pmArr && pmArr.find(item => item.id === msg.msgId);
+  const target = privateMessage || state.publicMessages.get(msg.msgId);
+  if (!target) return;
+  if (!target.reactions || typeof target.reactions !== 'object') target.reactions = {};
+  const users = Array.isArray(target.reactions[msg.emoji]) ? target.reactions[msg.emoji] : [];
+  if (msg.action === 'add') {
+    if (!users.includes(peerId)) users.push(peerId);
+    target.reactions[msg.emoji] = users;
+  } else {
+    const remaining = users.filter(id => id !== peerId);
+    if (remaining.length) target.reactions[msg.emoji] = remaining;
+    else delete target.reactions[msg.emoji];
   }
-  if (!found) {
-    const el = document.querySelector(`.msg[data-msgid="${msg.msgId}"]`);
-    if (el) { const oldRx = el.querySelector('.reactions-row'); if (oldRx) oldRx.remove(); }
+  if (privateMessage) {
+    if (state.pmOpenFor === peerId) renderPM();
+    return;
   }
+  const el = [...document.querySelectorAll('.msg[data-msgid]')].find(node => node.dataset.msgid === msg.msgId);
+  if (!el) return;
+  const old = el.querySelector('.reactions-row');
+  if (old) old.remove();
+  const row = renderReactions(target);
+  const bubble = el.querySelector('.bubble');
+  if (row && bubble) bubble.after(row);
 }
+
 function onDelivered(conn, msg) {
   const el = document.querySelector(`.msg[data-msgid="${msg.msgId}"]`);
   if (el) { const t = el.querySelector('.ticks'); if (t) { t.textContent = '✓✓'; t.classList.add('delivered'); } }
@@ -1968,7 +1979,7 @@ function addMessage(o, animType) {
   clearLastHighlight();
   const w = document.createElement('div');
   w.className = 'msg ' + (o.mine ? 'mine' : 'theirs');
-  if (o.id) w.setAttribute('data-msgid', o.id);
+  if (o.id) { w.setAttribute('data-msgid', o.id); if (!o._isPM) state.publicMessages.set(String(o.id), o); }
   let animClass = '';
   if (animType === 'flying' || (o.mine && !animType)) {
     if (o.sticker) animClass = 'sticker-fly';
@@ -1995,10 +2006,12 @@ function addMessage(o, animType) {
   w.appendChild(meta);
   bubble.addEventListener('dblclick', () => setReplyTo(o));
   box.appendChild(w);
-  while (box.children.length > 300) box.firstChild.remove();
+  while (box.children.length > 300) { const oldest = box.firstElementChild; if (!oldest) break; if (oldest.dataset.msgid) state.publicMessages.delete(oldest.dataset.msgid); oldest.remove(); }
   setTimeout(() => w.classList.add('last-message'), 100);
   if (near || o.mine) box.scrollTop = box.scrollHeight;
 }
+
+
 function addSystemMsg(text) {
   const box = $('messages');
   clearLastHighlight();
