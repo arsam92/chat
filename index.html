@@ -1479,6 +1479,7 @@ const THEMES = [
 const state = {
   myName: '', myPeerId: null, mySlot: -1,
   peer: null, peers: new Map(), publicMessages: new Map(),
+  connectionPool: new Map(), connectingPeers: new Set(),
   pm: new Map(), unread: new Map(),
   pmOpenFor: null, joined: false,
   joinResolve: null, pendingBootstrap: new Set(),
