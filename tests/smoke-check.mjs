@@ -11,6 +11,10 @@ assert.equal(scripts.length, 1, 'exactly one inline application script expected'
 const app = scripts[0][1];
 assert.doesNotThrow(() => new Function(app), 'inline JavaScript must parse');
 assert.match(html, /src="\.\/game-logic\.js"/, 'shared game logic must load from Pages');
+assert.match(app, /const ROOM_NAME = 'global-chat-2026';/, 'all fresh clients must claim the same canonical room');
+assert.match(app, /function getRoomSlugs\(\)/, 'previous URL-scoped rooms must remain discoverable');
+assert.match(app, /function maintainRoomConnections\(\)/, 'room discovery must retry after the initial join');
+assert.match(app, /discover\(slugs\)/, 'initial discovery must scan canonical and compatibility room IDs');
 assert.match(app, /msg\.from !== conn\.peer/, 'poll votes must match the sending peer');
 assert.match(app, /GameLogic\.canAcceptPollVote/, 'poll vote validation should use shared logic');
 assert.match(app, /function onGameMove\(conn, msg\)/, 'RPS move handler should exist');
