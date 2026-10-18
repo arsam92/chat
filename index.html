@@ -1758,8 +1758,14 @@
 'use strict';
 const GameLogic = window.ChatGameLogic;
 
-const ROOM_NAME = 'global-chat-2026-' + location.hostname + location.pathname.replace(/\/+$/, '');
+// Stable room namespace, with compatibility for the previous URL-scoped builds.
+const ROOM_NAME = 'global-chat-2026';
 const SLOT_PREFIX = 'chat-';
+function getRoomSlugs() {
+  const canonical = slugify(ROOM_NAME);
+  const scopedName = 'global-chat-2026-' + location.hostname + location.pathname.replace(/\/+$/, '');
+  return [...new Set([canonical, slugify(scopedName)])];
+}
 const MAX_SLOTS = 20;
 const MAX_IMAGE_SIZE = 800 * 1024;
 const MAX_VOICE_SIZE = 1500 * 1024;
@@ -1830,7 +1836,7 @@ const state = {
   pm: new Map(), unread: new Map(),
   pmOpenFor: null, joined: false,
   joinResolve: null, pendingBootstrap: new Set(),
-  joinTimer: null, replyTo: null, pendingImage: null,
+  joinTimer: null, discoveryTimer: null, roomScanRunning: false, roomSlugs: [], replyTo: null, pendingImage: null,
   myProfile: { avatar: null, bio: '' },
   typingTimers: new Map(),
   myTypingTimeout: null,
@@ -2011,15 +2017,16 @@ async function joinChat(name) {
   if (typeof Peer === 'undefined') { toast('❌ PeerJS لود نشد'); return; }
   state.myName = name;
   const btn = $('loginBtn'); btn.disabled = true; btn.classList.add('loading');
-  const slug = slugify(ROOM_NAME);
+  const slugs = getRoomSlugs();
+  const canonicalSlug = slugify(ROOM_NAME);
   try {
-    const { peer, slot } = await claimSlot(slug);
-    state.peer = peer; state.myPeerId = peer.id; state.mySlot = slot;
+    const { peer, slot } = await claimSlot(canonicalSlug);
+    state.peer = peer; state.myPeerId = peer.id; state.mySlot = slot; state.roomSlugs = slugs;
     wirePeer(peer);
-    await discover(slug);
+    await discover(slugs);
     // A second quick pass catches peers that claimed a slot during the first scan.
-    await new Promise(resolve => setTimeout(resolve, 450));
-    await discover(slug);
+    await new Promise(resolve => setTimeout(resolve, 650));
+    await discover(slugs);
     $('loginScreen').classList.add('leaving');
     setTimeout(() => finishJoin(), 700);
   } catch (err) {
@@ -2048,18 +2055,22 @@ function wirePeer(peer) {
     if (t === 'network' || t === 'server-error') updateStatus('reconnecting');
   });
 }
-function discover(slug) {
+function discover(slugs) {
   return new Promise(resolve => {
     if (state.joinTimer) clearTimeout(state.joinTimer);
     state.joinResolve = resolve;
     state.pendingBootstrap = new Set();
     const targets = [];
-    for (let slot = 0; slot < MAX_SLOTS; slot++) {
-      if (slot === state.mySlot) continue;
-      const id = SLOT_PREFIX + slug + '-' + slot;
-      const known = state.peers.get(id);
-      if (known && known.conn && known.conn.open) continue;
-      targets.push(id);
+    const roomIds = [...new Set((Array.isArray(slugs) ? slugs : [slugs]).filter(Boolean))];
+    for (const slug of roomIds) {
+      for (let slot = 0; slot < MAX_SLOTS; slot++) {
+        const id = SLOT_PREFIX + slug + '-' + slot;
+        if (id === state.myPeerId) continue;
+        const known = state.peers.get(id);
+        if (known && known.conn && known.conn.open) continue;
+        if (state.connectingPeers.has(id)) continue;
+        targets.push(id);
+      }
     }
     if (!targets.length) { finishDiscover(); return; }
     targets.forEach(id => state.pendingBootstrap.add(id));
@@ -2070,6 +2081,7 @@ function discover(slug) {
 function finishDiscover() { clearTimeout(state.joinTimer); const r = state.joinResolve; state.joinResolve = null; if (r) r(); }
 function finishJoin() {
   state.joined = true;
+  startRoomMaintenance();
   $('loginScreen').style.display = 'none';
   $('chatScreen').classList.add('on');
   $('meName').textContent = state.myName;
@@ -2082,6 +2094,29 @@ function finishJoin() {
     if (!reachable) toast('ℹ️ هنوز کاربر دیگری قابل دسترس نیست؛ ممکن است کسی آنلاین نباشد یا شبکه اتصال مستقیم را مسدود کرده باشد.');
   }, 1200);
   setTimeout(() => $('chatInput').focus(), 1000);
+}
+function startRoomMaintenance() {
+  if (state.discoveryTimer) clearInterval(state.discoveryTimer);
+  state.discoveryTimer = setInterval(maintainRoomConnections, 12000);
+  setTimeout(maintainRoomConnections, 1800);
+}
+function maintainRoomConnections() {
+  if (!state.joined || state.roomScanRunning || !state.peer || state.peer.destroyed || state.peer.disconnected) return;
+  state.roomScanRunning = true;
+  const slugs = state.roomSlugs.length ? state.roomSlugs : getRoomSlugs();
+  try {
+    for (const slug of slugs) {
+      for (let slot = 0; slot < MAX_SLOTS; slot++) {
+        const id = SLOT_PREFIX + slug + '-' + slot;
+        if (id === state.myPeerId || state.connectingPeers.has(id)) continue;
+        const existing = state.peers.get(id);
+        if (existing && existing.conn && existing.conn.open) continue;
+        dial(id);
+      }
+    }
+  } finally {
+    setTimeout(() => { state.roomScanRunning = false; }, 2200);
+  }
 }
 function updateStatus(mode) {
   const pill = $('statusPill'), txt = $('statusText');
@@ -3857,6 +3892,7 @@ $('sidebarShade').onclick = closeMobileUsers;
 window.addEventListener('keydown', e => { if (e.key === 'Escape') closeMobileUsers(); });
 
 window.addEventListener('beforeunload', () => {
+  if (state.discoveryTimer) clearInterval(state.discoveryTimer);
   if (state.peer && !state.peer.destroyed) { try { broadcast({ type: 'bye' }); } catch (_) {} }
 });
 </script>
