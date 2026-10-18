@@ -1455,6 +1455,14 @@ const state = {
 };
 
 const $ = id => document.getElementById(id);
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[ch]);
+}
+function safePeerName(value) {
+  return String(value ?? '').replace(/[\\u0000-\\u001f\\u007f]/g, ' ').trim().slice(0, 20) || 'کاربر';
+}
 const faNum = n => Number(n || 0).toLocaleString('fa-IR');
 const faTime = ts => new Date(ts).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
 const faDur = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
@@ -2352,7 +2360,7 @@ function inviteToGame(peerId) {
 function onGameInvite(conn, msg) {
   const e = state.peers.get(conn.peer); if (!e) return;
   const t = document.createElement('div'); t.className = 'game-invite-toast';
-  t.innerHTML = `<h4>✊✋✌️ دعوت به بازی</h4><p><b>${e.name}</b> می‌خواد سنگ کاغذ قیچی بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
+  t.innerHTML = `<h4>✊✋✌️ دعوت به بازی</h4><p><b>${escapeHTML(safePeerName(e.name))}</b> می‌خواد سنگ کاغذ قیچی بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
   document.body.appendChild(t);
   t.querySelector('.gi-accept').onclick = () => {
     t.remove();
@@ -2450,7 +2458,7 @@ function inviteToTTT(peerId) {
 function onTTTInvite(conn, msg) {
   const e = state.peers.get(conn.peer); if (!e) return;
   const t = document.createElement('div'); t.className = 'game-invite-toast';
-  t.innerHTML = `<h4>❌⭕ دعوت به دوز</h4><p><b>${e.name}</b> می‌خواد دوز بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
+  t.innerHTML = `<h4>❌⭕ دعوت به دوز</h4><p><b>${escapeHTML(safePeerName(e.name))}</b> می‌خواد دوز بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
   document.body.appendChild(t);
   t.querySelector('.gi-accept').onclick = () => { t.remove(); state.ttt = { id: msg.id, opponent: conn.peer, board: Array(9).fill(null), mySymbol: 'O', theirSymbol: 'X', myTurn: false, host: false }; safeSend(conn, { type: 'ttt-response', id: msg.id, accepted: true }); startTTTUI(); };
   t.querySelector('.gi-decline').onclick = () => { t.remove(); safeSend(conn, { type: 'ttt-response', id: msg.id, accepted: false }); };
@@ -2515,7 +2523,7 @@ function inviteToNF(peerId) {
 function onNFInvite(conn, msg) {
   const e = state.peers.get(conn.peer); if (!e) return;
   const t = document.createElement('div'); t.className = 'game-invite-toast';
-  t.innerHTML = `<h4>📝 دعوت به اسم فامیل</h4><p><b>${e.name}</b> می‌خواد اسم فامیل بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
+  t.innerHTML = `<h4>📝 دعوت به اسم فامیل</h4><p><b>${escapeHTML(safePeerName(e.name))}</b> می‌خواد اسم فامیل بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
   document.body.appendChild(t);
   t.querySelector('.gi-accept').onclick = () => { t.remove(); state.nf = { id: msg.id, opponent: conn.peer, host: false, letter: null, myAnswers: null, theirAnswers: null, timer: null }; safeSend(conn, { type: 'nf-response', id: msg.id, accepted: true }); toast('⏳ منتظر شروع بازی...'); };
   t.querySelector('.gi-decline').onclick = () => { t.remove(); safeSend(conn, { type: 'nf-response', id: msg.id, accepted: false }); };
@@ -2600,7 +2608,7 @@ function compareNF() {
     else if (m === t) { myPts = 5; theirPts = 5; myEl.classList.add('match'); status = '🤝 یکسان'; }
     else { myPts = 10; theirPts = 10; myEl.classList.add('unique'); status = '✅ متفاوت'; }
     myScore += myPts; theirScore += theirPts;
-    html += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed rgba(255,255,255,0.1)"><span><b>${NF_LABELS[cat]}:</b> تو "${mine[cat]||'—'}" / حریف "${theirs[cat]||'—'}"</span><span style="color:var(--accent);font-weight:700">${myPts} / ${theirPts} — ${status}</span></div>`;
+    html += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed rgba(255,255,255,0.1)"><span><b>${NF_LABELS[cat]}:</b> تو "${escapeHTML(mine[cat]||'—')}" / حریف "${escapeHTML(theirs[cat]||'—')}"</span><span style="color:var(--accent);font-weight:700">${myPts} / ${theirPts} — ${status}</span></div>`;
   });
   const winner = myScore > theirScore ? '🏆 بردی!' : myScore < theirScore ? '😢 باختی!' : '🤝 مساوی!';
   html += `<div style="text-align:center;margin-top:12px;font-size:20px;font-weight:900;color:var(--primary)">${winner}</div>`;
@@ -2940,7 +2948,7 @@ function inviteToUNO(peerId) {
 function onUNOInvite(conn, msg) {
   const e = state.peers.get(conn.peer); if (!e) return;
   const t = document.createElement('div'); t.className = 'game-invite-toast';
-  t.innerHTML = `<h4>🎴 دعوت به UNO</h4><p><b>${e.name}</b> می‌خواد UNO بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
+  t.innerHTML = `<h4>🎴 دعوت به UNO</h4><p><b>${escapeHTML(safePeerName(e.name))}</b> می‌خواد UNO بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
   document.body.appendChild(t);
   t.querySelector('.gi-accept').onclick = () => {
     t.remove();
