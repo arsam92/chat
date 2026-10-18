@@ -1606,6 +1606,134 @@
     .poll-option, .nf-btn { transition: none !important; animation: none !important; }
   }
 
+
+  /* ARSAM ARCADE: coherent, brighter game surfaces and responsive controls */
+  #gameModal .modal, #tttModal .modal, #nfModal .modal, #unoModal .modal {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    max-height: min(88vh, 820px);
+    overflow-y: auto;
+  }
+  #gameModal .modal::before, #tttModal .modal::before,
+  #nfModal .modal::before, #unoModal .modal::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--primary), #b388ff, #ffc107, transparent);
+    opacity: .9;
+    pointer-events: none;
+  }
+  #gameModal .game-arena { align-items: stretch; gap: 12px; }
+  #gameModal .game-player {
+    min-width: 0; flex: 1;
+    padding: 18px 12px;
+    border-radius: 20px;
+    background: linear-gradient(155deg, rgba(255,255,255,.075), rgba(255,255,255,.018));
+    border: 1px solid rgba(255,255,255,.11);
+    box-shadow: inset 0 1px rgba(255,255,255,.06), 0 14px 30px rgba(0,0,0,.18);
+  }
+  #gameModal .gp-avatar {
+    box-shadow: 0 0 0 4px rgba(255,255,255,.06), 0 0 26px rgba(0,217,163,.16);
+  }
+  #gameModal .gp-move {
+    display: grid; place-items: center;
+    min-height: 84px; margin: 12px 0 6px;
+    border-radius: 18px;
+    background: radial-gradient(circle, rgba(0,217,163,.13), rgba(0,0,0,.1));
+    border: 1px solid rgba(255,255,255,.08);
+    transform-style: preserve-3d;
+  }
+  #gameModal .game-vs {
+    align-self: center; flex: 0 0 auto;
+    display: grid; place-items: center;
+    width: 42px; height: 42px; padding: 0;
+    border-radius: 50%;
+    background: rgba(255,193,7,.1);
+    border: 1px solid rgba(255,193,7,.25);
+    box-shadow: 0 0 22px rgba(255,193,7,.08);
+  }
+  #gameModal .game-score { display: inline-flex; min-width: 42px; justify-content: center; padding: 5px 12px; border-radius: 999px; background: rgba(0,217,163,.1); }
+  #gameModal .game-status, #tttModal .game-status {
+    padding: 12px 14px; border-radius: 14px;
+    background: rgba(255,255,255,.045);
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  #gameModal .game-choice-btns { gap: 14px; margin-top: 20px; }
+  #gameModal .game-choice-btns button {
+    box-shadow: 0 9px 24px rgba(0,0,0,.18);
+    background: linear-gradient(150deg, rgba(0,217,163,.17), rgba(179,136,255,.1));
+  }
+  #gameModal .game-choice-btns button:focus-visible,
+  #tttModal .ttt-cell:focus-visible, #unoModal .uno-card:focus-visible {
+    outline: 3px solid var(--accent); outline-offset: 3px;
+  }
+  #gameModal .game-choice-btns button.selected {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(0,217,163,.12), 0 0 28px rgba(0,217,163,.23);
+  }
+  #gameModal .game-choice-btns button:disabled:not(.selected) { opacity: .56; filter: saturate(.55); }
+  #tttModal .ttt-grid {
+    gap: 12px; padding: 12px; border-radius: 22px;
+    background: radial-gradient(circle at 20% 0%, rgba(179,136,255,.11), transparent 50%), rgba(0,0,0,.13);
+    border: 1px solid rgba(255,255,255,.07);
+  }
+  #tttModal .ttt-cell {
+    border-radius: 18px;
+    background: linear-gradient(145deg, rgba(255,255,255,.07), rgba(0,0,0,.12));
+    box-shadow: inset 0 1px rgba(255,255,255,.06), 0 8px 18px rgba(0,0,0,.12);
+    border-color: rgba(255,255,255,.12);
+  }
+  #tttModal .ttt-cell.x { color: #24e4bd; text-shadow: 0 0 22px rgba(36,228,189,.28); }
+  #tttModal .ttt-cell.o { color: #c5a5ff; text-shadow: 0 0 22px rgba(197,165,255,.28); }
+  #tttModal .ttt-cell.taken { cursor: default; }
+  #tttModal .ttt-cell.mark-in { animation: tttMarkIn .32s cubic-bezier(.2,1.5,.45,1) both; }
+  @keyframes tttMarkIn { from { opacity: .35; transform: scale(.55) rotate(-12deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+  #tttModal .ttt-cell.win { box-shadow: 0 0 0 2px rgba(255,193,7,.18), 0 0 28px rgba(255,193,7,.16); }
+  #nfModal .nf-letter-box {
+    background: radial-gradient(circle at 50% 0%, rgba(179,136,255,.2), transparent 65%), linear-gradient(145deg, rgba(0,217,163,.1), rgba(179,136,255,.07));
+    box-shadow: inset 0 1px rgba(255,255,255,.06), 0 14px 30px rgba(0,0,0,.12);
+  }
+  #nfModal .nf-letter-box .nf-letter { text-shadow: 0 0 30px rgba(0,217,163,.28); }
+  #nfModal .nf-fields { gap: 12px; }
+  #nfModal .nf-field input { box-sizing: border-box; min-width: 0; transition: border-color .2s, background .2s, box-shadow .2s; }
+  #nfModal .nf-field input.nf-valid-letter { box-shadow: 0 0 0 2px rgba(0,217,163,.09); }
+  #nfModal .nf-field input.nf-invalid-letter { box-shadow: 0 0 0 2px rgba(255,82,82,.08); }
+  #nfModal .nf-timer { font-variant-numeric: tabular-nums; }
+  #unoModal .uno-table { gap: 18px; }
+  #unoModal .uno-opponent-hand, #unoModal .uno-my-hand {
+    width: 100%; padding: 12px; box-sizing: border-box;
+    border-radius: 18px; border: 1px solid rgba(255,255,255,.07);
+    background: rgba(0,0,0,.12);
+  }
+  #unoModal .uno-my-hand { gap: 9px 6px; }
+  #unoModal .uno-piles { padding: 14px 22px; border-radius: 22px; background: radial-gradient(circle at 50% 0%, rgba(255,193,7,.1), transparent 65%), rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.07); }
+  #unoModal .uno-deck { box-shadow: 0 12px 30px rgba(0,0,0,.3), 0 0 0 4px rgba(255,255,255,.05); }
+  #unoModal .uno-current { filter: drop-shadow(0 8px 16px rgba(0,0,0,.2)); }
+  #unoModal .uno-status { width: min(100%, 390px); padding: 12px 14px; box-sizing: border-box; border-radius: 14px; background: rgba(0,217,163,.08); border: 1px solid rgba(0,217,163,.12); text-align: center; }
+  #pollModal .modal { max-height: min(86vh, 700px); overflow-y: auto; }
+  #pollModal .poll-opt-row input { flex: 1; width: 100%; min-width: 0; box-sizing: border-box; }
+  #pollModal .poll-add-opt { box-sizing: border-box; }
+  #pollModal .poll-error { margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; color: #ffb4b4; background: rgba(255,82,82,.09); border: 1px solid rgba(255,82,82,.2); font-size: 12px; line-height: 1.8; }
+  #pollModal .poll-error[hidden] { display: none; }
+  @media (max-width: 480px) {
+    #gameModal .modal, #tttModal .modal, #nfModal .modal, #unoModal .modal { width: calc(100vw - 24px) !important; padding: 18px 14px; border-radius: 20px; }
+    #gameModal .game-player { padding: 12px 6px; }
+    #gameModal .gp-move { min-height: 64px; font-size: 42px; }
+    #gameModal .game-vs { width: 32px; height: 32px; font-size: 15px; }
+    #gameModal .game-choice-btns { gap: 9px; }
+    #gameModal .game-choice-btns button { width: 68px; height: 68px; border-radius: 16px; }
+    #tttModal .ttt-grid { gap: 8px; padding: 8px; width: min(280px, 76vw); }
+    #nfModal .nf-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #unoModal .uno-card { width: 50px; height: 76px; }
+    #unoModal .uno-my-hand { padding: 8px 4px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #gameModal .game-player, #gameModal .game-vs, #gameModal .gp-move,
+    #tttModal .ttt-cell, #nfModal .nf-letter, #unoModal .uno-card { animation: none !important; }
+  }
+
 </style>
 </head>
 <body>
@@ -1846,8 +1974,9 @@
     </div>
     <label style="display:block;font-size:12px;color:#aabdd0;margin-bottom:6px;font-weight:600">گزینه‌ها</label>
     <div class="poll-options-list" id="pollOptionsList"></div>
-    <button class="poll-add-opt" id="pollAddOpt">+ افزودن گزینه</button>
-    <button class="nf-btn primary" id="pollCreate">📊 ساخت نظرسنجی</button>
+    <p class="poll-error" id="pollError" role="alert" aria-live="polite" hidden></p>
+    <button type="button" class="poll-add-opt" id="pollAddOpt">+ افزودن گزینه</button>
+    <button type="button" class="nf-btn primary" id="pollCreate">📊 ساخت نظرسنجی</button>
   </div>
 </div>
 <!-- UNO Game -->
@@ -3084,7 +3213,13 @@ let pollOptionDraft = ['', ''];
 function initPollCreator() {
   pollOptionDraft = ['', ''];
   $('pollQuestion').value = '';
+  const error = $('pollError');
+  if (error) { error.hidden = true; error.textContent = ''; }
   renderPollOpts();
+}
+function syncPollOptionDraft() {
+  const inputs = [...$('pollOptionsList').querySelectorAll('input')];
+  if (inputs.length) pollOptionDraft = inputs.map(input => input.value);
 }
 function renderPollOpts() {
   const list = $('pollOptionsList'); list.innerHTML = '';
@@ -3126,21 +3261,52 @@ function renderPollOpts() {
 }
 $('pollBtn').onclick = () => { initPollCreator(); $('pollModal').classList.add('on'); };
 $('pollAddOpt').onclick = () => {
+  syncPollOptionDraft();
   if (pollOptionDraft.length >= 6) { toast('❗ حداکثر ۶ گزینه'); return; }
   pollOptionDraft.push('');
   renderPollOpts();
-  $('pollOptionsList').querySelector('input:last-of-type')?.focus();
+  $('pollOptionsList').querySelector('.poll-opt-row:last-child input')?.focus();
 };
 $('pollCreate').onclick = () => {
   const question = $('pollQuestion').value.trim();
-  const poll = GameLogic.createPoll(question, pollOptionDraft);
-  if (!poll) {
-    toast('❗ سؤال لازم است و حداقل ۲ گزینه متفاوت وارد کن');
-    $('pollQuestion').focus();
+  const optionInputs = [...$('pollOptionsList').querySelectorAll('input')];
+  const optionValues = optionInputs.map(input => input.value);
+  pollOptionDraft = optionValues.slice();
+  const error = $('pollError');
+  const showPollError = (message, focusTarget) => {
+    if (error) { error.textContent = message; error.hidden = false; }
+    toast('❗ ' + message);
+    focusTarget?.focus();
+  };
+  if (!question) {
+    showPollError('اول سؤال نظرسنجی را بنویس.', $('pollQuestion'));
     return;
   }
-  sendPoll(poll);
-  $('pollModal').classList.remove('on');
+  const distinctOptions = new Set(optionValues
+    .map(value => GameLogic.normalizeComparableText(value))
+    .filter(Boolean));
+  if (distinctOptions.size < 2) {
+    const focusTarget = optionInputs.find(input => !input.value.trim()) || optionInputs[0];
+    showPollError('حداقل دو گزینهٔ متفاوت و غیرخالی وارد کن.', focusTarget);
+    return;
+  }
+  const poll = GameLogic.createPoll(question, optionValues);
+  if (!poll) {
+    showPollError('ساخت نظرسنجی ممکن نشد؛ سؤال و گزینه‌ها را بررسی کن.', $('pollQuestion'));
+    return;
+  }
+  const button = $('pollCreate');
+  button.disabled = true;
+  try {
+    sendPoll(poll);
+    if (error) { error.hidden = true; error.textContent = ''; }
+    $('pollModal').classList.remove('on');
+  } catch (cause) {
+    console.error('Poll creation failed:', cause);
+    showPollError('خطا هنگام ساخت نظرسنجی. دوباره امتحان کن.', $('pollQuestion'));
+  } finally {
+    button.disabled = false;
+  }
 };
 
 // RPS
@@ -3187,11 +3353,18 @@ function startGameUI() {
   $('gameMeName').textContent = state.myName;
   $('gameOpName').textContent = opName;
   $('gameMeMove').textContent = '❔'; $('gameOpMove').textContent = '❔';
+  $('gameMeMove').classList.remove('reveal-3d'); $('gameOpMove').classList.remove('reveal-3d');
   $('gameMeScore').textContent = '۰'; $('gameOpScore').textContent = '۰';
   $('gameRound').textContent = 'دور ۱ از ۳';
   $('gameStatus').textContent = 'یک حرکت انتخاب کن!';
   document.querySelectorAll('.game-choice-btns button').forEach(b => { b.classList.remove('selected'); b.disabled = false; });
+  const arena = document.querySelector('#gameModal .game-arena');
+  const versus = document.querySelector('#gameModal .game-vs');
+  if (arena) { arena.classList.remove('vs-intro'); void arena.offsetWidth; arena.classList.add('vs-intro'); }
+  if (versus) { versus.classList.remove('vs-shake'); void versus.offsetWidth; versus.classList.add('vs-shake'); }
   $('gameModal').classList.add('on');
+  setTimeout(() => { if (arena) arena.classList.remove('vs-intro'); }, 1000);
+  setTimeout(() => { if (versus) versus.classList.remove('vs-shake'); }, 1300);
 }
 function onGameMove(conn, msg) {
   const g = state.game;
@@ -3209,8 +3382,8 @@ document.querySelectorAll('.game-choice-btns button').forEach(btn => {
     document.querySelectorAll('.game-choice-btns button').forEach(b => b.disabled = true);
     btn.classList.add('selected');
     $('gameMeMove').textContent = GAME_MOVES[move];
-    $('gameMeMove').classList.add('reveal');
-    setTimeout(() => $('gameMeMove').classList.remove('reveal'), 700);
+    $('gameMeMove').classList.remove('reveal-3d'); void $('gameMeMove').offsetWidth; $('gameMeMove').classList.add('reveal-3d');
+    setTimeout(() => $('gameMeMove').classList.remove('reveal-3d'), 950);
     const e = state.peers.get(state.game.opponent);
     if (e && e.conn) safeSend(e.conn, { type: 'game-move', gameId: state.game.id, round: state.game.round, move });
     $('gameStatus').textContent = 'منتظر حریف...';
@@ -3220,8 +3393,8 @@ document.querySelectorAll('.game-choice-btns button').forEach(btn => {
 function checkGameResult() {
   const g = state.game; if (!g || !g.myMove || !g.theirMove) return;
   $('gameOpMove').textContent = GAME_MOVES[g.theirMove];
-  $('gameOpMove').classList.add('reveal');
-  setTimeout(() => $('gameOpMove').classList.remove('reveal'), 700);
+  $('gameOpMove').classList.remove('reveal-3d'); void $('gameOpMove').offsetWidth; $('gameOpMove').classList.add('reveal-3d');
+  setTimeout(() => $('gameOpMove').classList.remove('reveal-3d'), 950);
   let w;
   if (g.myMove === g.theirMove) w = 'tie';
   else if (GAME_BEATS[g.myMove] === g.theirMove) w = 'me';
@@ -3229,8 +3402,14 @@ function checkGameResult() {
   if (w === 'me') { g.myScore++; $('gameStatus').textContent = '🎉 بردی!'; }
   else if (w === 'them') { g.theirScore++; $('gameStatus').textContent = '😢 باختی'; }
   else $('gameStatus').textContent = '🤝 مساوی';
-  $('gameMeScore').textContent = faNum(g.myScore);
-  $('gameOpScore').textContent = faNum(g.theirScore);
+  const scoreUpdates = [[$('gameMeScore'), g.myScore], [$('gameOpScore'), g.theirScore]];
+  scoreUpdates.forEach(([el, score]) => {
+    el.textContent = faNum(score);
+    el.classList.remove('count-up');
+    void el.offsetWidth;
+    el.classList.add('count-up');
+    setTimeout(() => el.classList.remove('count-up'), 700);
+  });
   setTimeout(() => {
     if (g.myScore >= 2 || g.theirScore >= 2) {
       $('gameStatus').textContent = g.myScore >= 2 ? '🏆 برنده شدی!' : '😢 باختی';
@@ -3271,9 +3450,12 @@ function renderTTT() {
   const t = state.ttt; if (!t) return;
   const grid = $('tttGrid'); grid.innerHTML = '';
   t.board.forEach((v, i) => {
-    const cell = document.createElement('div');
-    cell.className = 'ttt-cell' + (v ? ' taken' : '');
-    if (v) { cell.textContent = v === 'X' ? '❌' : '⭕'; cell.classList.add(v.toLowerCase()); }
+    const cell = document.createElement('button');
+    cell.type = 'button';
+    cell.className = 'ttt-cell' + (v ? ' taken ' + v.toLowerCase() + ' mark-in' : '');
+    cell.setAttribute('aria-label', 'خانهٔ ' + (i + 1) + (v ? ': ' + (v === 'X' ? 'ضربدر' : 'دایره') : ': خالی'));
+    cell.disabled = !!v || !t.myTurn || t.finished;
+    if (v) cell.textContent = v === 'X' ? '❌' : '⭕';
     cell.onclick = () => { if (!v && t.myTurn) makeTTTMove(i); };
     grid.appendChild(cell);
   });
