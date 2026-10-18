@@ -1736,6 +1736,10 @@ function finishJoin() {
   renderUsers(); updateStatus('online');
   setTimeout(() => addSystemMsg('👋 ' + state.myName + ' وارد چت شد'), 800);
   toast('🎉 به چت خوش آمدی، ' + state.myName + '!');
+  setTimeout(() => {
+    const reachable = [...state.peers.values()].some(entry => entry.name && entry.conn && entry.conn.open);
+    if (!reachable) toast('ℹ️ هنوز کاربر دیگری قابل دسترس نیست؛ ممکن است کسی آنلاین نباشد یا شبکه اتصال مستقیم را مسدود کرده باشد.');
+  }, 1200);
   setTimeout(() => $('chatInput').focus(), 1000);
 }
 function updateStatus(mode) {
