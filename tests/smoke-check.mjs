@@ -24,7 +24,7 @@ assert.match(app, /type: 'uno-draw-request'/, 'guest draws should be requested f
 assert.match(html, /prefers-reduced-motion:\s*reduce/, 'reduced-motion preference must be respected');
 assert.match(html, /id="mobileUsersBtn"/, 'mobile user-list button should exist');
 assert.match(html, /id="sidebarShade"/, 'mobile drawer backdrop should exist');
-assert.match(html, /class="poll-card"/, 'poll results card should exist');
+assert.match(app, /card\\.className = 'poll-card'/, 'poll results card should exist');
 assert.match(html, /nf-invalid-letter/, 'name-family answers should display invalid starting letters');
 
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(match => match[1]);
