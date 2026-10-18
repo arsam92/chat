@@ -67,9 +67,27 @@ try {
     rosterHas(b, 'ROOM-TEST-A')
   ]);
 
-  console.log('PASS: two independent browser contexts entered the same room.');
+  // Exercise the actual poll UI and ensure the poll reaches the other browser.
+  await a.locator('#pollBtn').click();
+  await a.locator('#pollModal.on').waitFor({ state: 'visible', timeout: 5000 });
+  await a.locator('#pollQuestion').fill('ROOM TEST: کدام گزینه؟');
+  await a.locator('#pollOptionsList input').nth(0).fill('گزینهٔ الف');
+  await a.locator('#pollOptionsList input').nth(1).fill('گزینهٔ ب');
+  await a.locator('#pollCreate').click();
+  await a.locator('.poll-card').filter({ hasText: 'ROOM TEST: کدام گزینه؟' }).waitFor({ state: 'visible', timeout: 5000 });
+  await b.locator('.poll-card').filter({ hasText: 'ROOM TEST: کدام گزینه؟' }).waitFor({ state: 'visible', timeout });
+
+  // Vote from B, then verify the origin receives the vote count update.
+  const remotePoll = b.locator('.poll-card').filter({ hasText: 'ROOM TEST: کدام گزینه؟' });
+  await remotePoll.locator('.poll-option').nth(0).click();
+  await a.locator('.poll-card').filter({ hasText: 'ROOM TEST: کدام گزینه؟' })
+    .locator('.poll-info').getByText(/1|۱/)
+    .waitFor({ state: 'visible', timeout: 10000 });
+
+  console.log('PASS: two independent browsers joined, created a poll, and exchanged a vote.');
   console.log('A roster:', JSON.stringify(await a.locator('#userList .u-name').allTextContents()));
   console.log('B roster:', JSON.stringify(await b.locator('#userList .u-name').allTextContents()));
+  console.log('A poll status:', await a.locator('.poll-card').filter({ hasText: 'ROOM TEST: کدام گزینه؟' }).locator('.poll-info').innerText());
 } catch (error) {
   console.error('FAIL: two independent browser contexts did not discover each other.');
   console.error(error?.stack || error);
