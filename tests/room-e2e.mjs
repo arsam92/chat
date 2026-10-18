@@ -77,9 +77,17 @@ try {
   await a.locator('#pollQuestion').fill('ROOM TEST: کدام گزینه؟');
   await a.locator('#pollOptionsList input').nth(0).fill('گزینهٔ الف');
   await a.locator('#pollOptionsList input').nth(1).fill('گزینهٔ ب');
+  await a.locator('#pollAddOpt').click();
+  assert.equal(await a.locator('#pollOptionsList input').nth(0).inputValue(), 'گزینهٔ الف', 'adding an option must preserve the first draft');
+  assert.equal(await a.locator('#pollOptionsList input').nth(1).inputValue(), 'گزینهٔ ب', 'adding an option must preserve the second draft');
+  await a.locator('#pollOptionsList input').nth(2).fill('گزینهٔ ج');
   await a.locator('#pollCreate').click();
-  await a.locator('.poll-card').filter({ hasText: 'ROOM TEST: کدام گزینه؟' }).waitFor({ state: 'visible', timeout: 5000 });
-  await b.locator('.poll-card').filter({ hasText: 'ROOM TEST: کدام گزینه؟' }).waitFor({ state: 'visible', timeout });
+  const ownPoll = a.locator('.poll-card').filter({ hasText: 'ROOM TEST: کدام گزینه؟' });
+  await ownPoll.waitFor({ state: 'visible', timeout: 5000 });
+  assert.equal(await ownPoll.locator('.poll-option').count(), 3, 'created poll should contain all three options');
+  const receivedPoll = b.locator('.poll-card').filter({ hasText: 'ROOM TEST: کدام گزینه؟' });
+  await receivedPoll.waitFor({ state: 'visible', timeout });
+  assert.equal(await receivedPoll.locator('.poll-option').count(), 3, 'remote poll should contain all three options');
 
   // Vote from B, then verify the origin receives the vote count update.
   const remotePoll = b.locator('.poll-card').filter({ hasText: 'ROOM TEST: کدام گزینه؟' });
@@ -96,7 +104,7 @@ try {
   console.log('B roster:', JSON.stringify(await b.locator('#userList .u-name').allTextContents()));
   console.log('A poll status:', await a.locator('.poll-card').filter({ hasText: 'ROOM TEST: کدام گزینه؟' }).locator('.poll-info').innerText());
 } catch (error) {
-  console.error('FAIL: two independent browser contexts did not discover each other.');
+  console.error('FAIL: room, poll creation, or vote synchronization failed.');
   console.error(error?.stack || error);
   for (let i = 0; i < pages.length; i++) {
     const page = pages[i];
