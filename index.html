@@ -1516,6 +1516,15 @@ function safeAudioSource(value) {
   const src = value.trim();
   return /^data:audio\/(?:webm|ogg|mp4|mpeg|wav|x-wav)(?:;codecs=[a-z0-9,._-]+)?;base64,[a-z0-9+/=\r\n]+$/i.test(src) ? src : '';
 }
+function safePollPayload(value) {
+  if (!value || typeof value !== 'object' || typeof value.question !== 'string' || !Array.isArray(value.options)) return null;
+  const question = value.question.trim().slice(0, 200);
+  const options = value.options.slice(0, 6)
+    .map(option => ({ text: option && typeof option.text === 'string' ? option.text.trim().slice(0, 120) : '' }))
+    .filter(option => option.text);
+  if (!question || options.length < 2) return null;
+  return { question, options: options.map(option => ({ text: option.text, votes: 0 })), voters: {} };
+}
 const faNum = n => Number(n || 0).toLocaleString('fa-IR');
 const faTime = ts => new Date(ts).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
 const faDur = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
@@ -1794,20 +1803,26 @@ function onUserList(conn, msg) {
   renderUsers();
 }
 function onPublicMsg(conn, msg) {
+  if (!conn || !msg || typeof msg !== 'object' || typeof msg.id !== 'string' || msg.id.length > 100) return;
+  if (state.publicMessages.has(msg.id)) return;
   const e = state.peers.get(conn.peer);
-  const name = (e && e.name) || msg.name || 'کاربر';
-  const entry = { id: msg.id, name, senderId: conn.peer, text: typeof msg.text === 'string' ? msg.text.slice(0, 4000) : '', sticker: safeImageSource(msg.sticker), image: safeImageSource(msg.image), voice: safeAudioSource(msg.voice), voiceDur: Math.max(0, Math.min(3600, Number(msg.voiceDur) || 0)), reply: msg.reply && typeof msg.reply === 'object' ? msg.reply : null, poll: msg.poll && typeof msg.poll === 'object' ? msg.poll : null, ts: Number.isFinite(msg.ts) ? msg.ts : Date.now(), mine: false, reactions: {} };
+  const name = (e && e.name) || safePeerName(msg.name);
+  const entry = { id: msg.id, name, senderId: conn.peer, text: typeof msg.text === 'string' ? msg.text.slice(0, 4000) : '', sticker: safeImageSource(msg.sticker), image: safeImageSource(msg.image), voice: safeAudioSource(msg.voice), voiceDur: Math.max(0, Math.min(3600, Number(msg.voiceDur) || 0)), reply: msg.reply && typeof msg.reply === 'object' ? { name: safePeerName(msg.reply.name), text: typeof msg.reply.text === 'string' ? msg.reply.text.slice(0, 240) : '', isSticker: !!msg.reply.isSticker, isImage: !!msg.reply.isImage, isVoice: !!msg.reply.isVoice, isPoll: !!msg.reply.isPoll, msgId: typeof msg.reply.msgId === 'string' ? msg.reply.msgId.slice(0, 100) : null } : null, poll: safePollPayload(msg.poll), ts: Number.isFinite(msg.ts) ? msg.ts : Date.now(), mine: false, reactions: {} };
+  if (!entry.text && !entry.sticker && !entry.image && !entry.voice && !entry.poll) return;
   addMessage(entry);
   if (msg.id) safeSend(conn, { type: 'delivered', msgId: msg.id });
   if (!document.hasFocus() || document.hidden) playNotif();
   clearTypingTimer(conn.peer);
 }
 function onPrivateMsg(conn, msg) {
-  if (msg.to !== state.myPeerId) return;
+  if (!conn || !msg || msg.to !== state.myPeerId || typeof msg.id !== 'string' || msg.id.length > 100) return;
   const id = conn.peer; const e = state.peers.get(id); if (!e) return;
-  safeSend(conn, { type: 'delivered', msgId: msg.id, to: conn.peer });
   let arr = state.pm.get(id) || [];
-  arr.push({ id: msg.id, from: e.name, senderId: conn.peer, text: typeof msg.text === 'string' ? msg.text.slice(0, 4000) : '', sticker: safeImageSource(msg.sticker), image: safeImageSource(msg.image), voice: safeAudioSource(msg.voice), voiceDur: Math.max(0, Math.min(3600, Number(msg.voiceDur) || 0)), reply: msg.reply && typeof msg.reply === 'object' ? msg.reply : null, poll: msg.poll && typeof msg.poll === 'object' ? msg.poll : null, ts: Number.isFinite(msg.ts) ? msg.ts : Date.now(), mine: false, delivered: false, seen: false, reactions: {} });
+  if (arr.some(item => item.id === msg.id)) return;
+  const entry = { id: msg.id, from: e.name, senderId: conn.peer, text: typeof msg.text === 'string' ? msg.text.slice(0, 4000) : '', sticker: safeImageSource(msg.sticker), image: safeImageSource(msg.image), voice: safeAudioSource(msg.voice), voiceDur: Math.max(0, Math.min(3600, Number(msg.voiceDur) || 0)), reply: msg.reply && typeof msg.reply === 'object' ? { name: safePeerName(msg.reply.name), text: typeof msg.reply.text === 'string' ? msg.reply.text.slice(0, 240) : '', isSticker: !!msg.reply.isSticker, isImage: !!msg.reply.isImage, isVoice: !!msg.reply.isVoice, isPoll: !!msg.reply.isPoll, msgId: typeof msg.reply.msgId === 'string' ? msg.reply.msgId.slice(0, 100) : null } : null, poll: safePollPayload(msg.poll), ts: Number.isFinite(msg.ts) ? msg.ts : Date.now(), mine: false, delivered: false, seen: false, reactions: {} };
+  if (!entry.text && !entry.sticker && !entry.image && !entry.voice && !entry.poll) return;
+  if (arr.length >= 300) arr.splice(0, arr.length - 299);
+  arr.push(entry);
   state.pm.set(id, arr);
   if (state.pmOpenFor === id) { renderPM(); setTimeout(() => sendSeen(id), 300); }
   else { state.unread.set(id, (state.unread.get(id) || 0) + 1); toast('💬 پیام خصوصی از ' + e.name); playNotif(); renderUsers(); }
