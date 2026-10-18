@@ -2399,10 +2399,12 @@ function startGameUI() {
   $('gameModal').classList.add('on');
 }
 function onGameMove(conn, msg) {
-  if (!state.game || state.game.id !== msg.gameId) return;
+  if (!state.game || state.game.id !== msg.gameId || conn.peer !== state.game.opponent) return;
+  if (!Object.prototype.hasOwnProperty.call(GAME_MOVES, msg.move)) return;
   state.game.theirMove = msg.move;
   checkGameResult();
 }
+
 document.querySelectorAll('.game-choice-btns button').forEach(btn => {
   btn.onclick = () => {
     if (!state.game || state.game.myMove) return;
@@ -2482,17 +2484,26 @@ function renderTTT() {
   $('tttStatus').textContent = t.myTurn ? '🎯 نوبت توئه!' : '⏳ منتظر حریف...';
 }
 function makeTTTMove(idx) {
-  const t = state.ttt; if (!t || t.board[idx]) return;
-  t.board[idx] = t.mySymbol; t.myTurn = false;
-  const e = state.peers.get(t.opponent);
-  if (e && e.conn) safeSend(e.conn, { type: 'ttt-move', id: t.id, idx, symbol: t.mySymbol });
+  const t = state.ttt;
+  if (!t || !t.myTurn || !Number.isInteger(idx) || idx < 0 || idx > 8 || t.board[idx]) return;
+  t.board[idx] = t.mySymbol;
+  t.myTurn = false;
+  const entry = state.peers.get(t.opponent);
+  if (entry && entry.conn) safeSend(entry.conn, { type: 'ttt-move', id: t.id, idx, symbol: t.mySymbol });
   renderTTT(); checkTTTWin();
 }
+
 function onTTTMove(conn, msg) {
-  const t = state.ttt; if (!t || t.id !== msg.id) return;
-  t.board[msg.idx] = msg.symbol; t.myTurn = true;
+  const t = state.ttt;
+  if (!t || t.id !== msg.id || conn.peer !== t.opponent || t.myTurn ||
+      !Number.isInteger(msg.idx) || msg.idx < 0 || msg.idx > 8 || t.board[msg.idx]) return;
+  const expected = t.mySymbol === 'X' ? 'O' : 'X';
+  if (msg.symbol !== expected) return;
+  t.board[msg.idx] = msg.symbol;
+  t.myTurn = true;
   renderTTT(); checkTTTWin();
 }
+
 function checkTTTWin() {
   const t = state.ttt; if (!t) return;
   const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
