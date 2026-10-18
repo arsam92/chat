@@ -1455,6 +1455,14 @@ const state = {
 };
 
 const $ = id => document.getElementById(id);
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[ch]);
+}
+function safePeerName(value) {
+  return String(value ?? '').replace(/[\\u0000-\\u001f\\u007f]/g, ' ').trim().slice(0, 20) || 'کاربر';
+}
 const faNum = n => Number(n || 0).toLocaleString('fa-IR');
 const faTime = ts => new Date(ts).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
 const faDur = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
@@ -1807,20 +1815,18 @@ function onDeleteMsg(conn, msg) {
   if (el) el.remove();
 }
 function onPollVote(conn, msg) {
-  // msg: { msgId, optionIndex, from }
-  const el = document.querySelector(`.msg[data-msgid="${msg.msgId}"]`);
-  if (!el) return;
-  const pollEl = el.querySelector('.poll-card');
-  if (!pollEl) return;
-  // find poll object
-  // We store poll data on the message element
-  if (!el._pollData) return;
-  const poll = el._pollData;
-  if (!poll.voters[msg.from]) {
-    poll.voters[msg.from] = msg.optionIndex;
-    poll.options[msg.optionIndex].votes++;
-    updatePollUI(el, poll);
-  }
+  if (!conn || !msg || typeof msg.msgId !== 'string' || !Number.isInteger(msg.optionIndex)) return;
+  const el = document.querySelectorAll('.msg[data-msgid]');
+  const target = [...el].find(node => node.dataset.msgid === msg.msgId);
+  if (!target || !target._pollData) return;
+  const poll = target._pollData;
+  const idx = msg.optionIndex;
+  if (!Array.isArray(poll.options) || idx < 0 || idx >= poll.options.length) return;
+  if (!poll.voters || typeof poll.voters !== 'object') poll.voters = {};
+  if (poll.voters[conn.peer] !== undefined) return;
+  poll.voters[conn.peer] = idx;
+  poll.options[idx].votes = (Number(poll.options[idx].votes) || 0) + 1;
+  updatePollUI(target, poll);
 }
 function onBye(conn) { removePeerById(conn.peer); }
 
@@ -2354,7 +2360,7 @@ function inviteToGame(peerId) {
 function onGameInvite(conn, msg) {
   const e = state.peers.get(conn.peer); if (!e) return;
   const t = document.createElement('div'); t.className = 'game-invite-toast';
-  t.innerHTML = `<h4>✊✋✌️ دعوت به بازی</h4><p><b>${e.name}</b> می‌خواد سنگ کاغذ قیچی بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
+  t.innerHTML = `<h4>✊✋✌️ دعوت به بازی</h4><p><b>${escapeHTML(safePeerName(e.name))}</b> می‌خواد سنگ کاغذ قیچی بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
   document.body.appendChild(t);
   t.querySelector('.gi-accept').onclick = () => {
     t.remove();
@@ -2393,10 +2399,12 @@ function startGameUI() {
   $('gameModal').classList.add('on');
 }
 function onGameMove(conn, msg) {
-  if (!state.game || state.game.id !== msg.gameId) return;
+  if (!state.game || state.game.id !== msg.gameId || conn.peer !== state.game.opponent) return;
+  if (!Object.prototype.hasOwnProperty.call(GAME_MOVES, msg.move)) return;
   state.game.theirMove = msg.move;
   checkGameResult();
 }
+
 document.querySelectorAll('.game-choice-btns button').forEach(btn => {
   btn.onclick = () => {
     if (!state.game || state.game.myMove) return;
@@ -2452,7 +2460,7 @@ function inviteToTTT(peerId) {
 function onTTTInvite(conn, msg) {
   const e = state.peers.get(conn.peer); if (!e) return;
   const t = document.createElement('div'); t.className = 'game-invite-toast';
-  t.innerHTML = `<h4>❌⭕ دعوت به دوز</h4><p><b>${e.name}</b> می‌خواد دوز بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
+  t.innerHTML = `<h4>❌⭕ دعوت به دوز</h4><p><b>${escapeHTML(safePeerName(e.name))}</b> می‌خواد دوز بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
   document.body.appendChild(t);
   t.querySelector('.gi-accept').onclick = () => { t.remove(); state.ttt = { id: msg.id, opponent: conn.peer, board: Array(9).fill(null), mySymbol: 'O', theirSymbol: 'X', myTurn: false, host: false }; safeSend(conn, { type: 'ttt-response', id: msg.id, accepted: true }); startTTTUI(); };
   t.querySelector('.gi-decline').onclick = () => { t.remove(); safeSend(conn, { type: 'ttt-response', id: msg.id, accepted: false }); };
@@ -2476,17 +2484,26 @@ function renderTTT() {
   $('tttStatus').textContent = t.myTurn ? '🎯 نوبت توئه!' : '⏳ منتظر حریف...';
 }
 function makeTTTMove(idx) {
-  const t = state.ttt; if (!t || t.board[idx]) return;
-  t.board[idx] = t.mySymbol; t.myTurn = false;
-  const e = state.peers.get(t.opponent);
-  if (e && e.conn) safeSend(e.conn, { type: 'ttt-move', id: t.id, idx, symbol: t.mySymbol });
+  const t = state.ttt;
+  if (!t || !t.myTurn || !Number.isInteger(idx) || idx < 0 || idx > 8 || t.board[idx]) return;
+  t.board[idx] = t.mySymbol;
+  t.myTurn = false;
+  const entry = state.peers.get(t.opponent);
+  if (entry && entry.conn) safeSend(entry.conn, { type: 'ttt-move', id: t.id, idx, symbol: t.mySymbol });
   renderTTT(); checkTTTWin();
 }
+
 function onTTTMove(conn, msg) {
-  const t = state.ttt; if (!t || t.id !== msg.id) return;
-  t.board[msg.idx] = msg.symbol; t.myTurn = true;
+  const t = state.ttt;
+  if (!t || t.id !== msg.id || conn.peer !== t.opponent || t.myTurn ||
+      !Number.isInteger(msg.idx) || msg.idx < 0 || msg.idx > 8 || t.board[msg.idx]) return;
+  const expected = t.mySymbol === 'X' ? 'O' : 'X';
+  if (msg.symbol !== expected) return;
+  t.board[msg.idx] = msg.symbol;
+  t.myTurn = true;
   renderTTT(); checkTTTWin();
 }
+
 function checkTTTWin() {
   const t = state.ttt; if (!t) return;
   const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
@@ -2517,7 +2534,7 @@ function inviteToNF(peerId) {
 function onNFInvite(conn, msg) {
   const e = state.peers.get(conn.peer); if (!e) return;
   const t = document.createElement('div'); t.className = 'game-invite-toast';
-  t.innerHTML = `<h4>📝 دعوت به اسم فامیل</h4><p><b>${e.name}</b> می‌خواد اسم فامیل بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
+  t.innerHTML = `<h4>📝 دعوت به اسم فامیل</h4><p><b>${escapeHTML(safePeerName(e.name))}</b> می‌خواد اسم فامیل بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
   document.body.appendChild(t);
   t.querySelector('.gi-accept').onclick = () => { t.remove(); state.nf = { id: msg.id, opponent: conn.peer, host: false, letter: null, myAnswers: null, theirAnswers: null, timer: null }; safeSend(conn, { type: 'nf-response', id: msg.id, accepted: true }); toast('⏳ منتظر شروع بازی...'); };
   t.querySelector('.gi-decline').onclick = () => { t.remove(); safeSend(conn, { type: 'nf-response', id: msg.id, accepted: false }); };
@@ -2602,7 +2619,7 @@ function compareNF() {
     else if (m === t) { myPts = 5; theirPts = 5; myEl.classList.add('match'); status = '🤝 یکسان'; }
     else { myPts = 10; theirPts = 10; myEl.classList.add('unique'); status = '✅ متفاوت'; }
     myScore += myPts; theirScore += theirPts;
-    html += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed rgba(255,255,255,0.1)"><span><b>${NF_LABELS[cat]}:</b> تو "${mine[cat]||'—'}" / حریف "${theirs[cat]||'—'}"</span><span style="color:var(--accent);font-weight:700">${myPts} / ${theirPts} — ${status}</span></div>`;
+    html += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed rgba(255,255,255,0.1)"><span><b>${NF_LABELS[cat]}:</b> تو "${escapeHTML(mine[cat]||'—')}" / حریف "${escapeHTML(theirs[cat]||'—')}"</span><span style="color:var(--accent);font-weight:700">${myPts} / ${theirPts} — ${status}</span></div>`;
   });
   const winner = myScore > theirScore ? '🏆 بردی!' : myScore < theirScore ? '😢 باختی!' : '🤝 مساوی!';
   html += `<div style="text-align:center;margin-top:12px;font-size:20px;font-weight:900;color:var(--primary)">${winner}</div>`;
@@ -2942,7 +2959,7 @@ function inviteToUNO(peerId) {
 function onUNOInvite(conn, msg) {
   const e = state.peers.get(conn.peer); if (!e) return;
   const t = document.createElement('div'); t.className = 'game-invite-toast';
-  t.innerHTML = `<h4>🎴 دعوت به UNO</h4><p><b>${e.name}</b> می‌خواد UNO بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
+  t.innerHTML = `<h4>🎴 دعوت به UNO</h4><p><b>${escapeHTML(safePeerName(e.name))}</b> می‌خواد UNO بازی کنه</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>`;
   document.body.appendChild(t);
   t.querySelector('.gi-accept').onclick = () => {
     t.remove();
