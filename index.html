@@ -1807,20 +1807,18 @@ function onDeleteMsg(conn, msg) {
   if (el) el.remove();
 }
 function onPollVote(conn, msg) {
-  // msg: { msgId, optionIndex, from }
-  const el = document.querySelector(`.msg[data-msgid="${msg.msgId}"]`);
-  if (!el) return;
-  const pollEl = el.querySelector('.poll-card');
-  if (!pollEl) return;
-  // find poll object
-  // We store poll data on the message element
-  if (!el._pollData) return;
-  const poll = el._pollData;
-  if (!poll.voters[msg.from]) {
-    poll.voters[msg.from] = msg.optionIndex;
-    poll.options[msg.optionIndex].votes++;
-    updatePollUI(el, poll);
-  }
+  if (!conn || !msg || typeof msg.msgId !== 'string' || !Number.isInteger(msg.optionIndex)) return;
+  const el = document.querySelectorAll('.msg[data-msgid]');
+  const target = [...el].find(node => node.dataset.msgid === msg.msgId);
+  if (!target || !target._pollData) return;
+  const poll = target._pollData;
+  const idx = msg.optionIndex;
+  if (!Array.isArray(poll.options) || idx < 0 || idx >= poll.options.length) return;
+  if (!poll.voters || typeof poll.voters !== 'object') poll.voters = {};
+  if (poll.voters[conn.peer] !== undefined) return;
+  poll.voters[conn.peer] = idx;
+  poll.options[idx].votes = (Number(poll.options[idx].votes) || 0) + 1;
+  updatePollUI(target, poll);
 }
 function onBye(conn) { removePeerById(conn.peer); }
 
