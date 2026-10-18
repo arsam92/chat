@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 
-const target = process.env.CHAT_URL || 'https://arsam92.github.io/chat/';
+const baseTarget = process.env.CHAT_URL || 'https://arsam92.github.io/chat/';
+const targetUrl = new URL(baseTarget);
+const uniqueTestRoom = 'ci-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+targetUrl.searchParams.set('testRoom', uniqueTestRoom);
+const target = targetUrl.toString();
 const timeout = Number(process.env.ROOM_TEST_TIMEOUT_MS || 30000);
 const browser = await chromium.launch({
   headless: true,
