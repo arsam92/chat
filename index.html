@@ -1696,7 +1696,14 @@ function wirePeer(peer) {
   peer.on('open', () => updateStatus('online'));
   peer.on('error', err => {
     const t = err && err.type;
-    if (t === 'peer-unavailable') { const mt = /peer\s+([A-Za-z0-9_-]+)/.exec(err.message || ''); if (mt) removePeerById(mt[1]); return; }
+    if (t === 'peer-unavailable') {
+      const mt = /peer\s+([A-Za-z0-9_-]+)/.exec(err.message || '');
+      if (mt) {
+        settleBootstrap(mt[1]);
+        removePeerById(mt[1]);
+      }
+      return;
+    }
     if (t === 'network' || t === 'server-error') updateStatus('reconnecting');
   });
 }
