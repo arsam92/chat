@@ -1411,7 +1411,7 @@
 <script>
 'use strict';
 
-const ROOM_NAME = 'global-chat-2026';
+const ROOM_NAME = 'global-chat-2026-' + location.hostname + location.pathname.replace(/\/+$/, '');
 const SLOT_PREFIX = 'chat-';
 const MAX_SLOTS = 20;
 const MAX_IMAGE_SIZE = 800 * 1024;
