@@ -1468,6 +1468,144 @@
   .ttt-cell.win { box-shadow: 0 0 20px rgba(255,193,7,.16), inset 0 0 0 1px rgba(255,193,7,.3); }
   @media (max-width: 480px) { .nf-result-answers { grid-template-columns: 1fr; } }
 
+  /* Polished mini-game surfaces */
+  #gameModal .modal, #tttModal .modal, #nfModal .modal, #unoModal .modal {
+    background:
+      radial-gradient(ellipse at 12% 0%, rgba(0,217,163,.13), transparent 38%),
+      radial-gradient(ellipse at 100% 100%, rgba(112,92,255,.12), transparent 42%),
+      linear-gradient(155deg, rgba(14,28,39,.98), rgba(7,17,27,.99));
+    border: 1px solid rgba(148,190,210,.23);
+    box-shadow: 0 28px 90px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06);
+    border-radius: 24px;
+  }
+  #gameModal .modal h3, #tttModal .modal h3, #nfModal .modal h3, #unoModal .modal h3 {
+    display: flex; align-items: center; justify-content: center; gap: 9px;
+    padding-bottom: 14px; margin-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    letter-spacing: .1px;
+  }
+  #gameModal .game-player {
+    flex: 1; min-width: 0; padding: 16px 10px 14px;
+    border-radius: 20px;
+    background: linear-gradient(145deg, rgba(255,255,255,.065), rgba(255,255,255,.018));
+    border: 1px solid rgba(255,255,255,.09);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  #gameModal .game-player .gp-avatar {
+    width: 54px; height: 54px; margin: 0 auto 9px; overflow: hidden;
+    border-radius: 18px; box-shadow: 0 8px 22px rgba(0,0,0,.24);
+  }
+  #gameModal .game-player .gp-name {
+    overflow-wrap: anywhere; font-weight: 700; color: #e5f3f4;
+  }
+  #gameModal .game-player .gp-move {
+    min-height: 82px; margin: 6px 0;
+    border-radius: 16px; background: rgba(0,0,0,.16);
+  }
+  #gameModal .game-vs {
+    align-self: center; padding: 9px 10px; border-radius: 12px;
+    background: rgba(255,193,7,.1); border: 1px solid rgba(255,193,7,.18);
+    font-size: 14px; letter-spacing: 1px;
+  }
+  #gameModal .game-score {
+    display: inline-flex; min-width: 34px; min-height: 34px;
+    justify-content: center; align-items: center; padding: 0 10px;
+    border-radius: 12px; background: rgba(0,217,163,.11);
+    border: 1px solid rgba(0,217,163,.18); font-size: 16px;
+  }
+  #gameModal .game-round {
+    display: table; margin: 14px auto 8px; padding: 6px 12px;
+    border-radius: 99px; background: rgba(255,193,7,.08);
+    border: 1px solid rgba(255,193,7,.16);
+  }
+  #gameModal .game-status, #tttModal .game-status {
+    width: fit-content; max-width: 100%; margin: 10px auto 0; padding: 9px 14px;
+    border-radius: 14px; background: rgba(255,255,255,.045);
+    border: 1px solid rgba(255,255,255,.075); line-height: 1.7;
+  }
+  #gameModal .game-choice-btns { gap: 12px; margin-top: 19px; }
+  #gameModal .game-choice-btns button {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    width: 88px; height: 88px; border-radius: 22px;
+    background: linear-gradient(145deg, rgba(0,217,163,.12), rgba(255,255,255,.025));
+    border: 1px solid rgba(0,217,163,.22);
+    box-shadow: 0 10px 24px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.07);
+  }
+  #gameModal .game-choice-btns button::after {
+    font: 700 12px/1.2 inherit; font-size: 12px; color: #b9d4d4; opacity: .9;
+  }
+  #gameModal .game-choice-btns [data-move="rock"]::after { content: 'سنگ'; }
+  #gameModal .game-choice-btns [data-move="paper"]::after { content: 'کاغذ'; }
+  #gameModal .game-choice-btns [data-move="scissors"]::after { content: 'قیچی'; }
+  #gameModal .game-choice-btns button.selected {
+    background: linear-gradient(145deg, rgba(0,217,163,.34), rgba(112,92,255,.22));
+    border-color: rgba(130,255,220,.75);
+    box-shadow: 0 0 0 3px rgba(0,217,163,.08), 0 10px 28px rgba(0,217,163,.15);
+  }
+  #tttModal .ttt-grid { gap: 11px; }
+  #tttModal .ttt-cell {
+    border-radius: 19px;
+    background: linear-gradient(145deg, rgba(255,255,255,.065), rgba(255,255,255,.018));
+    border: 1px solid rgba(140,190,210,.2);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 8px 18px rgba(0,0,0,.14);
+    font-size: clamp(38px, 10vw, 52px);
+  }
+  #tttModal .ttt-cell:not(.taken):hover {
+    border-color: rgba(0,217,163,.65);
+    box-shadow: 0 0 0 3px rgba(0,217,163,.06), 0 10px 24px rgba(0,217,163,.08);
+  }
+  #tttModal .ttt-cell.win {
+    background: linear-gradient(145deg, rgba(255,193,7,.22), rgba(255,152,0,.12));
+  }
+  #nfModal .nf-letter-box {
+    background: radial-gradient(circle at 50% 0%, rgba(0,217,163,.17), rgba(0,217,163,.035) 68%);
+    border: 1px solid rgba(0,217,163,.24); border-radius: 20px;
+  }
+  #nfModal .nf-fields { gap: 12px; }
+  #nfModal .nf-field input { min-height: 42px; }
+  #nfModal .nf-btn.primary {
+    background: linear-gradient(100deg, #00b98b, #0b947f 55%, #5468d9);
+    box-shadow: 0 9px 24px rgba(0,185,139,.15);
+  }
+  #unoModal .uno-piles {
+    display: flex; align-items: center; justify-content: center; gap: 22px;
+    width: 100%; padding: 18px 12px; border-radius: 20px;
+    background: radial-gradient(ellipse at center, rgba(0,217,163,.09), rgba(255,255,255,.015) 68%);
+    border: 1px solid rgba(255,255,255,.075);
+  }
+  #unoModal .uno-deck, #unoModal .uno-current {
+    border-radius: 17px; box-shadow: 0 12px 24px rgba(0,0,0,.28);
+  }
+  #unoModal .uno-status {
+    border-radius: 15px; background: rgba(0,217,163,.075);
+    border-color: rgba(0,217,163,.2); line-height: 1.8;
+  }
+  #unoModal .uno-my-hand { padding: 8px 4px; gap: 8px; }
+  #unoModal .uno-card { box-shadow: 0 9px 18px rgba(0,0,0,.25); }
+  #pollModal .modal { border-color: rgba(0,217,163,.22); }
+  #pollModal #pollCreate { margin-top: 2px; }
+  #pollModal #pollQuestion, #pollModal .poll-opt-row input {
+    box-sizing: border-box; min-width: 0; transition: border-color .18s, box-shadow .18s;
+  }
+  #pollModal #pollQuestion:focus, #pollModal .poll-opt-row input:focus {
+    border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,217,163,.09);
+  }
+  .poll-card { width: min(340px, calc(100vw - 120px)); box-sizing: border-box; }
+  .poll-option { min-height: 42px; display: flex; align-items: center; }
+  .poll-option:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  @media (max-width: 480px) {
+    #gameModal .game-player { padding: 12px 6px; }
+    #gameModal .game-player .gp-move { font-size: 44px; min-height: 68px; }
+    #gameModal .game-choice-btns button { width: 76px; height: 78px; border-radius: 18px; }
+    #unoModal .uno-piles { gap: 12px; }
+    #unoModal .uno-current { width: 68px; height: 104px; }
+    .poll-card { width: min(300px, calc(100vw - 86px)); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #gameModal .game-choice-btns button, #tttModal .ttt-cell, #unoModal .uno-card,
+    .poll-option, .nf-btn { transition: none !important; animation: none !important; }
+  }
+
 </style>
 </head>
 <body>
@@ -2488,9 +2626,9 @@ function buildPollCard(bubble, poll, msgId) {
   info.textContent = 'مجموع: ۰ رأی';
   card.appendChild(info);
   bubble.appendChild(card);
-  // store poll data on bubble for later updates
-  bubble.closest('.msg')._pollData = poll;
-  updatePollUI(bubble.closest('.msg'), poll);
+  // The bubble is built before it is attached to the .msg element.
+  // Store the model on the bubble; addMessage transfers it after mounting.
+  bubble._pollData = poll;
 }
 function updatePollUI(msgEl, poll) {
   if (!msgEl) return;
@@ -2588,6 +2726,10 @@ function addMessage(o, animType) {
   bubble.className = 'bubble';
   buildBubbleContent(bubble, o);
   w.appendChild(bubble);
+  if (bubble._pollData) {
+    w._pollData = bubble._pollData;
+    updatePollUI(w, w._pollData);
+  }
   const rx = renderReactions(o); if (rx) w.appendChild(rx);
   const meta = document.createElement('div'); meta.className = 'meta';
   const mText = document.createElement('span');
