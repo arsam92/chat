@@ -23,6 +23,13 @@ assert.match(app, /GameLogic\.canAcceptPollVote/, 'poll vote validation should u
 assert.ok(app.includes('bubble._pollData = poll;'), 'poll data must be stored before the bubble is attached to its message');
 assert.ok(app.includes('if (bubble._pollData) {\n    w._pollData = bubble._pollData;\n    updatePollUI(w, w._pollData);'), 'poll state must be initialized after the message is mounted');
 assert.ok(!app.includes("bubble.closest('.msg')._pollData = poll;"), 'poll creation must not look for a parent before DOM mounting');
+assert.match(app, /function syncPollOptionDraft\(\)/, 'adding/removing poll options must preserve the current live field values');
+assert.ok(app.includes("const optionInputs = [...$('pollOptionsList').querySelectorAll('input')];"), 'poll creation must read current values directly from the visible inputs');
+assert.ok(html.includes('id="pollError"'), 'poll validation errors should be visible near the form');
+assert.match(app, /classList\.add\('reveal-3d'\)/, 'RPS should activate the 3D reveal animation');
+assert.match(app, /classList\.add\('count-up'\)/, 'RPS score changes should animate');
+assert.match(app, /mark-in/, 'tic-tac-toe marks should animate as they appear');
+assert.ok(html.includes('ARSAM ARCADE'), 'game modals should include the new arcade styling');
 assert.match(app, /function onGameMove\(conn, msg\)/, 'RPS move handler should exist');
 assert.match(app, /msg\.round !== g\.round/, 'late RPS moves must be rejected');
 assert.match(app, /function onTTTMove\(conn, msg\)/, 'tic-tac-toe move handler should exist');
