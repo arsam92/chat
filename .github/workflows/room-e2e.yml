@@ -23,16 +23,25 @@ jobs:
         run: npm install --no-save --package-lock=false playwright@1.56.1
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Test two independent browsers on the published site
+      - name: Start local page server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/chat-server.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/chat-server.log
+          exit 1
+      - name: Test two clients, poll creation, and voting
         env:
-          CHAT_URL: https://arsam92.github.io/chat/
+          CHAT_URL: http://127.0.0.1:4173/
           ROOM_TEST_TIMEOUT_MS: 30000
         run: node tests/room-e2e.mjs
       - name: Upload browser diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: live-room-e2e-diagnostics
+          name: room-e2e-diagnostics
           path: room-test-page-*.png
           if-no-files-found: ignore
           retention-days: 3
