@@ -1087,6 +1087,42 @@
 
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-thumb { background: rgba(0, 217, 163, 0.4); border-radius: 4px; }
+  .mobile-users-btn { display: none; flex-shrink: 0; }
+  .sidebar-shade { display: none; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+  .msg.anim-in, .msg.flying-in, .msg.sticker-fly, .msg.image-fly {
+    animation: messageSettle .24s cubic-bezier(.2,.75,.25,1) both;
+    backface-visibility: hidden;
+  }
+  @keyframes messageSettle {
+    from { opacity: 0; transform: translate3d(0,10px,0) scale(.985); }
+    to { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+  }
+  .sidebar-shade.on { display: block; position: fixed; inset: 0; z-index: 140; background: rgba(0,0,0,.5); backdrop-filter: blur(3px); }
+  @media (max-width: 768px) {
+    .mobile-users-btn { display: inline-flex; align-items: center; justify-content: center; }
+    .topbar { gap: 8px; padding: 10px 12px; }
+    .topbar .me-chip { max-width: 112px; padding-right: 8px; gap: 6px; }
+    .topbar .me-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .main { grid-template-columns: 1fr; }
+    .sidebar { display: flex; position: fixed; top: 0; right: 0; bottom: 0; width: min(310px,86vw); z-index: 150; border-left: 1px solid var(--border); transform: translateX(110%); transition: transform .28s cubic-bezier(.2,.7,.2,1); box-shadow: -18px 0 48px rgba(0,0,0,.36); }
+    .sidebar.mobile-open { transform: translateX(0); }
+    .messages { padding: 16px 12px; }
+    .composer-wrap { padding: 10px 10px max(10px,env(safe-area-inset-bottom)); }
+  }
+  @media (max-width: 480px) {
+    .logo { width: 36px; height: 36px; border-radius: 11px; font-size: 18px; }
+    .topbar-info h1 { font-size: 13px; }
+    .topbar-info small { font-size: 9px; }
+    .topbar .online-badge { display: none; }
+    .game-choice-btns button { width: 64px; height: 64px; font-size: 30px; }
+    .nf-fields { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto !important; }
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  }
+
 </style>
 </head>
 <body>
@@ -1124,6 +1160,7 @@
       <h1>چت آنلاین</h1>
       <small><span class="live-dot"></span> اتاق جهانی</small>
     </div>
+    <button class="settings-btn mobile-users-btn" id="mobileUsersBtn" title="فهرست کاربران" aria-label="فهرست کاربران" aria-expanded="false">👥</button>
     <div class="online-badge">👥 <span id="onlineCount">۱ نفر</span></div>
     <div class="topbar-spacer"></div>
     <div class="me-chip" id="meChip">
@@ -1137,6 +1174,7 @@
     </div>
   </div>
 
+  <div class="sidebar-shade" id="sidebarShade" aria-hidden="true"></div>
   <div class="main">
     <aside class="sidebar">
       <div class="sidebar-head">👥 آنلاین‌ها <span class="count-badge" id="sidebarCount">۱</span></div>
@@ -3165,6 +3203,25 @@ handleData = function(conn, msg) {
 
 buildEmojiPanel();
 buildStickerPanel();
+
+function closeMobileUsers() {
+  const sidebar = document.querySelector('.sidebar');
+  if (sidebar) sidebar.classList.remove('mobile-open');
+  const shade = $('sidebarShade');
+  if (shade) shade.classList.remove('on');
+  const button = $('mobileUsersBtn');
+  if (button) button.setAttribute('aria-expanded', 'false');
+}
+$('mobileUsersBtn').onclick = () => {
+  const sidebar = document.querySelector('.sidebar');
+  if (!sidebar) return;
+  const opening = !sidebar.classList.contains('mobile-open');
+  sidebar.classList.toggle('mobile-open', opening);
+  $('sidebarShade').classList.toggle('on', opening);
+  $('mobileUsersBtn').setAttribute('aria-expanded', String(opening));
+};
+$('sidebarShade').onclick = closeMobileUsers;
+window.addEventListener('keydown', e => { if (e.key === 'Escape') closeMobileUsers(); });
 
 window.addEventListener('beforeunload', () => {
   if (state.peer && !state.peer.destroyed) { try { broadcast({ type: 'bye' }); } catch (_) {} }
