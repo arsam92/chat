@@ -1499,7 +1499,11 @@ function escapeHTML(value) {
   })[ch]);
 }
 function safePeerName(value) {
-  return String(value ?? '').replace(/[\\u0000-\\u001f\\u007f]/g, ' ').trim().slice(0, 20) || 'کاربر';
+  return String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, 20) || 'کاربر';
+}
+function findMessageElement(messageId) {
+  if (typeof messageId !== 'string') return null;
+  return [...document.querySelectorAll('.msg[data-msgid]')].find(node => node.dataset.msgid === messageId) || null;
 }
 const faNum = n => Number(n || 0).toLocaleString('fa-IR');
 const faTime = ts => new Date(ts).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
@@ -1567,12 +1571,12 @@ function buildFontOptions() {
 }
 function renderMyAvatar() {
   const el = $('meAvatar'); const [bg, fg] = avatarFor(state.myName);
-  if (state.myProfile.avatar) { el.style.background = 'transparent'; el.innerHTML = `<img src="${state.myProfile.avatar}" alt="">`; }
+  if (state.myProfile.avatar) { el.style.background = 'transparent'; el.innerHTML = `<img src="${escapeHTML(state.myProfile.avatar || '')}" alt="">`; }
   else { el.style.background = bg; el.style.color = fg; el.textContent = state.myName[0] || '?'; el.innerHTML = state.myName[0] || '?'; }
 }
 function renderProfileModal() {
   const big = $('profileAvatarBig'); const [bg, fg] = avatarFor(state.myName);
-  if (state.myProfile.avatar) { big.style.background = 'transparent'; big.innerHTML = `<img src="${state.myProfile.avatar}" alt="">`; }
+  if (state.myProfile.avatar) { big.style.background = 'transparent'; big.innerHTML = `<img src="${escapeHTML(state.myProfile.avatar || '')}" alt="">`; }
   else { big.style.background = bg; big.style.color = fg; big.textContent = state.myName[0] || '?'; }
   $('profileBio').value = state.myProfile.bio || '';
 }
@@ -1830,7 +1834,7 @@ function onReaction(conn, msg) {
 }
 
 function onDelivered(conn, msg) {
-  const el = document.querySelector(`.msg[data-msgid="${msg.msgId}"]`);
+  const el = findMessageElement(msg.msgId);
   if (el) { const t = el.querySelector('.ticks'); if (t) { t.textContent = '✓✓'; t.classList.add('delivered'); } }
   const id = conn.peer; const arr = state.pm.get(id);
   if (arr) { const m = arr.find(x => x.id === msg.msgId); if (m) m.delivered = true; }
@@ -1839,7 +1843,7 @@ function onSeen(conn, msg) {
   const id = conn.peer; const arr = state.pm.get(id);
   if (arr) msg.msgIds.forEach(mid => { const m = arr.find(x => x.id === mid); if (m) { m.seen = true; m.delivered = true; } });
   msg.msgIds.forEach(mid => {
-    const el = document.querySelector(`.msg[data-msgid="${mid}"]`);
+    const el = findMessageElement(mid);
     if (el) { const t = el.querySelector('.ticks'); if (t) { t.textContent = '✓✓'; t.classList.add('seen'); } }
   });
   if (state.pmOpenFor === id) renderPM();
@@ -1860,7 +1864,7 @@ function clearTypingTimer(peerId) {
 function onDeleteMsg(conn, msg) {
   const id = conn.peer; const arr = state.pm.get(id);
   if (arr) { const idx = arr.findIndex(x => x.id === msg.msgId); if (idx >= 0) { arr.splice(idx, 1); if (state.pmOpenFor === id) renderPM(); } }
-  const el = document.querySelector(`.msg[data-msgid="${msg.msgId}"]`);
+  const el = findMessageElement(msg.msgId);
   if (el) el.remove();
 }
 function onPollVote(conn, msg) {
@@ -1953,7 +1957,7 @@ function updatePollUI(msgEl, poll) {
 }
 function voteOnPoll(msgId, idx, optEl) {
   // find message
-  const msgEl = document.querySelector(`.msg[data-msgid="${msgId}"]`);
+  const msgEl = findMessageElement(msgId);
   if (!msgEl || !msgEl._pollData) return;
   const poll = msgEl._pollData;
   if (poll.voters[state.myPeerId] !== undefined) { toast('❗ قبلاً رأی دادی'); return; }
@@ -1969,7 +1973,7 @@ function voteOnPoll(msgId, idx, optEl) {
   }
 }
 function scrollToMessage(msgId) {
-  const el = document.querySelector(`.msg[data-msgid="${msgId}"]`);
+  const el = findMessageElement(msgId);
   if (!el) { toast('❌ پیام اصلی پیدا نشد'); return; }
   el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   el.classList.remove('highlighted'); void el.offsetWidth;
@@ -2078,7 +2082,7 @@ function userRow(u) {
   const [bg, fg] = avatarFor(u.name);
   const wrap = document.createElement('div'); wrap.className = 'u-avatar-wrap';
   const av = document.createElement('div'); av.className = 'u-avatar';
-  if (u.avatar) { av.innerHTML = `<img src="${u.avatar}" alt="">`; av.style.background = 'transparent'; }
+  if (u.avatar) { av.innerHTML = `<img src="${escapeHTML(u.avatar || '')}" alt="">`; av.style.background = 'transparent'; }
   else { av.style.background = bg; av.style.color = fg; av.textContent = u.name[0] || '?'; }
   wrap.appendChild(av);
   if (!u.me) { const st = document.createElement('div'); st.className = 'u-status'; wrap.appendChild(st); }
@@ -2143,7 +2147,7 @@ function deleteMessage(o, isPM) {
     if (idx >= 0) { arr.splice(idx, 1); renderPM(); }
   } else {
     broadcast({ type: 'delete-msg', msgId: o.id });
-    const el = document.querySelector(`.msg[data-msgid="${o.id}"]`);
+    const el = findMessageElement(o.id);
     if (el) el.remove();
   }
 }
@@ -2155,7 +2159,7 @@ function openPM(id) {
   $('pmTitle').textContent = '💬 ' + e.name;
   const [bg, fg] = avatarFor(e.name);
   const av = $('pmAvatar');
-  if (e.avatar) { av.innerHTML = `<img src="${e.avatar}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; av.style.background = 'transparent'; }
+  if (e.avatar) { av.innerHTML = `<img src="${escapeHTML(e.avatar || '')}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; av.style.background = 'transparent'; }
   else { av.style.background = bg; av.style.color = fg; av.textContent = e.name[0] || '?'; }
   renderPM(); renderUsers();
   $('pmOverlay').classList.add('on'); $('pmWindow').classList.add('on');
@@ -2224,7 +2228,7 @@ function toggleReaction(o, emoji, isPM) {
     renderPM();
   } else {
     broadcast({ type: 'reaction', msgId: o.id, emoji, from: state.myPeerId, action });
-    const el = document.querySelector(`.msg[data-msgid="${o.id}"]`);
+    const el = findMessageElement(o.id);
     if (el) { const oldRx = el.querySelector('.reactions-row'); if (oldRx) oldRx.remove(); const rx = renderReactions(o); if (rx) { const bubble = el.querySelector('.bubble'); bubble.after(rx); } }
   }
 }
@@ -2435,10 +2439,10 @@ function startGameUI() {
   const [bgMe, fgMe] = avatarFor(state.myName);
   const [bgOp, fgOp] = avatarFor(opName);
   const meAv = $('gameMeAvatar');
-  if (state.myProfile.avatar) { meAv.innerHTML = `<img src="${state.myProfile.avatar}" alt="">`; meAv.style.background = 'transparent'; }
+  if (state.myProfile.avatar) { meAv.innerHTML = `<img src="${escapeHTML(state.myProfile.avatar || '')}" alt="">`; meAv.style.background = 'transparent'; }
   else { meAv.style.background = bgMe; meAv.style.color = fgMe; meAv.textContent = state.myName[0] || '?'; }
   const opAv = $('gameOpAvatar');
-  if (e && e.avatar) { opAv.innerHTML = `<img src="${e.avatar}" alt="">`; opAv.style.background = 'transparent'; }
+  if (e && e.avatar) { opAv.innerHTML = `<img src="${escapeHTML(e.avatar || '')}" alt="">`; opAv.style.background = 'transparent'; }
   else { opAv.style.background = bgOp; opAv.style.color = fgOp; opAv.textContent = opName[0] || '?'; }
   $('gameMeName').textContent = state.myName;
   $('gameOpName').textContent = opName;
@@ -2932,7 +2936,7 @@ checkGameResult = function() {
 
 const _origVoteOnPoll = voteOnPoll;
 voteOnPoll = function(msgId, idx, optEl) {
-  const msgEl = document.querySelector(`.msg[data-msgid="${msgId}"]`);
+  const msgEl = findMessageElement(msgId);
   if (!msgEl || !msgEl._pollData) return;
   const poll = msgEl._pollData;
   if (poll.voters[state.myPeerId] !== undefined) { toast('❗ قبلاً رأی دادی'); return; }
