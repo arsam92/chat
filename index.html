@@ -1582,12 +1582,12 @@ function buildFontOptions() {
 }
 function renderMyAvatar() {
   const el = $('meAvatar'); const [bg, fg] = avatarFor(state.myName);
-  if (state.myProfile.avatar) { el.style.background = 'transparent'; el.innerHTML = `<img src="${escapeHTML(state.myProfile.avatar || '')}" alt="">`; }
+  if (safeImageSource(state.myProfile.avatar)) { el.style.background = 'transparent'; el.innerHTML = `<img src="${escapeHTML(safeImageSource(state.myProfile.avatar))}" alt="">`; }
   else { el.style.background = bg; el.style.color = fg; el.textContent = state.myName[0] || '?'; el.innerHTML = state.myName[0] || '?'; }
 }
 function renderProfileModal() {
   const big = $('profileAvatarBig'); const [bg, fg] = avatarFor(state.myName);
-  if (state.myProfile.avatar) { big.style.background = 'transparent'; big.innerHTML = `<img src="${escapeHTML(state.myProfile.avatar || '')}" alt="">`; }
+  if (safeImageSource(state.myProfile.avatar)) { big.style.background = 'transparent'; big.innerHTML = `<img src="${escapeHTML(safeImageSource(state.myProfile.avatar))}" alt="">`; }
   else { big.style.background = bg; big.style.color = fg; big.textContent = state.myName[0] || '?'; }
   $('profileBio').value = state.myProfile.bio || '';
 }
@@ -2107,7 +2107,7 @@ function userRow(u) {
   const [bg, fg] = avatarFor(u.name);
   const wrap = document.createElement('div'); wrap.className = 'u-avatar-wrap';
   const av = document.createElement('div'); av.className = 'u-avatar';
-  if (u.avatar) { av.innerHTML = `<img src="${escapeHTML(u.avatar || '')}" alt="">`; av.style.background = 'transparent'; }
+  if (safeImageSource(u.avatar)) { av.innerHTML = `<img src="${escapeHTML(safeImageSource(u.avatar))}" alt="">`; av.style.background = 'transparent'; }
   else { av.style.background = bg; av.style.color = fg; av.textContent = u.name[0] || '?'; }
   wrap.appendChild(av);
   if (!u.me) { const st = document.createElement('div'); st.className = 'u-status'; wrap.appendChild(st); }
@@ -2184,7 +2184,7 @@ function openPM(id) {
   $('pmTitle').textContent = '💬 ' + e.name;
   const [bg, fg] = avatarFor(e.name);
   const av = $('pmAvatar');
-  if (e.avatar) { av.innerHTML = `<img src="${escapeHTML(e.avatar || '')}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; av.style.background = 'transparent'; }
+  if (safeImageSource(e.avatar)) { av.innerHTML = `<img src="${escapeHTML(safeImageSource(e.avatar))}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; av.style.background = 'transparent'; }
   else { av.style.background = bg; av.style.color = fg; av.textContent = e.name[0] || '?'; }
   renderPM(); renderUsers();
   $('pmOverlay').classList.add('on'); $('pmWindow').classList.add('on');
@@ -2201,7 +2201,7 @@ function renderPM() {
   const box = $('pmMessages'); box.innerHTML = '';
   const id = state.pmOpenFor; if (!id) return;
   const arr = state.pm.get(id) || [];
-  if (!arr.length) { const e = state.peers.get(id); box.innerHTML = '<div style="color:#7a9ba8;text-align:center;padding:60px 20px;font-size:13.5px;line-height:2">🔒 این چت خصوصیه<br>بین تو و ' + (e ? e.name : 'این کاربر') + '</div>'; return; }
+  if (!arr.length) { const e = state.peers.get(id); const empty = document.createElement('div'); empty.style.cssText = 'color:#7a9ba8;text-align:center;padding:60px 20px;font-size:13.5px;line-height:2;white-space:pre-line'; empty.textContent = '🔒 این چت خصوصیه\nبین تو و ' + (e ? safePeerName(e.name) : 'این کاربر'); box.appendChild(empty); return; }
   arr.forEach(m => {
     m._isPM = true;
     const w = document.createElement('div'); w.className = 'msg ' + (m.mine ? 'mine' : 'theirs');
@@ -2464,10 +2464,10 @@ function startGameUI() {
   const [bgMe, fgMe] = avatarFor(state.myName);
   const [bgOp, fgOp] = avatarFor(opName);
   const meAv = $('gameMeAvatar');
-  if (state.myProfile.avatar) { meAv.innerHTML = `<img src="${escapeHTML(state.myProfile.avatar || '')}" alt="">`; meAv.style.background = 'transparent'; }
+  if (safeImageSource(state.myProfile.avatar)) { meAv.innerHTML = `<img src="${escapeHTML(safeImageSource(state.myProfile.avatar))}" alt="">`; meAv.style.background = 'transparent'; }
   else { meAv.style.background = bgMe; meAv.style.color = fgMe; meAv.textContent = state.myName[0] || '?'; }
   const opAv = $('gameOpAvatar');
-  if (e && e.avatar) { opAv.innerHTML = `<img src="${escapeHTML(e.avatar || '')}" alt="">`; opAv.style.background = 'transparent'; }
+  if (e && safeImageSource(e.avatar)) { opAv.innerHTML = `<img src="${escapeHTML(safeImageSource(e.avatar))}" alt="">`; opAv.style.background = 'transparent'; }
   else { opAv.style.background = bgOp; opAv.style.color = fgOp; opAv.textContent = opName[0] || '?'; }
   $('gameMeName').textContent = state.myName;
   $('gameOpName').textContent = opName;
