@@ -75,6 +75,11 @@ try {
   await a.locator('#pollBtn').click();
   await a.locator('#pollModal.on').waitFor({ state: 'visible', timeout: 5000 });
   await a.locator('#pollQuestion').fill('ROOM TEST: کدام گزینه؟');
+  // Invalid polls should explain what is missing instead of appearing to do nothing.
+  await a.locator('#pollCreate').click();
+  await a.locator('#pollError:not([hidden])').waitFor({ state: 'visible', timeout: 3000 });
+  assert.match(await a.locator('#pollError').innerText(), /حداقل دو گزینه/u);
+  assert.equal(await a.locator('#pollModal').evaluate(el => el.classList.contains('on')), true, 'invalid poll form must remain open');
   await a.locator('#pollOptionsList input').nth(0).fill('گزینهٔ الف');
   await a.locator('#pollOptionsList input').nth(1).fill('گزینهٔ ب');
   await a.locator('#pollAddOpt').click();
@@ -99,12 +104,34 @@ try {
     return /[1-9۱-۹]/u.test(info);
   }, null, { timeout: 10000 });
 
-  console.log('PASS: two independent browsers joined, created a poll, and exchanged a vote.');
+  // Exercise a full rock-paper-scissors invite and verify the animated game UI.
+  const bPeerId = await a.locator('#userList .user-item').evaluateAll(rows => {
+    const row = rows.find(el => el.querySelector('.u-name')?.textContent?.includes('ROOM-TEST-B'));
+    return row?.dataset.userId || null;
+  });
+  assert.ok(bPeerId, 'the second player should have a discoverable peer ID');
+  await a.evaluate(peerId => window.inviteToGame(peerId), bPeerId);
+  await b.locator('.game-invite-toast .gi-accept').click();
+  await Promise.all([
+    a.locator('#gameModal.on').waitFor({ state: 'visible', timeout }),
+    b.locator('#gameModal.on').waitFor({ state: 'visible', timeout })
+  ]);
+  assert.equal(await a.locator('#gameModal .game-player').first().evaluate(el => getComputedStyle(el).borderRadius), '20px', 'RPS player panels should use the new arcade card styling');
+  await a.locator('#gameModal button[data-move="rock"]').click();
+  assert.equal(await a.locator('#gameMeMove').evaluate(el => el.classList.contains('reveal-3d')), true, 'RPS move should trigger the 3D reveal');
+  await b.locator('#gameModal button[data-move="scissors"]').click();
+  await Promise.all([
+    a.waitForFunction(() => document.querySelector('#gameMeScore')?.textContent?.trim() === '۱', null, { timeout }),
+    b.waitForFunction(() => document.querySelector('#gameOpScore')?.textContent?.trim() === '۱', null, { timeout })
+  ]);
+
+  console.log('PASS: two browsers joined, poll creation/voting synced, and RPS played with the enhanced game UI.');
   console.log('A roster:', JSON.stringify(await a.locator('#userList .u-name').allTextContents()));
   console.log('B roster:', JSON.stringify(await b.locator('#userList .u-name').allTextContents()));
   console.log('A poll status:', await a.locator('.poll-card').filter({ hasText: 'ROOM TEST: کدام گزینه؟' }).locator('.poll-info').innerText());
+  console.log('RPS score:', await a.locator('#gameMeScore').innerText(), '-', await a.locator('#gameOpScore').innerText());
 } catch (error) {
-  console.error('FAIL: room, poll creation, or vote synchronization failed.');
+  console.error('FAIL: room, poll creation/voting, or game interaction failed.');
   console.error(error?.stack || error);
   for (let i = 0; i < pages.length; i++) {
     const page = pages[i];
