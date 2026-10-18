@@ -1087,6 +1087,42 @@
 
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-thumb { background: rgba(0, 217, 163, 0.4); border-radius: 4px; }
+  .mobile-users-btn { display: none; flex-shrink: 0; }
+  .sidebar-shade { display: none; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+  .msg.anim-in, .msg.flying-in, .msg.sticker-fly, .msg.image-fly {
+    animation: messageSettle .24s cubic-bezier(.2,.75,.25,1) both;
+    backface-visibility: hidden;
+  }
+  @keyframes messageSettle {
+    from { opacity: 0; transform: translate3d(0,10px,0) scale(.985); }
+    to { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+  }
+  .sidebar-shade.on { display: block; position: fixed; inset: 0; z-index: 140; background: rgba(0,0,0,.5); backdrop-filter: blur(3px); }
+  @media (max-width: 768px) {
+    .mobile-users-btn { display: inline-flex; align-items: center; justify-content: center; }
+    .topbar { gap: 8px; padding: 10px 12px; }
+    .topbar .me-chip { max-width: 112px; padding-right: 8px; gap: 6px; }
+    .topbar .me-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .main { grid-template-columns: 1fr; }
+    .sidebar { display: flex; position: fixed; top: 0; right: 0; bottom: 0; width: min(310px,86vw); z-index: 150; border-left: 1px solid var(--border); transform: translateX(110%); transition: transform .28s cubic-bezier(.2,.7,.2,1); box-shadow: -18px 0 48px rgba(0,0,0,.36); }
+    .sidebar.mobile-open { transform: translateX(0); }
+    .messages { padding: 16px 12px; }
+    .composer-wrap { padding: 10px 10px max(10px,env(safe-area-inset-bottom)); }
+  }
+  @media (max-width: 480px) {
+    .logo { width: 36px; height: 36px; border-radius: 11px; font-size: 18px; }
+    .topbar-info h1 { font-size: 13px; }
+    .topbar-info small { font-size: 9px; }
+    .topbar .online-badge { display: none; }
+    .game-choice-btns button { width: 64px; height: 64px; font-size: 30px; }
+    .nf-fields { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto !important; }
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  }
+
 </style>
 </head>
 <body>
@@ -1124,6 +1160,7 @@
       <h1>چت آنلاین</h1>
       <small><span class="live-dot"></span> اتاق جهانی</small>
     </div>
+    <button class="settings-btn mobile-users-btn" id="mobileUsersBtn" title="فهرست کاربران" aria-label="فهرست کاربران" aria-expanded="false">👥</button>
     <div class="online-badge">👥 <span id="onlineCount">۱ نفر</span></div>
     <div class="topbar-spacer"></div>
     <div class="me-chip" id="meChip">
@@ -1137,6 +1174,7 @@
     </div>
   </div>
 
+  <div class="sidebar-shade" id="sidebarShade" aria-hidden="true"></div>
   <div class="main">
     <aside class="sidebar">
       <div class="sidebar-head">👥 آنلاین‌ها <span class="count-badge" id="sidebarCount">۱</span></div>
@@ -1440,7 +1478,7 @@ const THEMES = [
 
 const state = {
   myName: '', myPeerId: null, mySlot: -1,
-  peer: null, peers: new Map(),
+  peer: null, peers: new Map(), publicMessages: new Map(),
   pm: new Map(), unread: new Map(),
   pmOpenFor: null, joined: false,
   joinResolve: null, pendingBootstrap: new Set(),
@@ -1461,7 +1499,31 @@ function escapeHTML(value) {
   })[ch]);
 }
 function safePeerName(value) {
-  return String(value ?? '').replace(/[\\u0000-\\u001f\\u007f]/g, ' ').trim().slice(0, 20) || 'کاربر';
+  return String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, 20) || 'کاربر';
+}
+function findMessageElement(messageId) {
+  if (typeof messageId !== 'string') return null;
+  return [...document.querySelectorAll('.msg[data-msgid]')].find(node => node.dataset.msgid === messageId) || null;
+}
+function safeImageSource(value) {
+  if (typeof value !== 'string' || value.length > 1200000) return '';
+  const src = value.trim();
+  if (/^data:image\/(?:png|jpe?g|gif|webp|avif);base64,[a-z0-9+/=\r\n]+$/i.test(src)) return src;
+  return /^https:\/\/[^\s"'<>]+$/i.test(src) ? src : '';
+}
+function safeAudioSource(value) {
+  if (typeof value !== 'string' || value.length > 2200000) return '';
+  const src = value.trim();
+  return /^data:audio\/(?:webm|ogg|mp4|mpeg|wav|x-wav)(?:;codecs=[a-z0-9,._-]+)?;base64,[a-z0-9+/=\r\n]+$/i.test(src) ? src : '';
+}
+function safePollPayload(value) {
+  if (!value || typeof value !== 'object' || typeof value.question !== 'string' || !Array.isArray(value.options)) return null;
+  const question = value.question.trim().slice(0, 200);
+  const options = value.options.slice(0, 6)
+    .map(option => ({ text: option && typeof option.text === 'string' ? option.text.trim().slice(0, 120) : '' }))
+    .filter(option => option.text);
+  if (!question || options.length < 2) return null;
+  return { question, options: options.map(option => ({ text: option.text, votes: 0 })), voters: {} };
 }
 const faNum = n => Number(n || 0).toLocaleString('fa-IR');
 const faTime = ts => new Date(ts).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
@@ -1529,12 +1591,12 @@ function buildFontOptions() {
 }
 function renderMyAvatar() {
   const el = $('meAvatar'); const [bg, fg] = avatarFor(state.myName);
-  if (state.myProfile.avatar) { el.style.background = 'transparent'; el.innerHTML = `<img src="${state.myProfile.avatar}" alt="">`; }
+  if (safeImageSource(state.myProfile.avatar)) { el.style.background = 'transparent'; el.innerHTML = `<img src="${escapeHTML(safeImageSource(state.myProfile.avatar))}" alt="">`; }
   else { el.style.background = bg; el.style.color = fg; el.textContent = state.myName[0] || '?'; el.innerHTML = state.myName[0] || '?'; }
 }
 function renderProfileModal() {
   const big = $('profileAvatarBig'); const [bg, fg] = avatarFor(state.myName);
-  if (state.myProfile.avatar) { big.style.background = 'transparent'; big.innerHTML = `<img src="${state.myProfile.avatar}" alt="">`; }
+  if (safeImageSource(state.myProfile.avatar)) { big.style.background = 'transparent'; big.innerHTML = `<img src="${escapeHTML(safeImageSource(state.myProfile.avatar))}" alt="">`; }
   else { big.style.background = bg; big.style.color = fg; big.textContent = state.myName[0] || '?'; }
   $('profileBio').value = state.myProfile.bio || '';
 }
@@ -1741,47 +1803,65 @@ function onUserList(conn, msg) {
   renderUsers();
 }
 function onPublicMsg(conn, msg) {
+  if (!conn || !msg || typeof msg !== 'object' || typeof msg.id !== 'string' || msg.id.length > 100) return;
+  if (state.publicMessages.has(msg.id)) return;
   const e = state.peers.get(conn.peer);
-  const name = (e && e.name) || msg.name || 'کاربر';
-  const entry = { id: msg.id, name, text: msg.text, sticker: msg.sticker, image: msg.image, voice: msg.voice, voiceDur: msg.voiceDur, reply: msg.reply, poll: msg.poll, ts: msg.ts || Date.now(), mine: false, reactions: {} };
+  const name = (e && e.name) || safePeerName(msg.name);
+  const entry = { id: msg.id, name, senderId: conn.peer, text: typeof msg.text === 'string' ? msg.text.slice(0, 4000) : '', sticker: safeImageSource(msg.sticker), image: safeImageSource(msg.image), voice: safeAudioSource(msg.voice), voiceDur: Math.max(0, Math.min(3600, Number(msg.voiceDur) || 0)), reply: msg.reply && typeof msg.reply === 'object' ? { name: safePeerName(msg.reply.name), text: typeof msg.reply.text === 'string' ? msg.reply.text.slice(0, 240) : '', isSticker: !!msg.reply.isSticker, isImage: !!msg.reply.isImage, isVoice: !!msg.reply.isVoice, isPoll: !!msg.reply.isPoll, msgId: typeof msg.reply.msgId === 'string' ? msg.reply.msgId.slice(0, 100) : null } : null, poll: safePollPayload(msg.poll), ts: Number.isFinite(msg.ts) ? msg.ts : Date.now(), mine: false, reactions: {} };
+  if (!entry.text && !entry.sticker && !entry.image && !entry.voice && !entry.poll) return;
   addMessage(entry);
   if (msg.id) safeSend(conn, { type: 'delivered', msgId: msg.id });
   if (!document.hasFocus() || document.hidden) playNotif();
   clearTypingTimer(conn.peer);
 }
 function onPrivateMsg(conn, msg) {
-  if (msg.to !== state.myPeerId) return;
+  if (!conn || !msg || msg.to !== state.myPeerId || typeof msg.id !== 'string' || msg.id.length > 100) return;
   const id = conn.peer; const e = state.peers.get(id); if (!e) return;
-  safeSend(conn, { type: 'delivered', msgId: msg.id, to: conn.peer });
   let arr = state.pm.get(id) || [];
-  arr.push({ id: msg.id, from: e.name, text: msg.text, sticker: msg.sticker, image: msg.image, voice: msg.voice, voiceDur: msg.voiceDur, reply: msg.reply, poll: msg.poll, ts: msg.ts || Date.now(), mine: false, delivered: false, seen: false, reactions: {} });
+  if (arr.some(item => item.id === msg.id)) return;
+  const entry = { id: msg.id, from: e.name, senderId: conn.peer, text: typeof msg.text === 'string' ? msg.text.slice(0, 4000) : '', sticker: safeImageSource(msg.sticker), image: safeImageSource(msg.image), voice: safeAudioSource(msg.voice), voiceDur: Math.max(0, Math.min(3600, Number(msg.voiceDur) || 0)), reply: msg.reply && typeof msg.reply === 'object' ? { name: safePeerName(msg.reply.name), text: typeof msg.reply.text === 'string' ? msg.reply.text.slice(0, 240) : '', isSticker: !!msg.reply.isSticker, isImage: !!msg.reply.isImage, isVoice: !!msg.reply.isVoice, isPoll: !!msg.reply.isPoll, msgId: typeof msg.reply.msgId === 'string' ? msg.reply.msgId.slice(0, 100) : null } : null, poll: safePollPayload(msg.poll), ts: Number.isFinite(msg.ts) ? msg.ts : Date.now(), mine: false, delivered: false, seen: false, reactions: {} };
+  if (!entry.text && !entry.sticker && !entry.image && !entry.voice && !entry.poll) return;
+  if (arr.length >= 300) arr.splice(0, arr.length - 299);
+  arr.push(entry);
   state.pm.set(id, arr);
+  safeSend(conn, { type: 'delivered', msgId: msg.id, to: conn.peer });
   if (state.pmOpenFor === id) { renderPM(); setTimeout(() => sendSeen(id), 300); }
   else { state.unread.set(id, (state.unread.get(id) || 0) + 1); toast('💬 پیام خصوصی از ' + e.name); playNotif(); renderUsers(); }
   clearTypingTimer(conn.peer);
 }
 function onReaction(conn, msg) {
-  const id = conn.peer;
-  let found = false;
-  const arr = state.pm.get(id);
-  if (arr) {
-    const m = arr.find(x => x.id === msg.msgId);
-    if (m) {
-      if (!m.reactions) m.reactions = {};
-      if (!m.reactions[msg.emoji]) m.reactions[msg.emoji] = [];
-      if (msg.action === 'add') { if (!m.reactions[msg.emoji].includes(msg.from)) m.reactions[msg.emoji].push(msg.from); }
-      else { m.reactions[msg.emoji] = m.reactions[msg.emoji].filter(u => u !== msg.from); if (!m.reactions[msg.emoji].length) delete m.reactions[msg.emoji]; }
-      found = true;
-      if (state.pmOpenFor === id) renderPM();
-    }
+  if (!conn || !msg || typeof msg.msgId !== 'string' ||
+      !REACTION_EMOJIS.includes(msg.emoji) || !['add', 'remove'].includes(msg.action)) return;
+  const peerId = conn.peer;
+  const pmArr = state.pm.get(peerId);
+  const privateMessage = pmArr && pmArr.find(item => item.id === msg.msgId);
+  const target = privateMessage || state.publicMessages.get(msg.msgId);
+  if (!target) return;
+  if (!target.reactions || typeof target.reactions !== 'object') target.reactions = {};
+  const users = Array.isArray(target.reactions[msg.emoji]) ? target.reactions[msg.emoji] : [];
+  if (msg.action === 'add') {
+    if (!users.includes(peerId)) users.push(peerId);
+    target.reactions[msg.emoji] = users;
+  } else {
+    const remaining = users.filter(id => id !== peerId);
+    if (remaining.length) target.reactions[msg.emoji] = remaining;
+    else delete target.reactions[msg.emoji];
   }
-  if (!found) {
-    const el = document.querySelector(`.msg[data-msgid="${msg.msgId}"]`);
-    if (el) { const oldRx = el.querySelector('.reactions-row'); if (oldRx) oldRx.remove(); }
+  if (privateMessage) {
+    if (state.pmOpenFor === peerId) renderPM();
+    return;
   }
+  const el = [...document.querySelectorAll('.msg[data-msgid]')].find(node => node.dataset.msgid === msg.msgId);
+  if (!el) return;
+  const old = el.querySelector('.reactions-row');
+  if (old) old.remove();
+  const row = renderReactions(target);
+  const bubble = el.querySelector('.bubble');
+  if (row && bubble) bubble.after(row);
 }
+
 function onDelivered(conn, msg) {
-  const el = document.querySelector(`.msg[data-msgid="${msg.msgId}"]`);
+  const el = findMessageElement(msg.msgId);
   if (el) { const t = el.querySelector('.ticks'); if (t) { t.textContent = '✓✓'; t.classList.add('delivered'); } }
   const id = conn.peer; const arr = state.pm.get(id);
   if (arr) { const m = arr.find(x => x.id === msg.msgId); if (m) m.delivered = true; }
@@ -1790,7 +1870,7 @@ function onSeen(conn, msg) {
   const id = conn.peer; const arr = state.pm.get(id);
   if (arr) msg.msgIds.forEach(mid => { const m = arr.find(x => x.id === mid); if (m) { m.seen = true; m.delivered = true; } });
   msg.msgIds.forEach(mid => {
-    const el = document.querySelector(`.msg[data-msgid="${mid}"]`);
+    const el = findMessageElement(mid);
     if (el) { const t = el.querySelector('.ticks'); if (t) { t.textContent = '✓✓'; t.classList.add('seen'); } }
   });
   if (state.pmOpenFor === id) renderPM();
@@ -1809,11 +1889,23 @@ function clearTypingTimer(peerId) {
   const e = state.peers.get(peerId); if (e) e.typing = false;
 }
 function onDeleteMsg(conn, msg) {
-  const id = conn.peer; const arr = state.pm.get(id);
-  if (arr) { const idx = arr.findIndex(x => x.id === msg.msgId); if (idx >= 0) { arr.splice(idx, 1); if (state.pmOpenFor === id) renderPM(); } }
-  const el = document.querySelector(`.msg[data-msgid="${msg.msgId}"]`);
-  if (el) el.remove();
+  if (!conn || !msg || typeof msg.msgId !== 'string') return;
+  const publicItem = state.publicMessages.get(msg.msgId);
+  if (publicItem) {
+    if (publicItem.senderId !== conn.peer) return;
+    state.publicMessages.delete(msg.msgId);
+    const publicEl = findMessageElement(msg.msgId);
+    if (publicEl) publicEl.remove();
+    return;
+  }
+  const arr = state.pm.get(conn.peer);
+  if (!arr) return;
+  const index = arr.findIndex(item => item.id === msg.msgId && item.senderId === conn.peer);
+  if (index < 0) return;
+  arr.splice(index, 1);
+  if (state.pmOpenFor === conn.peer) renderPM();
 }
+
 function onPollVote(conn, msg) {
   if (!conn || !msg || typeof msg.msgId !== 'string' || !Number.isInteger(msg.optionIndex)) return;
   const el = document.querySelectorAll('.msg[data-msgid]');
@@ -1850,8 +1942,8 @@ function buildBubbleContent(bubble, o) {
     if (o.reply.msgId) q.onclick = (e) => { e.stopPropagation(); scrollToMessage(o.reply.msgId); };
     bubble.appendChild(q);
   }
-  if (o.sticker) { bubble.classList.add('sticker'); const img = document.createElement('img'); img.src = o.sticker; bubble.appendChild(img); }
-  else if (o.image) { bubble.classList.add('image-bubble'); const img = document.createElement('img'); img.src = o.image; img.onclick = () => openImagePreview(o.image); bubble.appendChild(img); }
+  if (o.sticker) { const src = safeImageSource(o.sticker); if (!src) { bubble.textContent = 'استیکر نامعتبر است'; return; } bubble.classList.add('sticker'); const img = document.createElement('img'); img.src = src; img.alt = 'استیکر'; img.loading = 'lazy'; bubble.appendChild(img); }
+  else if (o.image) { const src = safeImageSource(o.image); if (!src) { bubble.textContent = 'تصویر نامعتبر است'; return; } bubble.classList.add('image-bubble'); const img = document.createElement('img'); img.src = src; img.alt = 'تصویر ارسال‌شده'; img.loading = 'lazy'; img.onclick = () => openImagePreview(src); bubble.appendChild(img); }
   else if (o.voice) { buildVoiceBubble(bubble, o.voice, o.voiceDur || 0); }
   else if (o.poll) { buildPollCard(bubble, o.poll, o.id); }
   else if (o.text && o.text.length <= 3 && /\p{Emoji}/u.test(o.text)) { bubble.classList.add('big-emoji'); bubble.textContent = o.text; }
@@ -1904,7 +1996,7 @@ function updatePollUI(msgEl, poll) {
 }
 function voteOnPoll(msgId, idx, optEl) {
   // find message
-  const msgEl = document.querySelector(`.msg[data-msgid="${msgId}"]`);
+  const msgEl = findMessageElement(msgId);
   if (!msgEl || !msgEl._pollData) return;
   const poll = msgEl._pollData;
   if (poll.voters[state.myPeerId] !== undefined) { toast('❗ قبلاً رأی دادی'); return; }
@@ -1920,7 +2012,7 @@ function voteOnPoll(msgId, idx, optEl) {
   }
 }
 function scrollToMessage(msgId) {
-  const el = document.querySelector(`.msg[data-msgid="${msgId}"]`);
+  const el = findMessageElement(msgId);
   if (!el) { toast('❌ پیام اصلی پیدا نشد'); return; }
   el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   el.classList.remove('highlighted'); void el.offsetWidth;
@@ -1940,7 +2032,9 @@ function buildVoiceBubble(bubble, dataUrl, dur) {
   const durEl = document.createElement('div'); durEl.className = 'voice-dur'; durEl.textContent = faDur(dur);
   wrap.appendChild(btn); wrap.appendChild(wave); wrap.appendChild(durEl);
   bubble.appendChild(wrap);
-  const audio = new Audio(dataUrl);
+  const audioSrc = safeAudioSource(dataUrl);
+  if (!audioSrc) { bubble.textContent = 'پیام صوتی نامعتبر است'; return; }
+  const audio = new Audio(audioSrc);
   audio.onended = () => { btn.innerHTML = '▶️'; wave.classList.remove('playing'); };
   btn.onclick = () => {
     if (audio.paused) { document.querySelectorAll('audio').forEach(a => a.pause()); audio.play(); btn.innerHTML = '⏸️'; wave.classList.add('playing'); }
@@ -1968,7 +2062,7 @@ function addMessage(o, animType) {
   clearLastHighlight();
   const w = document.createElement('div');
   w.className = 'msg ' + (o.mine ? 'mine' : 'theirs');
-  if (o.id) w.setAttribute('data-msgid', o.id);
+  if (o.id) { w.setAttribute('data-msgid', o.id); if (!o._isPM) { o.senderId = o.senderId || (o.mine ? state.myPeerId : null); state.publicMessages.set(String(o.id), o); } }
   let animClass = '';
   if (animType === 'flying' || (o.mine && !animType)) {
     if (o.sticker) animClass = 'sticker-fly';
@@ -1995,10 +2089,12 @@ function addMessage(o, animType) {
   w.appendChild(meta);
   bubble.addEventListener('dblclick', () => setReplyTo(o));
   box.appendChild(w);
-  while (box.children.length > 300) box.firstChild.remove();
+  while (box.children.length > 300) { const oldest = box.firstElementChild; if (!oldest) break; if (oldest.dataset.msgid) state.publicMessages.delete(oldest.dataset.msgid); oldest.remove(); }
   setTimeout(() => w.classList.add('last-message'), 100);
   if (near || o.mine) box.scrollTop = box.scrollHeight;
 }
+
+
 function addSystemMsg(text) {
   const box = $('messages');
   clearLastHighlight();
@@ -2027,7 +2123,7 @@ function userRow(u) {
   const [bg, fg] = avatarFor(u.name);
   const wrap = document.createElement('div'); wrap.className = 'u-avatar-wrap';
   const av = document.createElement('div'); av.className = 'u-avatar';
-  if (u.avatar) { av.innerHTML = `<img src="${u.avatar}" alt="">`; av.style.background = 'transparent'; }
+  if (safeImageSource(u.avatar)) { av.innerHTML = `<img src="${escapeHTML(safeImageSource(u.avatar))}" alt="">`; av.style.background = 'transparent'; }
   else { av.style.background = bg; av.style.color = fg; av.textContent = u.name[0] || '?'; }
   wrap.appendChild(av);
   if (!u.me) { const st = document.createElement('div'); st.className = 'u-status'; wrap.appendChild(st); }
@@ -2092,7 +2188,7 @@ function deleteMessage(o, isPM) {
     if (idx >= 0) { arr.splice(idx, 1); renderPM(); }
   } else {
     broadcast({ type: 'delete-msg', msgId: o.id });
-    const el = document.querySelector(`.msg[data-msgid="${o.id}"]`);
+    const el = findMessageElement(o.id);
     if (el) el.remove();
   }
 }
@@ -2104,7 +2200,7 @@ function openPM(id) {
   $('pmTitle').textContent = '💬 ' + e.name;
   const [bg, fg] = avatarFor(e.name);
   const av = $('pmAvatar');
-  if (e.avatar) { av.innerHTML = `<img src="${e.avatar}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; av.style.background = 'transparent'; }
+  if (safeImageSource(e.avatar)) { av.innerHTML = `<img src="${escapeHTML(safeImageSource(e.avatar))}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; av.style.background = 'transparent'; }
   else { av.style.background = bg; av.style.color = fg; av.textContent = e.name[0] || '?'; }
   renderPM(); renderUsers();
   $('pmOverlay').classList.add('on'); $('pmWindow').classList.add('on');
@@ -2121,7 +2217,7 @@ function renderPM() {
   const box = $('pmMessages'); box.innerHTML = '';
   const id = state.pmOpenFor; if (!id) return;
   const arr = state.pm.get(id) || [];
-  if (!arr.length) { const e = state.peers.get(id); box.innerHTML = '<div style="color:#7a9ba8;text-align:center;padding:60px 20px;font-size:13.5px;line-height:2">🔒 این چت خصوصیه<br>بین تو و ' + (e ? e.name : 'این کاربر') + '</div>'; return; }
+  if (!arr.length) { const e = state.peers.get(id); const empty = document.createElement('div'); empty.style.cssText = 'color:#7a9ba8;text-align:center;padding:60px 20px;font-size:13.5px;line-height:2;white-space:pre-line'; empty.textContent = '🔒 این چت خصوصیه\nبین تو و ' + (e ? safePeerName(e.name) : 'این کاربر'); box.appendChild(empty); return; }
   arr.forEach(m => {
     m._isPM = true;
     const w = document.createElement('div'); w.className = 'msg ' + (m.mine ? 'mine' : 'theirs');
@@ -2173,7 +2269,7 @@ function toggleReaction(o, emoji, isPM) {
     renderPM();
   } else {
     broadcast({ type: 'reaction', msgId: o.id, emoji, from: state.myPeerId, action });
-    const el = document.querySelector(`.msg[data-msgid="${o.id}"]`);
+    const el = findMessageElement(o.id);
     if (el) { const oldRx = el.querySelector('.reactions-row'); if (oldRx) oldRx.remove(); const rx = renderReactions(o); if (rx) { const bubble = el.querySelector('.bubble'); bubble.after(rx); } }
   }
 }
@@ -2384,10 +2480,10 @@ function startGameUI() {
   const [bgMe, fgMe] = avatarFor(state.myName);
   const [bgOp, fgOp] = avatarFor(opName);
   const meAv = $('gameMeAvatar');
-  if (state.myProfile.avatar) { meAv.innerHTML = `<img src="${state.myProfile.avatar}" alt="">`; meAv.style.background = 'transparent'; }
+  if (safeImageSource(state.myProfile.avatar)) { meAv.innerHTML = `<img src="${escapeHTML(safeImageSource(state.myProfile.avatar))}" alt="">`; meAv.style.background = 'transparent'; }
   else { meAv.style.background = bgMe; meAv.style.color = fgMe; meAv.textContent = state.myName[0] || '?'; }
   const opAv = $('gameOpAvatar');
-  if (e && e.avatar) { opAv.innerHTML = `<img src="${e.avatar}" alt="">`; opAv.style.background = 'transparent'; }
+  if (e && safeImageSource(e.avatar)) { opAv.innerHTML = `<img src="${escapeHTML(safeImageSource(e.avatar))}" alt="">`; opAv.style.background = 'transparent'; }
   else { opAv.style.background = bgOp; opAv.style.color = fgOp; opAv.textContent = opName[0] || '?'; }
   $('gameMeName').textContent = state.myName;
   $('gameOpName').textContent = opName;
@@ -2881,7 +2977,7 @@ checkGameResult = function() {
 
 const _origVoteOnPoll = voteOnPoll;
 voteOnPoll = function(msgId, idx, optEl) {
-  const msgEl = document.querySelector(`.msg[data-msgid="${msgId}"]`);
+  const msgEl = findMessageElement(msgId);
   if (!msgEl || !msgEl._pollData) return;
   const poll = msgEl._pollData;
   if (poll.voters[state.myPeerId] !== undefined) { toast('❗ قبلاً رأی دادی'); return; }
@@ -2988,7 +3084,7 @@ function onUNOResponse(conn, msg) {
   if (e && e.conn) {
     safeSend(e.conn, {
       type: 'uno-start', id: state.uno.id, deck,
-      myHand: opHand, current, myTurn: false, opponentHand: myHand
+      myHand: opHand, current, myTurn: false, opponentHandCount: myHand.length
     });
   }
   startUNOUI();
@@ -2999,7 +3095,7 @@ function onUNOStart(conn, msg) {
   state.uno.myHand = msg.myHand;
   state.uno.current = msg.current;
   state.uno.myTurn = msg.myTurn;
-  state.uno.opHand = new Array(msg.opponentHand ? msg.opponentHand.length : 7).fill({});
+  state.uno.opHand = new Array(Number.isInteger(msg.opponentHandCount) ? Math.max(0, Math.min(100, msg.opponentHandCount)) : 7).fill({});
   startUNOUI();
 }
 function startUNOUI() {
@@ -3152,6 +3248,25 @@ handleData = function(conn, msg) {
 
 buildEmojiPanel();
 buildStickerPanel();
+
+function closeMobileUsers() {
+  const sidebar = document.querySelector('.sidebar');
+  if (sidebar) sidebar.classList.remove('mobile-open');
+  const shade = $('sidebarShade');
+  if (shade) shade.classList.remove('on');
+  const button = $('mobileUsersBtn');
+  if (button) button.setAttribute('aria-expanded', 'false');
+}
+$('mobileUsersBtn').onclick = () => {
+  const sidebar = document.querySelector('.sidebar');
+  if (!sidebar) return;
+  const opening = !sidebar.classList.contains('mobile-open');
+  sidebar.classList.toggle('mobile-open', opening);
+  $('sidebarShade').classList.toggle('on', opening);
+  $('mobileUsersBtn').setAttribute('aria-expanded', String(opening));
+};
+$('sidebarShade').onclick = closeMobileUsers;
+window.addEventListener('keydown', e => { if (e.key === 'Escape') closeMobileUsers(); });
 
 window.addEventListener('beforeunload', () => {
   if (state.peer && !state.peer.destroyed) { try { broadcast({ type: 'bye' }); } catch (_) {} }
