@@ -3540,7 +3540,7 @@ function inviteToUNO(peerId) {
   if (!e || !e.conn || !e.conn.open) { toast('❌ کاربر آفلاین'); return; }
   if (state.uno) { toast('❗ یک بازی UNO در جریان است'); return; }
   const id = 'uno-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
-  state.uno = { id, opponent: peerId, host: true, myHand: [], opHand: [], deck: [], current: null, myTurn: false, pendingWild: null, finished: false, endTimer: null };
+  state.uno = { id, opponent: peerId, host: true, myHand: [], opHand: [], deck: [], current: null, myTurn: false, pendingWild: null, finished: false, endTimer: null, turnSeq: 0 };
   safeSend(e.conn, { type: 'uno-invite', id, name: state.myName });
   toast('⏳ دعوت UNO ارسال شد...');
 }
@@ -3557,7 +3557,7 @@ function onUNOInvite(conn, msg) {
   document.body.appendChild(t);
   t.querySelector('.gi-accept').onclick = () => {
     t.remove();
-    state.uno = { id: msg.id, opponent: conn.peer, host: false, myHand: [], opHand: [], deck: [], current: null, myTurn: false, pendingWild: null, finished: false, endTimer: null };
+    state.uno = { id: msg.id, opponent: conn.peer, host: false, myHand: [], opHand: [], deck: [], current: null, myTurn: false, pendingWild: null, finished: false, endTimer: null, turnSeq: 0 };
     safeSend(conn, { type: 'uno-response', id: msg.id, accepted: true });
     toast('⏳ در حال شروع...');
   };
@@ -3575,7 +3575,7 @@ function onUNOResponse(conn, msg) {
   let current = deck.pop();
   while (current && current.type === 'wild' && deck.length) { deck.unshift(current); current = deck.pop(); }
   if (!current || current.type !== 'number') { toast('❌ ساخت دسته کارت ناموفق بود'); state.uno = null; return; }
-  Object.assign(u, { deck, myHand, opHand, current, myTurn: true, pendingWild: null, finished: false });
+  Object.assign(u, { deck, myHand, opHand, current, myTurn: true, pendingWild: null, finished: false, turnSeq: 0 });
   // Never expose the remaining deck to the other player.
   const peer = state.peers.get(u.opponent);
   if (peer && peer.conn) safeSend(peer.conn, {
@@ -3664,6 +3664,8 @@ function applyUNOPlay(idx, wildColor) {
   u.current = played;
 
   const keepsTurn = played.type === 'special'; // In two-player mode, Skip/Reverse/Draw Two keep the turn.
+  const turnSeq = (u.turnSeq || 0) + 1;
+  u.turnSeq = turnSeq;
   let penaltyCards = [];
   if (u.host && played.type === 'special' && played.value === 'draw2') {
     penaltyCards = u.deck.splice(0, Math.min(2, u.deck.length));
@@ -3673,7 +3675,7 @@ function applyUNOPlay(idx, wildColor) {
 
   const e = state.peers.get(u.opponent);
   if (e && e.conn) safeSend(e.conn, {
-    type: 'uno-move', id: u.id, card: played, handCount: u.myHand.length,
+    type: 'uno-move', id: u.id, turnSeq, card: played, handCount: u.myHand.length,
     turnOwner: keepsTurn ? (u.host ? 'host' : 'guest') : (u.host ? 'guest' : 'host'),
     penaltyCards: u.host ? penaltyCards : undefined
   });
@@ -3694,12 +3696,14 @@ function onUNOMove(conn, msg) {
   if (!u || u.finished || u.id !== msg.id || conn.peer !== u.opponent || u.myTurn ||
       !GameLogic.isValidUnoCard(msg.card, true) || !unoCardCanPlay(msg.card, u.current) ||
       !Number.isInteger(msg.handCount) || msg.handCount < 0 || msg.handCount > 100 ||
+      !Number.isInteger(msg.turnSeq) || msg.turnSeq !== (u.turnSeq || 0) + 1 ||
       !['host', 'guest'].includes(msg.turnOwner)) return;
 
   if (u.host) {
     const cardIndex = u.opHand.findIndex(card => GameLogic.unoCardsMatchInHand(card, msg.card));
     if (cardIndex < 0 || u.opHand.length - 1 !== msg.handCount) return;
     u.opHand.splice(cardIndex, 1);
+    u.turnSeq = msg.turnSeq;
     u.current = { ...msg.card };
     const keepsTurn = msg.card.type === 'special';
     if (msg.card.type === 'special' && msg.card.value === 'draw2') {
@@ -3709,7 +3713,7 @@ function onUNOMove(conn, msg) {
     if (u.opHand.length === 0) { finishUNO(conn.peer); return; }
     const peer = state.peers.get(u.opponent);
     if (peer && peer.conn) safeSend(peer.conn, {
-      type: 'uno-sync', id: u.id, current: u.current,
+      type: 'uno-sync', id: u.id, turnSeq: u.turnSeq, current: u.current,
       hostHandCount: u.myHand.length, guestHandCount: u.opHand.length,
       turnOwner: keepsTurn ? 'guest' : 'host'
     });
@@ -3718,6 +3722,7 @@ function onUNOMove(conn, msg) {
   }
 
   const newHostCount = msg.handCount;
+  u.turnSeq = msg.turnSeq;
   u.current = { ...msg.card };
   u.opHand = new Array(newHostCount).fill(null);
   if (Array.isArray(msg.penaltyCards) && msg.penaltyCards.length <= 2 &&
@@ -3744,7 +3749,7 @@ function onUNOEnd(conn, msg) {
 function onUNOSync(conn, msg) {
   const u = state.uno;
   if (!u || u.host || u.finished || u.id !== msg.id || conn.peer !== u.opponent ||
-      !GameLogic.isValidUnoCard(msg.current, true) ||
+      !GameLogic.isValidUnoCard(msg.current, true) || !Number.isInteger(msg.turnSeq) || msg.turnSeq !== (u.turnSeq || 0) ||
       !Number.isInteger(msg.hostHandCount) || msg.hostHandCount < 0 || msg.hostHandCount > 100 ||
       !Number.isInteger(msg.guestHandCount) || msg.guestHandCount < 0 || msg.guestHandCount > 100 ||
       !['host', 'guest'].includes(msg.turnOwner)) return;
@@ -3758,10 +3763,11 @@ function onUNODrawRequest(conn, msg) {
   if (!u || !u.host || u.finished || u.id !== msg.id || conn.peer !== u.opponent || u.myTurn) return;
   const card = u.deck.pop();
   if (card) u.opHand.push(card);
+  u.turnSeq = (u.turnSeq || 0) + 1;
   u.myTurn = true;
   const peer = state.peers.get(u.opponent);
   if (peer && peer.conn) safeSend(peer.conn, {
-    type: 'uno-draw-result', id: u.id, drawnBy: card ? 'guest' : 'none',
+    type: 'uno-draw-result', id: u.id, turnSeq: u.turnSeq, drawnBy: card ? 'guest' : 'none',
     card: card || null, hostHandCount: u.myHand.length,
     guestHandCount: u.opHand.length, current: u.current, turnOwner: 'host'
   });
@@ -3772,9 +3778,11 @@ function onUNODrawResult(conn, msg) {
   const u = state.uno;
   if (!u || u.host || u.finished || u.id !== msg.id || conn.peer !== u.opponent ||
       !['host', 'guest', 'none'].includes(msg.drawnBy) ||
+      !Number.isInteger(msg.turnSeq) || msg.turnSeq !== (u.turnSeq || 0) + 1 ||
       !Number.isInteger(msg.hostHandCount) || msg.hostHandCount < 0 || msg.hostHandCount > 100 ||
       !Number.isInteger(msg.guestHandCount) || msg.guestHandCount < 0 || msg.guestHandCount > 100 ||
       !GameLogic.isValidUnoCard(msg.current, true) || !['host', 'guest'].includes(msg.turnOwner)) return;
+  u.turnSeq = msg.turnSeq;
   if (msg.drawnBy === 'guest' && msg.card && GameLogic.isValidUnoCard(msg.card, false)) u.myHand.push(msg.card);
   u.current = { ...msg.current };
   u.opHand = new Array(msg.hostHandCount).fill(null);
@@ -3789,10 +3797,11 @@ function unoDraw() {
   if (u.host) {
     const card = u.deck.pop();
     if (card) u.myHand.push(card);
+    u.turnSeq = (u.turnSeq || 0) + 1;
     u.myTurn = false;
     const peer = state.peers.get(u.opponent);
     if (peer && peer.conn) safeSend(peer.conn, {
-      type: 'uno-draw-result', id: u.id, drawnBy: card ? 'host' : 'none',
+      type: 'uno-draw-result', id: u.id, turnSeq: u.turnSeq, drawnBy: card ? 'host' : 'none',
       hostHandCount: u.myHand.length, guestHandCount: u.opHand.length,
       current: u.current, turnOwner: 'guest'
     });
