@@ -1724,29 +1724,89 @@ function updateStatus(mode) {
   pill.className = 'status-pill ' + mode;
   txt.textContent = mode === 'online' ? 'متصل' : mode === 'reconnecting' ? 'در حال اتصال...' : 'قطع';
 }
+function settleBootstrap(id) {
+  if (!state.pendingBootstrap || !state.pendingBootstrap.delete(id)) return;
+  if (state.pendingBootstrap.size === 0) setTimeout(finishDiscover, 350);
+}
 function dial(id) {
-  if (!state.peer || state.peer.destroyed) return;
+  if (!state.peer || state.peer.destroyed || !id || id === state.myPeerId) return;
   const existing = state.peers.get(id);
   if (existing && existing.conn && existing.conn.open) return;
-  let conn; try { conn = state.peer.connect(id, { reliable: true }); } catch (_) { return; }
-  if (!conn) return;
-  let e = state.peers.get(id); if (!e) { e = { conn: null, name: null, slot: null }; state.peers.set(id, e); }
-  e.conn = conn; attachConn(conn, { outgoing: true });
+  if (state.connectingPeers.has(id)) return;
+  state.connectingPeers.add(id);
+  let conn;
+  try { conn = state.peer.connect(id, { reliable: true }); }
+  catch (_) { state.connectingPeers.delete(id); settleBootstrap(id); return; }
+  if (!conn) { state.connectingPeers.delete(id); settleBootstrap(id); return; }
+  let entry = state.peers.get(id);
+  if (!entry) {
+    entry = { conn: null, name: null, slot: null };
+    state.peers.set(id, entry);
+  }
+  if (!entry.conn || !entry.conn.open) entry.conn = conn;
+  attachConn(conn, { outgoing: true });
 }
 function attachConn(conn, { outgoing }) {
   const id = conn.peer;
+  let pool = state.connectionPool.get(id);
+  if (!pool) { pool = new Set(); state.connectionPool.set(id, pool); }
+  pool.add(conn);
+  const ensureEntry = () => {
+    let entry = state.peers.get(id);
+    if (!entry) {
+      entry = { conn: null, name: null, slot: null };
+      state.peers.set(id, entry);
+    }
+    if (!entry.conn || !entry.conn.open) entry.conn = conn;
+  };
+  const cleanup = () => {
+    const connections = state.connectionPool.get(id);
+    if (connections) {
+      connections.delete(conn);
+      if (connections.size === 0) state.connectionPool.delete(id);
+    }
+    state.connectingPeers.delete(id);
+    settleBootstrap(id);
+    removePeerById(id, conn);
+  };
   conn.on('open', () => {
-    if (state.pendingBootstrap.has(id)) { state.pendingBootstrap.delete(id); if (state.pendingBootstrap.size === 0) setTimeout(finishDiscover, 700); }
-    if (outgoing) safeSend(conn, { type: 'hello', name: state.myName, slot: state.mySlot, avatar: state.myProfile.avatar, bio: state.myProfile.bio });
+    state.connectingPeers.delete(id);
+    ensureEntry();
+    settleBootstrap(id);
+    if (outgoing) safeSend(conn, {
+      type: 'hello', name: state.myName, slot: state.mySlot,
+      avatar: state.myProfile.avatar, bio: state.myProfile.bio
+    });
   });
   conn.on('data', msg => { try { handleData(conn, msg); } catch (e) { console.warn(e); } });
-  conn.on('close', () => removePeerById(id));
-  conn.on('error', () => removePeerById(id));
+  conn.on('close', cleanup);
+  conn.on('error', cleanup);
 }
-function removePeerById(id) {
-  const e = state.peers.get(id); if (!e) return;
-  if (e.name && state.joined) addSystemMsg('👋 ' + e.name + ' از چت خارج شد');
-  state.peers.delete(id); renderUsers();
+function removePeerById(id, sourceConn) {
+  const entry = state.peers.get(id);
+  const pool = state.connectionPool.get(id);
+  if (sourceConn && pool) {
+    pool.delete(sourceConn);
+    if (pool.size === 0) state.connectionPool.delete(id);
+  }
+  if (!entry) return;
+  const remaining = state.connectionPool.get(id);
+  const active = remaining ? [...remaining].find(connection => connection.open) : null;
+  if (sourceConn && entry.conn !== sourceConn) {
+    if ((!entry.conn || !entry.conn.open) && active) entry.conn = active;
+    return;
+  }
+  if (active) {
+    entry.conn = active;
+    state.connectingPeers.delete(id);
+    return;
+  }
+  // A late peer-unavailable error must not remove a working connection.
+  if (!sourceConn && entry.conn && entry.conn.open) return;
+  state.connectingPeers.delete(id);
+  if (entry.name && state.joined) addSystemMsg('👋 ' + entry.name + ' از چت خارج شد');
+  state.peers.delete(id);
+  renderUsers();
 }
 
 function handleData(conn, msg) {
@@ -1778,13 +1838,28 @@ function handleData(conn, msg) {
 }
 
 function onHello(conn, msg) {
-  const id = conn.peer; let e = state.peers.get(id);
-  if (!e) { e = { conn, name: msg.name || 'کاربر', slot: msg.slot, avatar: msg.avatar, bio: msg.bio, isNew: true }; state.peers.set(id, e); }
-  else { e.conn = conn; if (msg.avatar !== undefined) e.avatar = msg.avatar; if (msg.bio !== undefined) e.bio = msg.bio; }
-  if (!e.name) e.name = msg.name || 'کاربر';
-  if (e.isNew && state.joined) { addSystemMsg('👋 ' + e.name + ' وارد چت شد'); toast('👋 ' + e.name + ' وارد شد'); e.isNew = false; }
+  if (!conn || !msg || typeof msg !== 'object') return;
+  const id = conn.peer;
+  let e = state.peers.get(id);
+  if (!e) {
+    e = { conn, name: safePeerName(msg.name), slot: msg.slot, avatar: msg.avatar, bio: msg.bio, isNew: true };
+    state.peers.set(id, e);
+  } else {
+    // Never replace a healthy route with a duplicate incoming connection.
+    if (!e.conn || !e.conn.open) e.conn = conn;
+    if (msg.avatar !== undefined) e.avatar = msg.avatar;
+    if (msg.bio !== undefined) e.bio = msg.bio;
+  }
+  if (!e.name) e.name = safePeerName(msg.name);
+  if (e.isNew && state.joined) {
+    addSystemMsg('👋 ' + e.name + ' وارد چت شد');
+    toast('👋 ' + e.name + ' وارد شد');
+    e.isNew = false;
+  }
   safeSend(conn, { type: 'user-list', members: roster() });
-  if (state.myProfile.avatar || state.myProfile.bio) safeSend(conn, { type: 'profile', name: state.myName, avatar: state.myProfile.avatar, bio: state.myProfile.bio });
+  if (state.myProfile.avatar || state.myProfile.bio) {
+    safeSend(conn, { type: 'profile', name: state.myName, avatar: state.myProfile.avatar, bio: state.myProfile.bio });
+  }
   renderUsers();
 }
 function onProfile(conn, msg) {
