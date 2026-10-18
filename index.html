@@ -3080,20 +3080,23 @@ $('recCancel').onclick = () => { state.recShouldSend = false; if (state.mediaRec
 $('recSend').onclick = () => { state.recShouldSend = true; if (state.mediaRecorder && state.mediaRecorder.state === 'recording') state.mediaRecorder.stop(); };
 
 // Poll Creator
-let pollOptsCount = 2;
+let pollOptionDraft = ['', ''];
 function initPollCreator() {
-  pollOptsCount = 2;
+  pollOptionDraft = ['', ''];
   $('pollQuestion').value = '';
   renderPollOpts();
 }
 function renderPollOpts() {
   const list = $('pollOptionsList'); list.innerHTML = '';
-  for (let i = 0; i < pollOptsCount; i++) {
+  pollOptionDraft.forEach((value, i) => {
     const row = document.createElement('div'); row.className = 'poll-opt-row';
     const inp = document.createElement('input');
+    inp.type = 'text';
     inp.className = 'poll-create-field';
-    inp.placeholder = 'گزینه ' + (i+1);
+    inp.placeholder = 'گزینه ' + (i + 1);
     inp.maxLength = 60;
+    inp.value = value;
+    inp.setAttribute('aria-label', 'گزینه ' + (i + 1));
     inp.style.padding = '11px 14px';
     inp.style.background = 'rgba(7,24,20,0.6)';
     inp.style.border = '1.5px solid var(--border)';
@@ -3103,24 +3106,37 @@ function renderPollOpts() {
     inp.style.fontSize = '13.5px';
     inp.style.outline = 'none';
     inp.dataset.idx = i;
+    inp.addEventListener('input', () => { pollOptionDraft[i] = inp.value; });
     row.appendChild(inp);
-    if (pollOptsCount > 2) {
+    if (pollOptionDraft.length > 2) {
       const del = document.createElement('button');
+      del.type = 'button';
       del.textContent = '✕';
-      del.onclick = () => { pollOptsCount--; renderPollOpts(); };
+      del.setAttribute('aria-label', 'حذف گزینه ' + (i + 1));
+      del.onclick = () => {
+        pollOptionDraft.splice(i, 1);
+        renderPollOpts();
+      };
       row.appendChild(del);
     }
     list.appendChild(row);
-  }
+  });
+  $('pollAddOpt').disabled = pollOptionDraft.length >= 6;
+  $('pollAddOpt').textContent = pollOptionDraft.length >= 6 ? 'حداکثر ۶ گزینه' : '+ افزودن گزینه';
 }
 $('pollBtn').onclick = () => { initPollCreator(); $('pollModal').classList.add('on'); };
-$('pollAddOpt').onclick = () => { if (pollOptsCount < 6) { pollOptsCount++; renderPollOpts(); } else toast('❗ حداکثر ۶ گزینه'); };
+$('pollAddOpt').onclick = () => {
+  if (pollOptionDraft.length >= 6) { toast('❗ حداکثر ۶ گزینه'); return; }
+  pollOptionDraft.push('');
+  renderPollOpts();
+  $('pollOptionsList').querySelector('input:last-of-type')?.focus();
+};
 $('pollCreate').onclick = () => {
   const question = $('pollQuestion').value.trim();
-  const inputs = $('pollOptionsList').querySelectorAll('input');
-  const poll = GameLogic.createPoll(question, [...inputs].map(input => input.value));
+  const poll = GameLogic.createPoll(question, pollOptionDraft);
   if (!poll) {
     toast('❗ سؤال لازم است و حداقل ۲ گزینه متفاوت وارد کن');
+    $('pollQuestion').focus();
     return;
   }
   sendPoll(poll);
