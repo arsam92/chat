@@ -1758,13 +1758,11 @@
 'use strict';
 const GameLogic = window.ChatGameLogic;
 
-// Stable room namespace, with compatibility for the previous URL-scoped builds.
+// A stable room name shared by every visitor, independent of URL formatting.
 const ROOM_NAME = 'global-chat-2026';
 const SLOT_PREFIX = 'chat-';
 function getRoomSlugs() {
-  const canonical = slugify(ROOM_NAME);
-  const scopedName = 'global-chat-2026-' + location.hostname + location.pathname.replace(/\/+$/, '');
-  return [...new Set([canonical, slugify(scopedName)])];
+  return [slugify(ROOM_NAME)];
 }
 const MAX_SLOTS = 20;
 const MAX_IMAGE_SIZE = 800 * 1024;
@@ -2055,30 +2053,52 @@ function wirePeer(peer) {
     if (t === 'network' || t === 'server-error') updateStatus('reconnecting');
   });
 }
-function discover(slugs) {
+function probePeerIds(ids) {
   return new Promise(resolve => {
     if (state.joinTimer) clearTimeout(state.joinTimer);
     state.joinResolve = resolve;
     state.pendingBootstrap = new Set();
-    const targets = [];
-    const roomIds = [...new Set((Array.isArray(slugs) ? slugs : [slugs]).filter(Boolean))];
-    for (const slug of roomIds) {
-      for (let slot = 0; slot < MAX_SLOTS; slot++) {
-        const id = SLOT_PREFIX + slug + '-' + slot;
-        if (id === state.myPeerId) continue;
-        const known = state.peers.get(id);
-        if (known && known.conn && known.conn.open) continue;
-        if (state.connectingPeers.has(id)) continue;
-        targets.push(id);
-      }
-    }
+    const targets = [...new Set(ids)].filter(id => {
+      if (!id || id === state.myPeerId || state.connectingPeers.has(id)) return false;
+      const known = state.peers.get(id);
+      return !(known && known.conn && known.conn.open);
+    });
     if (!targets.length) { finishDiscover(); return; }
     targets.forEach(id => state.pendingBootstrap.add(id));
     targets.forEach(id => dial(id));
     state.joinTimer = setTimeout(finishDiscover, 4500);
   });
 }
-function finishDiscover() { clearTimeout(state.joinTimer); const r = state.joinResolve; state.joinResolve = null; if (r) r(); }
+async function discover(slugs) {
+  const roomIds = [...new Set((Array.isArray(slugs) ? slugs : [slugs]).filter(Boolean))];
+  const canonicalSlug = slugify(ROOM_NAME);
+  const canonicalTargets = [];
+  // Each newcomer dials only earlier occupied slots. This creates a full mesh
+  // without opening dozens of connections to IDs that nobody has claimed.
+  for (let slot = 0; slot < Math.min(MAX_SLOTS, Math.max(0, state.mySlot)); slot++) {
+    canonicalTargets.push(SLOT_PREFIX + canonicalSlug + '-' + slot);
+  }
+  for (const [id, entry] of state.peers) {
+    if (id.startsWith(SLOT_PREFIX + canonicalSlug + '-') && (!entry.conn || !entry.conn.open)) {
+      canonicalTargets.push(id);
+    }
+  }
+  await probePeerIds(canonicalTargets);
+  await new Promise(resolve => setTimeout(resolve, 250));
+  const hasRoomConnection = [...state.peers.values()].some(entry => entry.conn && entry.conn.open);
+  if (hasRoomConnection) return;
+
+  // One compatibility pass lets a freshly loaded client find a still-open tab
+  // running the older URL-scoped build, without scanning that namespace forever.
+  const legacyTargets = [];
+  for (const slug of roomIds.filter(id => id !== canonicalSlug)) {
+    for (let slot = 0; slot < MAX_SLOTS; slot++) {
+      legacyTargets.push(SLOT_PREFIX + slug + '-' + slot);
+    }
+  }
+  await probePeerIds(legacyTargets);
+}
+function finishDiscover() { if (state.joinTimer) clearTimeout(state.joinTimer); const r = state.joinResolve; state.joinResolve = null; if (r) r(); }
 function finishJoin() {
   state.joined = true;
   startRoomMaintenance();
@@ -2103,16 +2123,22 @@ function startRoomMaintenance() {
 function maintainRoomConnections() {
   if (!state.joined || state.roomScanRunning || !state.peer || state.peer.destroyed || state.peer.disconnected) return;
   state.roomScanRunning = true;
-  const slugs = state.roomSlugs.length ? state.roomSlugs : getRoomSlugs();
+  const canonicalSlug = slugify(ROOM_NAME);
+  const targets = new Set();
+  // Retry only earlier slots; later participants are responsible for dialing us.
+  for (let slot = 0; slot < Math.min(MAX_SLOTS, Math.max(0, state.mySlot)); slot++) {
+    targets.add(SLOT_PREFIX + canonicalSlug + '-' + slot);
+  }
+  // Also restore peers already discovered through a roster if their route dropped.
+  for (const [id, entry] of state.peers) {
+    if (!entry.conn || !entry.conn.open) targets.add(id);
+  }
   try {
-    for (const slug of slugs) {
-      for (let slot = 0; slot < MAX_SLOTS; slot++) {
-        const id = SLOT_PREFIX + slug + '-' + slot;
-        if (id === state.myPeerId || state.connectingPeers.has(id)) continue;
-        const existing = state.peers.get(id);
-        if (existing && existing.conn && existing.conn.open) continue;
-        dial(id);
-      }
+    for (const id of targets) {
+      if (id === state.myPeerId || state.connectingPeers.has(id)) continue;
+      const existing = state.peers.get(id);
+      if (existing && existing.conn && existing.conn.open) continue;
+      dial(id);
     }
   } finally {
     setTimeout(() => { state.roomScanRunning = false; }, 2200);
