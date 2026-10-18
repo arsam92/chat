@@ -3001,7 +3001,7 @@ function onUNOResponse(conn, msg) {
   if (e && e.conn) {
     safeSend(e.conn, {
       type: 'uno-start', id: state.uno.id, deck,
-      myHand: opHand, current, myTurn: false, opponentHand: myHand
+      myHand: opHand, current, myTurn: false, opponentHandCount: myHand.length
     });
   }
   startUNOUI();
@@ -3012,7 +3012,7 @@ function onUNOStart(conn, msg) {
   state.uno.myHand = msg.myHand;
   state.uno.current = msg.current;
   state.uno.myTurn = msg.myTurn;
-  state.uno.opHand = new Array(msg.opponentHand ? msg.opponentHand.length : 7).fill({});
+  state.uno.opHand = new Array(Number.isInteger(msg.opponentHandCount) ? Math.max(0, Math.min(100, msg.opponentHandCount)) : 7).fill({});
   startUNOUI();
 }
 function startUNOUI() {
