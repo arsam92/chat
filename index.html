@@ -1505,6 +1505,17 @@ function findMessageElement(messageId) {
   if (typeof messageId !== 'string') return null;
   return [...document.querySelectorAll('.msg[data-msgid]')].find(node => node.dataset.msgid === messageId) || null;
 }
+function safeImageSource(value) {
+  if (typeof value !== 'string' || value.length > 1200000) return '';
+  const src = value.trim();
+  if (/^data:image\/(?:png|jpe?g|gif|webp|avif);base64,[a-z0-9+/=\r\n]+$/i.test(src)) return src;
+  return /^https:\/\/[^\s"'<>]+$/i.test(src) ? src : '';
+}
+function safeAudioSource(value) {
+  if (typeof value !== 'string' || value.length > 2200000) return '';
+  const src = value.trim();
+  return /^data:audio\/(?:webm|ogg|mp4|mpeg|wav|x-wav)(?:;codecs=[a-z0-9,._-]+)?;base64,[a-z0-9+/=\r\n]+$/i.test(src) ? src : '';
+}
 const faNum = n => Number(n || 0).toLocaleString('fa-IR');
 const faTime = ts => new Date(ts).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
 const faDur = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
@@ -1785,7 +1796,7 @@ function onUserList(conn, msg) {
 function onPublicMsg(conn, msg) {
   const e = state.peers.get(conn.peer);
   const name = (e && e.name) || msg.name || 'کاربر';
-  const entry = { id: msg.id, name, text: msg.text, sticker: msg.sticker, image: msg.image, voice: msg.voice, voiceDur: msg.voiceDur, reply: msg.reply, poll: msg.poll, ts: msg.ts || Date.now(), mine: false, reactions: {} };
+  const entry = { id: msg.id, name, senderId: conn.peer, text: typeof msg.text === 'string' ? msg.text.slice(0, 4000) : '', sticker: safeImageSource(msg.sticker), image: safeImageSource(msg.image), voice: safeAudioSource(msg.voice), voiceDur: Math.max(0, Math.min(3600, Number(msg.voiceDur) || 0)), reply: msg.reply && typeof msg.reply === 'object' ? msg.reply : null, poll: msg.poll && typeof msg.poll === 'object' ? msg.poll : null, ts: Number.isFinite(msg.ts) ? msg.ts : Date.now(), mine: false, reactions: {} };
   addMessage(entry);
   if (msg.id) safeSend(conn, { type: 'delivered', msgId: msg.id });
   if (!document.hasFocus() || document.hidden) playNotif();
@@ -1796,7 +1807,7 @@ function onPrivateMsg(conn, msg) {
   const id = conn.peer; const e = state.peers.get(id); if (!e) return;
   safeSend(conn, { type: 'delivered', msgId: msg.id, to: conn.peer });
   let arr = state.pm.get(id) || [];
-  arr.push({ id: msg.id, from: e.name, text: msg.text, sticker: msg.sticker, image: msg.image, voice: msg.voice, voiceDur: msg.voiceDur, reply: msg.reply, poll: msg.poll, ts: msg.ts || Date.now(), mine: false, delivered: false, seen: false, reactions: {} });
+  arr.push({ id: msg.id, from: e.name, senderId: conn.peer, text: typeof msg.text === 'string' ? msg.text.slice(0, 4000) : '', sticker: safeImageSource(msg.sticker), image: safeImageSource(msg.image), voice: safeAudioSource(msg.voice), voiceDur: Math.max(0, Math.min(3600, Number(msg.voiceDur) || 0)), reply: msg.reply && typeof msg.reply === 'object' ? msg.reply : null, poll: msg.poll && typeof msg.poll === 'object' ? msg.poll : null, ts: Number.isFinite(msg.ts) ? msg.ts : Date.now(), mine: false, delivered: false, seen: false, reactions: {} });
   state.pm.set(id, arr);
   if (state.pmOpenFor === id) { renderPM(); setTimeout(() => sendSeen(id), 300); }
   else { state.unread.set(id, (state.unread.get(id) || 0) + 1); toast('💬 پیام خصوصی از ' + e.name); playNotif(); renderUsers(); }
@@ -1862,11 +1873,23 @@ function clearTypingTimer(peerId) {
   const e = state.peers.get(peerId); if (e) e.typing = false;
 }
 function onDeleteMsg(conn, msg) {
-  const id = conn.peer; const arr = state.pm.get(id);
-  if (arr) { const idx = arr.findIndex(x => x.id === msg.msgId); if (idx >= 0) { arr.splice(idx, 1); if (state.pmOpenFor === id) renderPM(); } }
-  const el = findMessageElement(msg.msgId);
-  if (el) el.remove();
+  if (!conn || !msg || typeof msg.msgId !== 'string') return;
+  const publicItem = state.publicMessages.get(msg.msgId);
+  if (publicItem) {
+    if (publicItem.senderId !== conn.peer) return;
+    state.publicMessages.delete(msg.msgId);
+    const publicEl = findMessageElement(msg.msgId);
+    if (publicEl) publicEl.remove();
+    return;
+  }
+  const arr = state.pm.get(conn.peer);
+  if (!arr) return;
+  const index = arr.findIndex(item => item.id === msg.msgId && item.senderId === conn.peer);
+  if (index < 0) return;
+  arr.splice(index, 1);
+  if (state.pmOpenFor === conn.peer) renderPM();
 }
+
 function onPollVote(conn, msg) {
   if (!conn || !msg || typeof msg.msgId !== 'string' || !Number.isInteger(msg.optionIndex)) return;
   const el = document.querySelectorAll('.msg[data-msgid]');
@@ -1903,8 +1926,8 @@ function buildBubbleContent(bubble, o) {
     if (o.reply.msgId) q.onclick = (e) => { e.stopPropagation(); scrollToMessage(o.reply.msgId); };
     bubble.appendChild(q);
   }
-  if (o.sticker) { bubble.classList.add('sticker'); const img = document.createElement('img'); img.src = o.sticker; bubble.appendChild(img); }
-  else if (o.image) { bubble.classList.add('image-bubble'); const img = document.createElement('img'); img.src = o.image; img.onclick = () => openImagePreview(o.image); bubble.appendChild(img); }
+  if (o.sticker) { const src = safeImageSource(o.sticker); if (!src) { bubble.textContent = 'استیکر نامعتبر است'; return; } bubble.classList.add('sticker'); const img = document.createElement('img'); img.src = src; img.alt = 'استیکر'; img.loading = 'lazy'; bubble.appendChild(img); }
+  else if (o.image) { const src = safeImageSource(o.image); if (!src) { bubble.textContent = 'تصویر نامعتبر است'; return; } bubble.classList.add('image-bubble'); const img = document.createElement('img'); img.src = src; img.alt = 'تصویر ارسال‌شده'; img.loading = 'lazy'; img.onclick = () => openImagePreview(src); bubble.appendChild(img); }
   else if (o.voice) { buildVoiceBubble(bubble, o.voice, o.voiceDur || 0); }
   else if (o.poll) { buildPollCard(bubble, o.poll, o.id); }
   else if (o.text && o.text.length <= 3 && /\p{Emoji}/u.test(o.text)) { bubble.classList.add('big-emoji'); bubble.textContent = o.text; }
@@ -1993,7 +2016,9 @@ function buildVoiceBubble(bubble, dataUrl, dur) {
   const durEl = document.createElement('div'); durEl.className = 'voice-dur'; durEl.textContent = faDur(dur);
   wrap.appendChild(btn); wrap.appendChild(wave); wrap.appendChild(durEl);
   bubble.appendChild(wrap);
-  const audio = new Audio(dataUrl);
+  const audioSrc = safeAudioSource(dataUrl);
+  if (!audioSrc) { bubble.textContent = 'پیام صوتی نامعتبر است'; return; }
+  const audio = new Audio(audioSrc);
   audio.onended = () => { btn.innerHTML = '▶️'; wave.classList.remove('playing'); };
   btn.onclick = () => {
     if (audio.paused) { document.querySelectorAll('audio').forEach(a => a.pause()); audio.play(); btn.innerHTML = '⏸️'; wave.classList.add('playing'); }
@@ -2021,7 +2046,7 @@ function addMessage(o, animType) {
   clearLastHighlight();
   const w = document.createElement('div');
   w.className = 'msg ' + (o.mine ? 'mine' : 'theirs');
-  if (o.id) { w.setAttribute('data-msgid', o.id); if (!o._isPM) state.publicMessages.set(String(o.id), o); }
+  if (o.id) { w.setAttribute('data-msgid', o.id); if (!o._isPM) { o.senderId = o.senderId || (o.mine ? state.myPeerId : null); state.publicMessages.set(String(o.id), o); } }
   let animClass = '';
   if (animType === 'flying' || (o.mine && !animType)) {
     if (o.sticker) animClass = 'sticker-fly';
