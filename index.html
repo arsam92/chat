@@ -1532,7 +1532,7 @@
     box-shadow: 0 10px 24px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.07);
   }
   #gameModal .game-choice-btns button::after {
-    font: 700 12px/1.2 inherit; font-size: 12px; color: #b9d4d4; opacity: .9;
+    font-family: inherit; font-weight: 700; line-height: 1.2; font-size: 12px; color: #b9d4d4; opacity: .9;
   }
   #gameModal .game-choice-btns [data-move="rock"]::after { content: 'سنگ'; }
   #gameModal .game-choice-btns [data-move="paper"]::after { content: 'کاغذ'; }
@@ -1896,11 +1896,14 @@
 'use strict';
 const GameLogic = window.ChatGameLogic;
 
-// A stable room name shared by every visitor, independent of URL formatting.
-const ROOM_NAME = 'global-chat-2026';
+// All regular visitors share one room. Automated browser tests can opt into
+// an isolated CI-only room so they never post test polls into the public chat.
+const requestedTestRoom = new URLSearchParams(location.search).get('testRoom') || '';
+const ROOM_NAME = /^ci-[a-z0-9-]{1,40}$/.test(requestedTestRoom) ? requestedTestRoom : 'global-chat-2026';
 const SLOT_PREFIX = 'chat-';
 function getRoomSlugs() {
   const canonical = slugify(ROOM_NAME);
+  if (ROOM_NAME !== 'global-chat-2026') return [canonical];
   const scopedName = 'global-chat-2026-' + location.hostname + location.pathname.replace(/\/+$/, '');
   return [...new Set([canonical, slugify(scopedName)])];
 }
