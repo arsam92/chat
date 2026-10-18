@@ -19,6 +19,9 @@ assert.ok(app.includes('for (const slug of roomIds.filter(id => id !== canonical
 assert.match(app, /Retry only earlier slots; later participants are responsible for dialing us/, 'maintenance should retry only relevant peers');
 assert.match(app, /msg\.from !== conn\.peer/, 'poll votes must match the sending peer');
 assert.match(app, /GameLogic\.canAcceptPollVote/, 'poll vote validation should use shared logic');
+assert.ok(app.includes('bubble._pollData = poll;'), 'poll data must be stored before the bubble is attached to its message');
+assert.ok(app.includes('if (bubble._pollData) {\n    w._pollData = bubble._pollData;\n    updatePollUI(w, w._pollData);'), 'poll state must be initialized after the message is mounted');
+assert.ok(!app.includes("bubble.closest('.msg')._pollData = poll;"), 'poll creation must not look for a parent before DOM mounting');
 assert.match(app, /function onGameMove\(conn, msg\)/, 'RPS move handler should exist');
 assert.match(app, /msg\.round !== g\.round/, 'late RPS moves must be rejected');
 assert.match(app, /function onTTTMove\(conn, msg\)/, 'tic-tac-toe move handler should exist');
