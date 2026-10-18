@@ -1824,6 +1824,7 @@ function onPrivateMsg(conn, msg) {
   if (arr.length >= 300) arr.splice(0, arr.length - 299);
   arr.push(entry);
   state.pm.set(id, arr);
+  safeSend(conn, { type: 'delivered', msgId: msg.id, to: conn.peer });
   if (state.pmOpenFor === id) { renderPM(); setTimeout(() => sendSeen(id), 300); }
   else { state.unread.set(id, (state.unread.get(id) || 0) + 1); toast('💬 پیام خصوصی از ' + e.name); playNotif(); renderUsers(); }
   clearTypingTimer(conn.peer);
