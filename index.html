@@ -1805,9 +1805,24 @@ function attachConn(conn, { outgoing }) {
   conn.on('close', cleanup);
   conn.on('error', cleanup);
 }
-function removePeerById(id, sourceConn) {
+function removePeerById(id, sourceConn, force = false) {
   const entry = state.peers.get(id);
   const pool = state.connectionPool.get(id);
+  if (force) {
+    if (pool) {
+      for (const connection of pool) {
+        try { if (connection !== sourceConn) connection.close(); } catch (_) {}
+      }
+      state.connectionPool.delete(id);
+    }
+    state.connectingPeers.delete(id);
+    if (entry) {
+      if (entry.name && state.joined) addSystemMsg('👋 ' + entry.name + ' از چت خارج شد');
+      state.peers.delete(id);
+      renderUsers();
+    }
+    return;
+  }
   if (sourceConn && pool) {
     pool.delete(sourceConn);
     if (pool.size === 0) state.connectionPool.delete(id);
@@ -2019,7 +2034,7 @@ function onPollVote(conn, msg) {
   poll.options[idx].votes = (Number(poll.options[idx].votes) || 0) + 1;
   updatePollUI(target, poll);
 }
-function onBye(conn) { removePeerById(conn.peer); }
+function onBye(conn) { removePeerById(conn.peer, conn, true); }
 
 function roster() {
   const arr = [{ id: state.myPeerId, name: state.myName, slot: state.mySlot, avatar: state.myProfile.avatar, bio: state.myProfile.bio }];
