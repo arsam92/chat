@@ -1397,6 +1397,8 @@
     .login-rings { width: min(550px, 115vw); height: min(550px, 115vw); }
     .messages { scroll-behavior: smooth; }
     .modal-overlay { padding: 12px; }
+    /* The mobile drawer must be controlled only by its open/closed transform. */
+    .sidebar { animation: none !important; }
   }
   @media (prefers-reduced-motion: reduce) {
     .login-rings, body::before, .login-card::before, .login-card::after, .login-icon,
