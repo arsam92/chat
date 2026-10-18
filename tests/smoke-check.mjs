@@ -11,8 +11,9 @@ assert.equal(scripts.length, 1, 'exactly one inline application script expected'
 const app = scripts[0][1];
 assert.doesNotThrow(() => new Function(app), 'inline JavaScript must parse');
 assert.match(html, /src="\.\/game-logic\.js"/, 'shared game logic must load from Pages');
-assert.match(app, /const ROOM_NAME = 'global-chat-2026';/, 'all fresh clients must claim the same canonical room');
+assert.match(app, /const ROOM_NAME = \/\^ci-\[a-z0-9-\]\{1,40\}\$\/.test\(requestedTestRoom\) \? requestedTestRoom : 'global-chat-2026';/, 'regular visitors share the canonical room while CI uses isolated rooms');
 assert.ok(app.includes('return [...new Set([canonical, slugify(scopedName)])];'), 'fresh clients use a stable room plus a legacy compatibility alias');
+assert.ok(app.includes("if (ROOM_NAME !== 'global-chat-2026') return [canonical];"), 'isolated test rooms must never scan or join the public room alias');
 assert.match(app, /function probePeerIds\(ids\)/, 'room discovery must probe an explicit target list');
 assert.match(app, /for \(let slot = 0; slot < Math\.min\(MAX_SLOTS, Math\.max\(0, state\.mySlot\)\); slot\+\+\)/, 'new clients should scan earlier occupied slots instead of every empty slot');
 assert.ok(app.includes('for (const slug of roomIds.filter(id => id !== canonicalSlug))'), 'legacy room IDs are scanned only in the fallback phase');
