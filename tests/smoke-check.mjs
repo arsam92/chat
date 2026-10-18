@@ -5,29 +5,29 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const GameLogic = require('../game-logic.js');
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
-const scripts = [...html.matchAll(/<script\\b(?![^>]*\\bsrc=)[^>]*>([\\s\\S]*?)<\\/script>/gi)];
+const scripts = [...html.matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)];
 assert.equal(scripts.length, 1, 'exactly one inline application script expected');
 
 const app = scripts[0][1];
 assert.doesNotThrow(() => new Function(app), 'inline JavaScript must parse');
-assert.match(html, /src="\\.\\/game-logic\\.js"/, 'shared game logic must load from Pages');
-assert.match(app, /msg\\.from !== conn\\.peer/, 'poll votes must match the sending peer');
-assert.match(app, /GameLogic\\.canAcceptPollVote/, 'poll vote validation should use shared logic');
-assert.match(app, /function onGameMove\\(conn, msg\\)/, 'RPS move handler should exist');
-assert.match(app, /msg\\.round !== g\\.round/, 'late RPS moves must be rejected');
-assert.match(app, /function onTTTMove\\(conn, msg\\)/, 'tic-tac-toe move handler should exist');
-assert.match(app, /GameLogic\\.tttWinningLine/, 'tic-tac-toe should use tested win detection');
-assert.match(app, /function scoreNameFamily|GameLogic\\.scoreNameFamily/, 'name-family scoring must use shared logic');
-assert.match(app, /type: 'uno-start', id: u\\.id, myHand: opHand, current/, 'UNO start must send a hand and current card');
-assert.doesNotMatch(app, /type: 'uno-start', id: u\\.id, deck/, 'UNO must not expose the remaining deck');
+assert.match(html, /src="\.\/game-logic\.js"/, 'shared game logic must load from Pages');
+assert.match(app, /msg\.from !== conn\.peer/, 'poll votes must match the sending peer');
+assert.match(app, /GameLogic\.canAcceptPollVote/, 'poll vote validation should use shared logic');
+assert.match(app, /function onGameMove\(conn, msg\)/, 'RPS move handler should exist');
+assert.match(app, /msg\.round !== g\.round/, 'late RPS moves must be rejected');
+assert.match(app, /function onTTTMove\(conn, msg\)/, 'tic-tac-toe move handler should exist');
+assert.match(app, /GameLogic\.tttWinningLine/, 'tic-tac-toe should use tested win detection');
+assert.match(app, /function scoreNameFamily|GameLogic\.scoreNameFamily/, 'name-family scoring must use shared logic');
+assert.match(app, /type: 'uno-start', id: u\.id, myHand: opHand, current/, 'UNO start must send a hand and current card');
+assert.doesNotMatch(app, /type: 'uno-start', id: u\.id, deck/, 'UNO must not expose the remaining deck');
 assert.match(app, /type: 'uno-draw-request'/, 'guest draws should be requested from the deck owner');
-assert.match(html, /prefers-reduced-motion:\\s*reduce/, 'reduced-motion preference must be respected');
+assert.match(html, /prefers-reduced-motion:\s*reduce/, 'reduced-motion preference must be respected');
 assert.match(html, /id="mobileUsersBtn"/, 'mobile user-list button should exist');
 assert.match(html, /id="sidebarShade"/, 'mobile drawer backdrop should exist');
 assert.match(html, /class="poll-card"/, 'poll results card should exist');
 assert.match(html, /nf-invalid-letter/, 'name-family answers should display invalid starting letters');
 
-const ids = [...html.matchAll(/\\bid=["']([^"']+)["']/g)].map(match => match[1]);
+const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(match => match[1]);
 assert.equal(new Set(ids).size, ids.length, 'HTML element IDs must be unique');
 
 // Poll validation: trim, cap, drop blanks, and deduplicate equivalent answers.
