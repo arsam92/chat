@@ -125,11 +125,13 @@ try {
   assert.equal(await a.locator('#gameMeMove').innerText(), '?', 'the first locked move remains hidden during suspense');
   await b.locator('#gameModal button[data-move="scissors"]').click();
   await Promise.all([
-    a.locator('#rpsClash.revealing').waitFor({ state: 'visible', timeout }),
-    b.locator('#rpsClash.revealing').waitFor({ state: 'visible', timeout }),
     a.locator('#gameMeMove.rps-revealing').waitFor({ state: 'visible', timeout }),
     b.locator('#gameMeMove.rps-revealing').waitFor({ state: 'visible', timeout })
   ]);
+  assert.equal(await a.locator('#gameMeMove').innerText(), '✊', 'player A should reveal rock after both moves are locked');
+  assert.equal(await a.locator('#gameOpMove').innerText(), '✌️', 'player A should receive player B scissors');
+  assert.equal(await b.locator('#gameMeMove').innerText(), '✌️', 'player B should reveal scissors after both moves are locked');
+  assert.equal(await b.locator('#gameOpMove').innerText(), '✊', 'player B should receive player A rock');
   await Promise.all([
     a.waitForFunction(() => document.querySelector('#gameMeScore')?.textContent?.trim() === '۱', null, { timeout }),
     b.waitForFunction(() => document.querySelector('#gameOpScore')?.textContent?.trim() === '۱', null, { timeout })
