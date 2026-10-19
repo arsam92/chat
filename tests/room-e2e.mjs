@@ -266,12 +266,12 @@ try {
   // Private replies must identify the target sender and point back to the exact
   // message ID, not merely show a generic "replying" label.
   const originalPrivateMessageId = await b.locator('#pmMessages .msg.theirs')
-    .filter({ hasText: 'Private chat test works' }).getAttribute('data-msgid');
+    .filter({ hasText: 'PRIVATE MEME TEST start' }).getAttribute('data-msgid');
   assert.ok(originalPrivateMessageId, 'original PM should have a stable message ID');
-  await b.locator('#pmMessages .msg.theirs').filter({ hasText: 'Private chat test works' }).locator('.reply-btn').click();
+  await b.locator('#pmMessages .msg.theirs').filter({ hasText: 'PRIVATE MEME TEST start' }).locator('.reply-btn').click();
   await b.locator('#pmReplyPreview:not([hidden])').waitFor({ state: 'visible', timeout: 3000 });
   assert.match(await b.locator('#pmRpName').innerText(), /ROOM-TEST-A/u, 'reply preview must name the original sender');
-  assert.match(await b.locator('#pmRpText').innerText(), /Private chat test works/u, 'reply preview must quote the original text');
+  assert.match(await b.locator('#pmRpText').innerText(), /PRIVATE MEME TEST start/u, 'reply preview must quote the original text');
   await b.locator('#pmInput').fill('PM reply correctly linked');
   await b.locator('#pmSendBtn').click();
   const receivedReply = a.locator('#pmMessages .msg.theirs').filter({ hasText: 'PM reply correctly linked' });
