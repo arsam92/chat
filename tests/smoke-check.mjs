@@ -38,7 +38,12 @@ assert.match(app, /function renderPM\(options = \{\}\)/, 'private messages shoul
 assert.match(app, /function closeSettings\(\)/, 'settings should have a controlled close animation');
 assert.ok(html.includes('id="rpsCountdown"') && html.includes('id="rpsFootnote"'), 'rock-paper-scissors should have a dedicated duel countdown/reveal UI');
 assert.match(app, /function revealRPSRound\(g\)/, 'RPS must reveal both moves together after the suspense countdown');
+assert.match(app, /function finishRPSRound\(g, winner\)/, 'RPS scoring should happen only after the move reveal animation');
+assert.ok(!app.includes("checkGameResult = function()"), 'legacy RPS code must not override the synchronized countdown state machine');
+assert.ok(!app.includes("document.querySelectorAll('.game-choice-btns button')"), 'legacy selector must not leave new RPS controls locked between rounds');
 assert.match(app, /function createUNOCard\(card, options = \{\}\)/, 'UNO should render actual layered card faces instead of a bare emoji');
+assert.match(app, /penaltyCards = u\.deck\.splice\(0, Math\.min\(2, u\.deck\.length\)\);\s*u\.opHand\.push\(\.\.\.penaltyCards\)/, 'UNO Draw Two penalties should be drawn for and added to the guest hand');
+assert.match(app, /if \(penaltyCards\.length\) u\.myHand\.push\(\.\.\.penaltyCards\)/, 'UNO guest should receive Draw Two cards through sync');
 assert.ok(app.includes("ellipse") && app.includes("uno-back-oval"), 'UNO faces and backs should use the custom card artwork builder');
 assert.match(html, /prefers-reduced-motion: reduce/, 'new animations must respect reduced-motion preferences');
 assert.match(app, /function onGameMove\(conn, msg\)/, 'RPS move handler should exist');
