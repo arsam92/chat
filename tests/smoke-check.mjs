@@ -42,8 +42,14 @@ assert.match(app, /function finishRPSRound\(g, winner\)/, 'RPS scoring should ha
 assert.ok(!app.includes("checkGameResult = function()"), 'legacy RPS code must not override the synchronized countdown state machine');
 assert.ok(!app.includes("document.querySelectorAll('.game-choice-btns button')"), 'legacy selector must not leave new RPS controls locked between rounds');
 assert.match(app, /function createUNOCard\(card, options = \{\}\)/, 'UNO should render actual layered card faces instead of a bare emoji');
-assert.match(app, /penaltyCards = u\.deck\.splice\(0, Math\.min\(2, u\.deck\.length\)\);\s*u\.opHand\.push\(\.\.\.penaltyCards\)/, 'UNO Draw Two penalties should be drawn for and added to the guest hand');
-assert.match(app, /if \(penaltyCards\.length\) u\.myHand\.push\(\.\.\.penaltyCards\)/, 'UNO guest should receive Draw Two cards through sync');
+assert.match(app, /function unoTakeCards\(u, amount = 1\)/, 'UNO should draw from the deck and recycle discarded cards when needed');
+assert.match(app, /const penaltyAmount = GameLogic\.unoCardPenalty\(played\)/, 'UNO +2 and +4 penalties should use shared rule logic');
+assert.match(app, /u\.opHand\.push\(\.\.\.penaltyCards\)/, 'UNO penalties must be added to the opponent hand');
+assert.match(app, /if \(penaltyCards\.length\) u\.myHand\.push\(\.\.\.penaltyCards\)/, 'UNO guest should receive its penalty cards through sync');
+assert.match(app, /u\.drawnCardOnly = canPlay/, 'only the newly drawn playable card should be enabled');
+assert.match(app, /function unoPassDraw\(\)/, 'players need to end their turn after choosing not to play a drawn card');
+assert.match(app, /card: null, hostHandCount: u\.myHand\.length/, 'the host must never leak a card drawn into its own hand');
+assert.match(app, /id="unoPassDraw"/, 'the drawn-card pass-turn control should exist');
 assert.ok(app.includes("ellipse") && app.includes("uno-back-oval"), 'UNO faces and backs should use the custom card artwork builder');
 assert.match(html, /prefers-reduced-motion: reduce/, 'new animations must respect reduced-motion preferences');
 assert.match(app, /function onGameMove\(conn, msg\)/, 'RPS move handler should exist');
@@ -54,6 +60,13 @@ assert.match(app, /function scoreNameFamily|GameLogic\.scoreNameFamily/, 'name-f
 assert.match(app, /type: 'uno-start', id: u\.id, myHand: opHand, current/, 'UNO start must send a hand and current card');
 assert.doesNotMatch(app, /type: 'uno-start', id: u\.id, deck/, 'UNO must not expose the remaining deck');
 assert.match(app, /type: 'uno-draw-request'/, 'guest draws should be requested from the deck owner');
+assert.match(app, /function moderateOutgoingText\(text\)/, 'outgoing messages must pass through the profanity filter');
+assert.match(app, /function applyPeerModerationBan\(peerId, name, violation, isPrivate = false\)/, 'incoming profanity must be removed and its sender temporarily blocked');
+assert.match(app, /case 'moderation-report': onModerationReport\(conn, msg\)/, 'moderation reports must be routed');
+assert.match(app, /function scrollToPMMessage\(msgId\)/, 'private reply quotes must jump to the correct message');
+assert.match(app, /state\.pmReplyTo = replySnapshot\(o\)/, 'private replies must retain the original sender and message ID');
+assert.ok(html.includes('id="pmReplyPreview"') && html.includes('id="pmRpName"'), 'private chat should show who a reply is addressed to');
+assert.match(app, /data-reply-to/, 'message DOM should explicitly record the reply target');
 assert.match(html, /prefers-reduced-motion:\s*reduce/, 'reduced-motion preference must be respected');
 assert.match(html, /id="mobileUsersBtn"/, 'mobile user-list button should exist');
 assert.match(html, /id="sidebarShade"/, 'mobile drawer backdrop should exist');
@@ -111,5 +124,21 @@ assert.equal(GameLogic.unoCardCanPlay(blueSkip, redFive), false);
 assert.equal(GameLogic.unoCardCanPlay(heldWild, redFive), true);
 assert.equal(GameLogic.unoCardsMatchInHand(heldWild, playedWild), true);
 assert.equal(GameLogic.isValidUnoCard({ color: 'pink', value: 'wild', type: 'wild' }, true), false);
+const heldWild4 = { color: 'wild', value: 'wild4', type: 'wild' };
+const playedWild4 = { color: 'blue', value: 'wild4', type: 'wild' };
+assert.equal(GameLogic.isValidUnoCard(heldWild4), true, 'Wild Draw Four must exist in the deck');
+assert.equal(GameLogic.isValidUnoCard(playedWild4, true), true, 'Wild Draw Four with the chosen active color is a valid played card');
+assert.equal(GameLogic.unoCardPenalty({ color: 'red', value: 'draw2', type: 'special' }), 2);
+assert.equal(GameLogic.unoCardPenalty(playedWild4), 4);
+assert.equal(GameLogic.unoCardCanPlay(heldWild4, redFive, [redFive, heldWild4], 1), false,
+  'Wild Draw Four is illegal when the hand has a card of the active color');
+assert.equal(GameLogic.unoCardCanPlay(heldWild4, redFive, [blueFive, heldWild4], 1), true,
+  'Wild Draw Four is legal when the hand has no card of the active color');
+assert.equal(GameLogic.unoCardCanPlay(heldWild, redFive), true, 'normal Wild may be played even when another color card matches');
+assert.equal(GameLogic.classifyProfanity('اسکول پلشت دلقک'), null, 'mild teasing words must not be punished');
+assert.equal(GameLogic.classifyProfanity('سلام دوست خوبم'), null, 'normal conversation should pass moderation');
+assert.equal(GameLogic.classifyProfanity('shit')?.severity, 1, 'less severe profanity should get the shortest ban tier');
+assert.equal(GameLogic.classifyProfanity('کسکش')?.severity, 2, 'strong profanity should get the middle ban tier');
+assert.equal(GameLogic.classifyProfanity('کیر مادر')?.severity, 3, 'very severe profanity should get the longest initial ban tier');
 
-console.log('Smoke checks passed: app syntax, poll integrity, NF letter scoring, RPS/TTT rules, UNO validation, responsive UI, and unique IDs.');
+console.log('Smoke checks passed: app syntax, poll integrity, NF letter scoring, RPS/TTT rules, classic UNO +4 legality/penalties, moderation tiers, accurate replies, responsive UI, and unique IDs.');
