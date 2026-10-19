@@ -3013,7 +3013,7 @@ function maintainRoomConnections() {
   state.roomScanRunning = true;
   const canonicalSlug = slugify(ROOM_NAME);
   const targets = new Set();
-  // Retry only earlier canonical slots; later participants dial us.
+  // Retry only earlier slots; later participants are responsible for dialing us.
   for (let slot = 0; slot < Math.min(MAX_SLOTS, Math.max(0, state.mySlot)); slot++) {
     targets.add(SLOT_PREFIX + canonicalSlug + '-' + slot);
   }
