@@ -50,6 +50,11 @@ assert.equal((app.match(/fetch\(/g) || []).length, 1, 'the app should make no ot
 assert.match(html, /تا وقتی تأیید نکنی هیچ گزارشی جمع‌آوری یا ارسال نمی‌شود/, 'consent text must say that reports are not collected automatically');
 assert.match(app, /case 'pm-typing': onPMTyping\(conn, msg\)/, 'private typing events must be routed separately from public typing');
 assert.match(app, /function renderPM\(options = \{\}\)/, 'private messages should rerender without replaying every old message');
+assert.match(app, /function insertMemeToken\(url, input\)/, 'the sticker picker should insert a meme at the current caret');
+assert.match(app, /function appendTextWithMemes\(container, value\)/, 'message bubbles should render meme tokens as safe inline images');
+assert.ok(html.includes('id="pmStickerBtn"') && html.includes('id="pmStickerGrid"'), 'private chat should offer an inline meme picker');
+assert.match(app, /d\.onclick = \(\) => \{ insertMemeToken\(url, \$\('chatInput'\)\); closePanels\(\); \}/, 'public sticker selection should insert into the message, not send separately');
+assert.match(app, /className = 'inline-meme'/, 'inline meme images should have a dedicated style and rendering class');
 assert.match(app, /function closeSettings\(\)/, 'settings should have a controlled close animation');
 assert.ok(html.includes('id="rpsCountdown"') && html.includes('id="rpsFootnote"'), 'rock-paper-scissors should have a dedicated duel countdown/reveal UI');
 assert.match(app, /function revealRPSRound\(g\)/, 'RPS must reveal both moves together after the suspense countdown');
