@@ -167,6 +167,22 @@ try {
   await a.locator('#pmSendBtn').click();
   await b.locator('#pmMessages .msg').filter({ hasText: 'Private chat test works' }).waitFor({ state: 'visible', timeout });
   await a.locator('#pmMessages .msg.mine .ticks.delivered').waitFor({ state: 'visible', timeout });
+
+  // Private replies must identify the target sender and point back to the exact
+  // message ID, not merely show a generic "replying" label.
+  const originalPrivateMessageId = await b.locator('#pmMessages .msg.theirs')
+    .filter({ hasText: 'Private chat test works' }).getAttribute('data-msgid');
+  assert.ok(originalPrivateMessageId, 'original PM should have a stable message ID');
+  await b.locator('#pmMessages .msg.theirs').filter({ hasText: 'Private chat test works' }).locator('.reply-btn').click();
+  await b.locator('#pmReplyPreview:not([hidden])').waitFor({ state: 'visible', timeout: 3000 });
+  assert.match(await b.locator('#pmRpName').innerText(), /ROOM-TEST-A/u, 'reply preview must name the original sender');
+  assert.match(await b.locator('#pmRpText').innerText(), /Private chat test works/u, 'reply preview must quote the original text');
+  await b.locator('#pmInput').fill('PM reply correctly linked');
+  await b.locator('#pmSendBtn').click();
+  const receivedReply = a.locator('#pmMessages .msg.theirs').filter({ hasText: 'PM reply correctly linked' });
+  await receivedReply.waitFor({ state: 'visible', timeout });
+  assert.equal(await receivedReply.getAttribute('data-reply-to'), originalPrivateMessageId, 'PM reply must point to the precise original message');
+  assert.match(await receivedReply.locator('.reply-quote .rq-name').innerText(), /ROOM-TEST-A/u, 'reply quote must show who is being replied to');
   await Promise.all([a.locator('#pmClose').click(), b.locator('#pmClose').click()]);
   await Promise.all([
     a.locator('#pmWindow.on').waitFor({ state: 'hidden', timeout: 5000 }),
@@ -248,7 +264,18 @@ try {
   assert.deepEqual(await b.evaluate(() => state.uno.myHand.filter(card => card.value === '2' || card.value === '5').map(card => card.color).sort()), ['blue', 'green'], 'guest should receive both cards drawn as the +2 penalty');
   assert.equal(await a.evaluate(() => state.uno.myHand.length), 7, 'host must not accidentally keep guest penalty cards');
   assert.equal(await b.locator('#unoMyHand .uno-card').count(), 8, 'guest UI should render both penalty cards');
-  console.log('PASS: room discovery, poll create/vote, two-round RPS, PM typing/delivery, settings, realistic UNO cards, and correct +2 penalty routing.');
+
+  // Mild teasing is allowed; severe profanity is blocked before a message
+  // reaches chat, and the offender is banned on peers that receive the report.
+  await a.evaluate(() => sendText('اسکول پلشت دلقک'));
+  await b.locator('#messages .msg').filter({ hasText: 'اسکول پلشت دلقک' }).waitFor({ state: 'visible', timeout });
+  assert.equal(await a.evaluate(() => state.localBanUntil), 0, 'mild teasing words must not trigger a ban');
+  await a.evaluate(() => sendText('کیر مادر'));
+  await a.waitForFunction(() => state.localBanUntil > Date.now(), null, { timeout: 3000 });
+  assert.equal(await a.locator('#messages .msg').filter({ hasText: 'کیر مادر' }).count(), 0, 'offensive message should be blocked, not displayed');
+  await b.waitForFunction(peerId => !state.peers.has(peerId), aPeerId, { timeout: 5000 });
+
+  console.log('PASS: room discovery, poll create/vote, two-round RPS, PM typing/delivery/replies, settings, UNO +2 routing, mild-language exemptions, and severe-profanity ban.');
   console.log('A roster:', JSON.stringify(await a.locator('#userList .u-name').allTextContents()));
   console.log('B roster:', JSON.stringify(await b.locator('#userList .u-name').allTextContents()));
   console.log('A poll status:', await a.locator('.poll-card').filter({ hasText: 'ROOM TEST: کدام گزینه؟' }).locator('.poll-info').innerText());
