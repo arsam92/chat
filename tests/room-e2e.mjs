@@ -200,11 +200,42 @@ try {
   assert.equal(await b.locator('#unoOpHand .uno-card.opponent.uno-back .uno-back-oval').count(), 7, 'guest should see seven stylized backs');
   assert.equal(await a.locator('#unoCurrent > .uno-card.current-card .uno-card-ellipse').count(), 1, 'discard pile should display a layered card face');
   assert.ok(await a.locator('#unoMyHand .uno-card-corner').count() >= 14, 'hand cards should have duplicated corner labels');
-  console.log('PASS: room discovery, poll create/vote, two-round RPS, PM typing/delivery, settings, and UNO card faces.');
+
+  // Regression test: when the guest plays +2, the host draws from the hidden
+  // deck but the drawn cards must be delivered to the guest (not kept by host).
+  await Promise.all([
+    a.evaluate(() => {
+      const u = state.uno;
+      u.current = { color: 'red', value: '4', type: 'number' };
+      u.deck = [
+        { color: 'blue', value: '2', type: 'number' },
+        { color: 'green', value: '5', type: 'number' }
+      ];
+      u.opHand[0] = { color: 'red', value: 'draw2', type: 'special' };
+      u.turnSeq = 0; u.myTurn = false;
+      renderUNO();
+    }),
+    b.evaluate(() => {
+      const u = state.uno;
+      u.current = { color: 'red', value: '4', type: 'number' };
+      u.myHand[0] = { color: 'red', value: 'draw2', type: 'special' };
+      u.turnSeq = 0; u.myTurn = true;
+      renderUNO();
+    })
+  ]);
+  await b.evaluate(() => window.applyUNOPlay(0));
+  await Promise.all([
+    a.waitForFunction(() => state.uno?.turnSeq === 1 && state.uno.opHand.length === 8 && state.uno.myHand.length === 7 && state.uno.deck.length === 0, null, { timeout: 5000 }),
+    b.waitForFunction(() => state.uno?.turnSeq === 1 && state.uno.myHand.length === 8 && state.uno.myTurn, null, { timeout: 5000 })
+  ]);
+  assert.deepEqual(await b.evaluate(() => state.uno.myHand.filter(card => card.value === '2' || card.value === '5').map(card => card.color).sort()), ['blue', 'green'], 'guest should receive both cards drawn as the +2 penalty');
+  assert.equal(await a.evaluate(() => state.uno.myHand.length), 7, 'host must not accidentally keep guest penalty cards');
+  assert.equal(await b.locator('#unoMyHand .uno-card').count(), 8, 'guest UI should render both penalty cards');
+  console.log('PASS: room discovery, poll create/vote, two-round RPS, PM typing/delivery, settings, realistic UNO cards, and correct +2 penalty routing.');
   console.log('A roster:', JSON.stringify(await a.locator('#userList .u-name').allTextContents()));
   console.log('B roster:', JSON.stringify(await b.locator('#userList .u-name').allTextContents()));
   console.log('A poll status:', await a.locator('.poll-card').filter({ hasText: 'ROOM TEST: کدام گزینه؟' }).locator('.poll-info').innerText());
-  console.log('UNO hand/card faces:', await a.locator('#unoMyHand .uno-card').count(), await a.locator('#unoMyHand .uno-card-ellipse').count());
+  console.log('UNO host hand / guest hand:', await a.locator('#unoMyHand .uno-card').count(), await b.locator('#unoMyHand .uno-card').count());
 } catch (error) {
   console.error('FAIL: room, poll, RPS, private chat, settings, or UNO interaction failed.');
   console.error(error?.stack || error);
@@ -215,6 +246,15 @@ try {
       console.error(`PAGE-${i + 1} status:`, await page.locator('#statusText').textContent().catch(() => 'unavailable'));
       console.error(`PAGE-${i + 1} roster:`, JSON.stringify(await page.locator('#userList .u-name').allTextContents().catch(() => [])));
       console.error(`PAGE-${i + 1} toasts:`, JSON.stringify(await page.locator('#toasts').innerText().catch(() => 'unavailable')));
+      console.error(`PAGE-${i + 1} RPS snapshot:`, JSON.stringify(await page.evaluate(() => ({
+        status: document.querySelector('#gameStatus')?.textContent,
+        round: document.querySelector('#gameRound')?.textContent,
+        clash: document.querySelector('#rpsClash')?.className,
+        myMoveText: document.querySelector('#gameMeMove')?.textContent,
+        opMoveText: document.querySelector('#gameOpMove')?.textContent,
+        choices: [...document.querySelectorAll('.rps-choice-btns button')].map(button => ({ move: button.dataset.move, selected: button.classList.contains('selected'), disabled: button.disabled })),
+        game: typeof state !== 'undefined' && state.game ? { round: state.game.round, myMove: state.game.myMove, theirMove: state.game.theirMove, roundResolved: state.game.roundResolved, finished: state.game.finished, myScore: state.game.myScore, theirScore: state.game.theirScore } : null
+      })).catch(() => ({ error: 'unavailable' }))));
       await page.screenshot({ path: `room-test-page-${i + 1}.png`, fullPage: true }).catch(() => {});
     } catch {}
   }
