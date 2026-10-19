@@ -3933,7 +3933,7 @@ function sendPM(text) {
   setTimeout(() => sendButton.classList.remove('sending'), 450);
 }
 
-function sendTyping(isTyping) { if (ensureLocalChatAllowed()) broadcast({ type: 'typing', typing: !!isTyping }); }
+function sendTyping(isTyping) { if (state.localBanUntil <= Date.now()) broadcast({ type: 'typing', typing: !!isTyping }); }
 $('chatInput').addEventListener('input', function() {
   if (state.myTypingTimeout) return;
   sendTyping(true);
