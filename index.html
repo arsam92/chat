@@ -4560,41 +4560,9 @@ checkTTTWin = function() {
   }
 };
 
-checkGameResult = function() {
-  const g = state.game;
-  if (!g || g.finished || g.roundResolved || !g.myMove || !g.theirMove) return;
-  g.roundResolved = true;
-  $('gameOpMove').textContent = GAME_MOVES[g.theirMove];
-  $('gameOpMove').classList.add('reveal-3d');
-  $('gameMeMove').classList.add('reveal-3d');
-  setTimeout(() => { $('gameOpMove').classList.remove('reveal-3d'); $('gameMeMove').classList.remove('reveal-3d'); }, 380);
-  const result = GameLogic.rpsWinner(g.myMove, g.theirMove, GAME_BEATS);
-  if (result === 'me') { g.myScore++; $('gameStatus').textContent = '🎉 این دور را بردی!'; showConfetti(); }
-  else if (result === 'them') { g.theirScore++; $('gameStatus').textContent = '😢 این دور را باختی'; shakeScreen(); }
-  else $('gameStatus').textContent = '🤝 این دور مساوی شد';
-  animateScore($('gameMeScore'), g.myScore);
-  animateScore($('gameOpScore'), g.theirScore);
-  g.roundTimer = setTimeout(() => {
-    if (state.game !== g || g.finished) return;
-    const reachedTarget = g.myScore >= 2 || g.theirScore >= 2;
-    if (reachedTarget || g.round >= 3) {
-      g.finished = true;
-      if (g.myScore === g.theirScore) $('gameStatus').textContent = '🤝 بازی مساوی شد';
-      else $('gameStatus').textContent = g.myScore > g.theirScore ? '🏆 برنده شدی!' : '😢 حریف برنده شد';
-      if (g.myScore > g.theirScore) showConfetti(); else if (g.myScore < g.theirScore) shakeScreen();
-      g.closeTimer = setTimeout(() => {
-        if (state.game === g) { $('gameModal').classList.remove('on'); state.game = null; }
-      }, 1800);
-      return;
-    }
-    g.round++; g.myMove = null; g.theirMove = null; g.roundResolved = false;
-    $('gameMeMove').textContent = '❔'; $('gameOpMove').textContent = '❔';
-    $('gameRound').textContent = 'دور ' + g.round + ' از ۳';
-    $('gameStatus').textContent = 'حرکت بعدی رو انتخاب کن!';
-    document.querySelectorAll('.game-choice-btns button').forEach(button => { button.classList.remove('selected'); button.disabled = false; });
-  }, 1200);
-};
-
+// Keep the single synchronized RPS implementation defined above. Earlier
+// animation experiments replaced checkGameResult here and bypassed the
+// countdown/reveal state machine, causing choices to desynchronize by round.
 const _origVoteOnPoll = voteOnPoll;
 voteOnPoll = function(msgId, idx, optEl) {
   const msgEl = findMessageElement(msgId);
@@ -4614,11 +4582,7 @@ voteOnPoll = function(msgId, idx, optEl) {
   broadcast({ type: 'poll-vote', msgId, optionIndex: idx, from: state.myPeerId });
 };
 
-const _origStartGameUI = startGameUI;
-startGameUI = function() {
-  _origStartGameUI();
-  setTimeout(playVsIntro, 100);
-};
+// RPS entrance animation is handled by the redesigned startGameUI above.
 
 // ═══════════════════════════════════════════
 //   UNO GAME
