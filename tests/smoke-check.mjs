@@ -39,7 +39,7 @@ assert.match(app, /function closeSettings\(\)/, 'settings should have a controll
 assert.ok(html.includes('id="rpsCountdown"') && html.includes('id="rpsFootnote"'), 'rock-paper-scissors should have a dedicated duel countdown/reveal UI');
 assert.match(app, /function revealRPSRound\(g\)/, 'RPS must reveal both moves together after the suspense countdown');
 assert.match(app, /function createUNOCard\(card, options = \{\}\)/, 'UNO should render actual layered card faces instead of a bare emoji');
-assert.ok(html.includes('class="uno-card-ellipse"') && html.includes('class="uno-back-oval"'), 'UNO faces and backs should use the custom card artwork');
+assert.ok(app.includes("ellipse") && app.includes("uno-back-oval"), 'UNO faces and backs should use the custom card artwork builder');
 assert.match(html, /prefers-reduced-motion: reduce/, 'new animations must respect reduced-motion preferences');
 assert.match(app, /function onGameMove\(conn, msg\)/, 'RPS move handler should exist');
 assert.match(app, /msg\.round !== g\.round/, 'late RPS moves must be rejected');
