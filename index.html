@@ -3356,8 +3356,15 @@ function buildBubbleContent(bubble, o) {
   else if (o.image) { const src = safeImageSource(o.image); if (!src) { bubble.textContent = 'تصویر نامعتبر است'; return; } bubble.classList.add('image-bubble'); const img = document.createElement('img'); img.src = src; img.alt = 'تصویر ارسال‌شده'; img.loading = 'lazy'; img.onclick = () => openImagePreview(src); bubble.appendChild(img); }
   else if (o.voice) { buildVoiceBubble(bubble, o.voice, o.voiceDur || 0); }
   else if (o.poll) { buildPollCard(bubble, o.poll, o.id); }
-  else if (o.text && o.text.length <= 3 && /\p{Emoji}/u.test(o.text)) { bubble.classList.add('big-emoji'); bubble.textContent = o.text; }
-  else { bubble.textContent = o.text || ''; }
+  else if (o.text && o.text.length <= 3 && /\p{Emoji}/u.test(o.text)) {
+    bubble.classList.add('big-emoji');
+    const emojiText = document.createElement('span'); emojiText.textContent = o.text; bubble.appendChild(emojiText);
+  }
+  else {
+    // Use a child node instead of textContent so a reply quote added above survives.
+    const textNode = document.createElement('span'); textNode.className = 'bubble-text';
+    textNode.textContent = o.text || ''; bubble.appendChild(textNode);
+  }
 }
 function buildPollCard(bubble, poll, msgId) {
   bubble.classList.add('sticker'); // remove bg
