@@ -48,6 +48,10 @@ assert.match(app, /u\.opHand\.push\(\.\.\.penaltyCards\)/, 'UNO penalties must b
 assert.match(app, /if \(penaltyCards\.length\) u\.myHand\.push\(\.\.\.penaltyCards\)/, 'UNO guest should receive its penalty cards through sync');
 assert.match(app, /u\.drawnCardOnly = canPlay/, 'only the newly drawn playable card should be enabled');
 assert.match(app, /function unoPassDraw\(\)/, 'players need to end their turn after choosing not to play a drawn card');
+assert.match(app, /function unoResolveChallenge\(challenge\)/, 'Wild Draw Four needs an accept/challenge decision');
+assert.match(app, /function onUNOChallengeDecision\(conn, msg\)/, 'Wild Draw Four decisions must reach the deck owner');
+assert.match(app, /function onUNOChallengeResult\(conn, msg\)/, 'Wild Draw Four outcomes must synchronize to the guest');
+assert.match(html, /id="unoChallengeActions"/, 'the challenge decision UI should exist');
 assert.match(app, /card: null, hostHandCount: u\.myHand\.length/, 'the host must never leak a card drawn into its own hand');
 assert.match(html, /id="unoPassDraw"/, 'the drawn-card pass-turn control should exist');
 assert.ok(app.includes("ellipse") && app.includes("uno-back-oval"), 'UNO faces and backs should use the custom card artwork builder');
@@ -130,10 +134,12 @@ assert.equal(GameLogic.isValidUnoCard(heldWild4), true, 'Wild Draw Four must exi
 assert.equal(GameLogic.isValidUnoCard(playedWild4, true), true, 'Wild Draw Four with the chosen active color is a valid played card');
 assert.equal(GameLogic.unoCardPenalty({ color: 'red', value: 'draw2', type: 'special' }), 2);
 assert.equal(GameLogic.unoCardPenalty(playedWild4), 4);
-assert.equal(GameLogic.unoCardCanPlay(heldWild4, redFive, [redFive, heldWild4], 1), false,
-  'Wild Draw Four is illegal when the hand has a card of the active color');
-assert.equal(GameLogic.unoCardCanPlay(heldWild4, redFive, [blueFive, heldWild4], 1), true,
-  'Wild Draw Four is legal when the hand has no card of the active color');
+assert.equal(GameLogic.unoCardCanPlay(heldWild4, redFive, [redFive, heldWild4], 1), true,
+  'Wild Draw Four can be played and challenged if it is not legal');
+assert.equal(GameLogic.unoWildDrawFourIsLegal([redFive, heldWild4], 'red', 1), false,
+  'a challenge should succeed if the player held a card of the active color');
+assert.equal(GameLogic.unoWildDrawFourIsLegal([blueFive, heldWild4], 'red', 1), true,
+  'a challenge should fail if the player had no card of the active color');
 assert.equal(GameLogic.unoCardCanPlay(heldWild, redFive), true, 'normal Wild may be played even when another color card matches');
 assert.equal(GameLogic.classifyProfanity('اسکول پلشت دلقک'), null, 'mild teasing words must not be punished');
 assert.equal(GameLogic.classifyProfanity('سلام دوست خوبم'), null, 'normal conversation should pass moderation');
