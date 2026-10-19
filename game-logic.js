@@ -154,18 +154,97 @@
       return UNO_COLORS.includes(card.color) && UNO_SPECIALS.includes(card.value);
     }
     if (card.type === 'wild') {
-      return card.value === 'wild' && (card.color === 'wild' || (played && UNO_COLORS.includes(card.color)));
+      return ['wild', 'wild4'].includes(card.value) &&
+        (card.color === 'wild' || (played && UNO_COLORS.includes(card.color)));
     }
     return false;
   }
 
-  function unoCardCanPlay(card, current) {
+  function unoCardPenalty(card) {
+    if (!card || typeof card !== 'object') return 0;
+    if (card.type === 'special' && card.value === 'draw2') return 2;
+    if (card.type === 'wild' && card.value === 'wild4') return 4;
+    return 0;
+  }
+
+  function unoCardCanPlay(card, current, hand = [], cardIndex = -1) {
     if (!isValidUnoCard(card, false) || !isValidUnoCard(current, true)) return false;
-    if (card.type === 'wild') return true;
+    if (card.type === 'wild') {
+      if (card.value !== 'wild4') return true;
+      // Classic UNO: Wild Draw Four is legal only when the player's hand
+      // contains no other card of the active color. A same number/action
+      // in another color does not make it illegal.
+      return !Array.isArray(hand) || !hand.some((held, index) =>
+        index !== cardIndex && held && held.type !== 'wild' &&
+        isValidUnoCard(held, false) && held.color === current.color
+      );
+    }
     if (card.color === current.color) return true;
     if (card.type === current.type && card.value === current.value &&
         (card.type === 'number' || card.type === 'special')) return true;
     return false;
+  }
+
+  function unoCardsMatchInHand(heldCard, playedCard) {
+    if (!isValidUnoCard(heldCard, false) || !isValidUnoCard(playedCard, true)) return false;
+    if (heldCard.type !== playedCard.type || heldCard.value !== playedCard.value) return false;
+    return heldCard.type === 'wild' || heldCard.color === playedCard.color;
+  }
+
+  function normalizeModerationText(value) {
+    return String(value ?? '')
+      .normalize('NFKC')
+      .toLocaleLowerCase('fa')
+      .replace(/[يى]/g, 'ی')
+      .replace(/ك/g, 'ک')
+      .replace(/[ۀة]/g, 'ه')
+      .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+      .replace(/[\u200c\u200d\u200e\u200f]/g, ' ')
+      .replace(/[^\p{L}\p{N}]+/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  const PROFANITY_RULES = [
+    { severity: 1, words: ['کص', 'کون', 'کیر', 'گه', 'گوه', 'جنده', 'کونی', 'عن', 'fuck', 'fucking', 'shit', 'bitch', 'asshole', 'dick', 'pussy', 'whore', 'slut'] },
+    { severity: 2, words: ['کصکش', 'کسکش', 'کصخل', 'کسخل', 'حرومزاده', 'حرامزاده', 'بیناموس', 'بی ناموس', 'fuck you', 'fuck off', 'son of a bitch', 'bastard'] },
+    { severity: 3, words: ['مادرجنده', 'مادر جنده', 'کس ننه', 'کسننه', 'کص ننه', 'کیرمادر', 'کیر مادر', 'مادر قحبه', 'motherfucker', 'cocksucker', 'go fuck yourself'] }
+  ];
+
+  function classifyProfanity(value) {
+    const normalized = normalizeModerationText(value);
+    if (!normalized) return null;
+    const tokens = normalized.split(' ');
+    let severity = 0;
+    const matches = [];
+    for (const rule of PROFANITY_RULES) {
+      for (const term of rule.words) {
+        const needle = normalizeModerationText(term).split(' ');
+        if (needle.length === 1) {
+          if (tokens.includes(needle[0])) {
+            severity = Math.max(severity, rule.severity);
+            matches.push(needle[0]);
+          }
+          continue;
+        }
+        for (let i = 0; i <= tokens.length - needle.length; i++) {
+          if (needle.every((word, offset) => tokens[i + offset] === word)) {
+            severity = Math.max(severity, rule.severity);
+            matches.push(needle.join(' '));
+            break;
+          }
+        }
+      }
+    }
+    if (!severity) return null;
+    // Multiple distinct profanities in one message increase the severity,
+    // but ordinary put-downs (for example "اسکول"، "پلشت"، "دلقک") are not
+    // in this list and do not count as profanity.
+    const uniqueMatches = new Set(matches);
+    if (uniqueMatches.size >= 3) severity = Math.max(severity, 3);
+    else if (uniqueMatches.size >= 2) severity = Math.max(severity, 2);
+    const baseDurationMs = ({ 1: 60_000, 2: 10 * 60_000, 3: 60 * 60_000 })[severity];
+    return { severity, baseDurationMs, matches: [...uniqueMatches] };
   }
 
   function unoCardsMatchInHand(heldCard, playedCard) {
@@ -187,6 +266,9 @@
     isValidUnoColor,
     isValidUnoCard,
     unoCardCanPlay,
-    unoCardsMatchInHand
+    unoCardPenalty,
+    unoCardsMatchInHand,
+    normalizeModerationText,
+    classifyProfanity
   };
 });
