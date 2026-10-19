@@ -4633,7 +4633,7 @@ function buildEmojiPanel() {
     grid.appendChild(d);
   });
 }
-const INLINE_MEME_PATTERN = /⟦میم\\s*(\\d{1,2})⟧/gu;
+const INLINE_MEME_PATTERN = /⟦میم\s*(\d{1,2})⟧/gu;
 function memeTextPreview(value) {
   return String(value || '').replace(INLINE_MEME_PATTERN, '🎨 میم');
 }
@@ -4656,7 +4656,7 @@ function insertMemeToken(url, input) {
 }
 function appendTextWithMemes(container, value) {
   const text = String(value || '');
-  const pattern = /⟦میم\\s*(\\d{1,2})⟧/gu;
+  const pattern = /⟦میم\s*(\d{1,2})⟧/gu;
   let cursor = 0;
   for (const match of text.matchAll(pattern)) {
     const position = match.index;
