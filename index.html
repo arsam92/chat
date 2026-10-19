@@ -4073,9 +4073,64 @@ function unoShuffle(arr) {
   return a;
 }
 function unoCardLabel(card) {
-  if (card.type === 'wild') return '🌈';
-  if (card.type === 'special') return UNO_SYMBOLS[card.value] || '?';
-  return card.value;
+  if (!card || typeof card !== 'object') return '?';
+  if (card.type === 'wild') return 'WILD';
+  if (card.type === 'special') return ({ skip: '⊘', reverse: '↻', draw2: '+2' })[card.value] || '?';
+  return String(card.value);
+}
+function unoCardAccessibleName(card) {
+  if (!card) return 'کارت';
+  const colors = { red: 'قرمز', blue: 'آبی', green: 'سبز', yellow: 'زرد', wild: 'وحشی' };
+  const labels = { skip: 'توقف', reverse: 'برعکس', draw2: 'به‌علاوهٔ دو', wild: 'رنگ‌آمیزی' };
+  const detail = card.type === 'number' ? String(card.value) : (labels[card.value] || unoCardLabel(card));
+  return 'کارت ' + (colors[card.color] || 'رنگی') + ' ' + detail;
+}
+function createUNOCard(card, options = {}) {
+  const { back = false, current = false, interactive = false, playable = false, dealing = false, index = 0 } = options;
+  const el = document.createElement(interactive ? 'button' : 'div');
+  if (interactive) el.type = 'button';
+  const colorClass = back ? 'uno-back' : (card && card.type === 'wild' ? 'wild' : (card && card.color) || 'red');
+  el.className = 'uno-card ' + colorClass + (back ? ' opponent' : '') +
+    (current ? ' current-card' : '') + (playable ? ' playable' : '') + (interactive && !playable ? ' disabled' : '') +
+    (dealing ? ' dealing' : '');
+  if (interactive) {
+    el.disabled = !playable;
+    el.setAttribute('aria-label', unoCardAccessibleName(card));
+    el.setAttribute('aria-pressed', 'false');
+    el.dataset.cardIndex = String(index);
+  }
+  if (back) {
+    el.setAttribute('aria-label', 'کارت پشت‌ورو');
+    const backFace = document.createElement('span');
+    backFace.className = 'uno-back-oval';
+    const word = document.createElement('span');
+    word.textContent = 'UNO';
+    backFace.appendChild(word);
+    el.appendChild(backFace);
+    return el;
+  }
+  if (!card) return el;
+  el.dataset.color = card.color || 'wild';
+  el.dataset.type = card.type || 'number';
+  el.dataset.value = card.value || '';
+  const label = unoCardLabel(card);
+  const cornerA = document.createElement('span');
+  cornerA.className = 'uno-card-corner top-left';
+  cornerA.textContent = label === 'WILD' ? 'W' : label;
+  cornerA.setAttribute('aria-hidden', 'true');
+  const ellipse = document.createElement('span');
+  ellipse.className = 'uno-card-ellipse';
+  ellipse.setAttribute('aria-hidden', 'true');
+  const center = document.createElement('span');
+  center.className = 'uno-card-center ' + (card.type === 'number' ? 'number' : 'symbol');
+  center.textContent = label === 'WILD' ? 'WILD' : label;
+  ellipse.appendChild(center);
+  const cornerB = document.createElement('span');
+  cornerB.className = 'uno-card-corner bottom-right';
+  cornerB.textContent = cornerA.textContent;
+  cornerB.setAttribute('aria-hidden', 'true');
+  el.append(cornerA, ellipse, cornerB);
+  return el;
 }
 function unoCardCanPlay(card, current) {
   return GameLogic.unoCardCanPlay(card, current);
@@ -4155,30 +4210,29 @@ function closeUNO() {
   state.uno = null;
 }
 function renderUNO() {
-  const u = state.uno; if (!u) return;
+  const u = state.uno; if (!u || !Array.isArray(u.myHand) || !u.current) return;
   const opHand = $('unoOpHand'); opHand.innerHTML = '';
-  const opCount = u.opHand ? u.opHand.length : 0;
-  for (let i = 0; i < opCount; i++) {
-    const c = document.createElement('div');
-    c.className = 'uno-card opponent';
-    opHand.appendChild(c);
-  }
+  const opCount = Array.isArray(u.opHand) ? u.opHand.length : 0;
+  for (let i = 0; i < opCount; i++) opHand.appendChild(createUNOCard(null, { back: true, index: i }));
   $('unoOpCount').textContent = faNum(opCount);
+
   const myHand = $('unoMyHand'); myHand.innerHTML = '';
   u.myHand.forEach((card, i) => {
-    const canPlay = u.myTurn && unoCardCanPlay(card, u.current);
-    const c = document.createElement('div');
-    c.className = 'uno-card ' + card.color + (canPlay ? '' : ' disabled') + ' dealing';
-    c.innerHTML = `<span class="uno-card-num">${unoCardLabel(card)}</span>`;
-    c.style.animationDelay = (i * 0.05) + 's';
+    const canPlay = !!u.myTurn && !u.finished && !u.pendingWild && unoCardCanPlay(card, u.current);
+    const c = createUNOCard(card, { interactive: true, playable: canPlay, dealing: true, index: i });
+    c.style.setProperty('--deal-index', String(i));
+    c.style.animationDelay = (i * 0.045) + 's';
     if (canPlay) c.onclick = () => unoPlayCard(i);
     myHand.appendChild(c);
   });
   $('unoMyCount').textContent = faNum(u.myHand.length);
   const cur = $('unoCurrent');
-  cur.className = 'uno-current ' + u.current.color;
-  cur.textContent = unoCardLabel(u.current);
-  $('unoStatus').textContent = u.myTurn ? '🎯 نوبت توئه!' : '⏳ منتظر حریف...';
+  cur.className = 'uno-current';
+  cur.replaceChildren(createUNOCard(u.current, { current: true }));
+  $('unoStatus').classList.toggle('my-turn', !!u.myTurn);
+  $('unoStatus').textContent = u.myTurn ? '🎯 نوبت توئه؛ کارت قابل بازی رو انتخاب کن' : '⏳ منتظر حرکت حریف…';
+  $('unoDeck').disabled = !u.myTurn || u.finished;
+  $('unoDeck').classList.toggle('deck-ready', !!u.myTurn && !u.finished);
 }
 function unoPlayCard(idx) {
   const u = state.uno;
