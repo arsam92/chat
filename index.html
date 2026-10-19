@@ -2067,6 +2067,7 @@
     border: 1px solid rgba(255,255,255,.07); border-radius: 18px;
     background: radial-gradient(ellipse at 50% 0%, rgba(54,207,177,.055), transparent 66%), rgba(0,0,0,.12);
   }
+  #unoModal .uno-card::before, #unoModal .uno-card.opponent::after { content: none !important; display: none !important; }
   #unoModal .uno-card {
     --face-color: #d92335;
     width: 59px; height: 88px; flex: 0 0 59px; position: relative; isolation: isolate;
@@ -3929,7 +3930,7 @@ function setRPSStage(name) {
   const clash = $('rpsClash');
   const arena = document.querySelector('#gameModal .rps-arena');
   if (!clash || !arena) return;
-  ['countdown', 'revealing', 'waiting', 'round-win', 'round-loss', 'round-tie', 'match-win', 'match-loss'].forEach(c => {
+  ['intro', 'countdown', 'revealing', 'waiting', 'round-win', 'round-loss', 'round-tie', 'match-win', 'match-loss'].forEach(c => {
     clash.classList.remove(c);
     arena.classList.remove(c);
   });
