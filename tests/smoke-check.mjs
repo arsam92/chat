@@ -30,6 +30,17 @@ assert.match(app, /classList\.add\('reveal-3d'\)/, 'RPS should activate the 3D r
 assert.match(app, /classList\.add\('count-up'\)/, 'RPS score changes should animate');
 assert.match(app, /mark-in/, 'tic-tac-toe marks should animate as they appear');
 assert.ok(html.includes('ARSAM ARCADE'), 'game modals should include the new arcade styling');
+assert.match(html, /fonts\.googleapis\.com\/css2\?family=Vazirmatn/, 'the app should load the Persian-friendly Vazirmatn font');
+assert.ok(html.includes('id="pmTyping"') && html.includes('id="pmPresenceText"'), 'private chat should display live typing and presence state');
+assert.ok(html.includes('id="pmSendBtn"'), 'private chat should have its own accessible send button');
+assert.match(app, /case 'pm-typing': onPMTyping\(conn, msg\)/, 'private typing events must be routed separately from public typing');
+assert.match(app, /function renderPM\(options = \{\}\)/, 'private messages should rerender without replaying every old message');
+assert.match(app, /function closeSettings\(\)/, 'settings should have a controlled close animation');
+assert.ok(html.includes('id="rpsCountdown"') && html.includes('id="rpsFootnote"'), 'rock-paper-scissors should have a dedicated duel countdown/reveal UI');
+assert.match(app, /function revealRPSRound\(g\)/, 'RPS must reveal both moves together after the suspense countdown');
+assert.match(app, /function createUNOCard\(card, options = \{\}\)/, 'UNO should render actual layered card faces instead of a bare emoji');
+assert.ok(html.includes('class="uno-card-ellipse"') && html.includes('class="uno-back-oval"'), 'UNO faces and backs should use the custom card artwork');
+assert.match(html, /prefers-reduced-motion: reduce/, 'new animations must respect reduced-motion preferences');
 assert.match(app, /function onGameMove\(conn, msg\)/, 'RPS move handler should exist');
 assert.match(app, /msg\.round !== g\.round/, 'late RPS moves must be rejected');
 assert.match(app, /function onTTTMove\(conn, msg\)/, 'tic-tac-toe move handler should exist');
