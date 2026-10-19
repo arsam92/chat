@@ -3356,92 +3356,214 @@ function onGameResponse(conn, msg) {
   if (msg.accepted) { toast('✅ ' + (e ? e.name : 'حریف') + ' قبول کرد!'); startGameUI(); }
   else { toast('❌ رد شد'); state.game = null; }
 }
+function clearRPSRoundTimers(g) {
+  if (!g) return;
+  if (Array.isArray(g.revealTimers)) g.revealTimers.forEach(timer => clearTimeout(timer));
+  g.revealTimers = [];
+  if (g.roundTimer) clearTimeout(g.roundTimer);
+  if (g.closeTimer) clearTimeout(g.closeTimer);
+  g.roundTimer = null;
+  g.closeTimer = null;
+}
+function setRPSStage(name) {
+  const clash = $('rpsClash');
+  const arena = document.querySelector('#gameModal .rps-arena');
+  if (!clash || !arena) return;
+  ['countdown', 'revealing', 'waiting', 'round-win', 'round-loss', 'round-tie', 'match-win', 'match-loss'].forEach(c => {
+    clash.classList.remove(c);
+    arena.classList.remove(c);
+  });
+  if (name) {
+    clash.classList.add(name);
+    arena.classList.add(name);
+  }
+}
+function resetRPSRoundUI(g, isOpening = false) {
+  setRPSStage(isOpening ? 'intro' : '');
+  const clash = $('rpsClash');
+  clash.classList.remove('countdown-pop');
+  $('rpsCountdown').textContent = '⚡';
+  $('gameMeMove').textContent = '?';
+  $('gameOpMove').textContent = '?';
+  $('gameMeMove').classList.remove('reveal-3d', 'rps-revealing');
+  $('gameOpMove').classList.remove('reveal-3d', 'rps-revealing');
+  $('gameMeCaption').textContent = 'منتظر انتخاب';
+  $('gameOpCaption').textContent = 'منتظر انتخاب';
+  document.querySelectorAll('.rps-player').forEach(player => player.classList.remove('locked', 'winner', 'loser'));
+  document.querySelectorAll('.rps-choice-btns button').forEach(button => {
+    button.classList.remove('selected', 'locked');
+    button.disabled = false;
+  });
+  $('gameRound').textContent = 'دور ' + faNum(g.round || 1) + ' از ۳';
+  $('gameStatus').textContent = 'یکی از حرکت‌ها رو انتخاب کن.';
+  $('rpsFootnote').textContent = 'اولین نفری که ۲ دور رو ببره، برنده می‌شه.';
+}
 function startGameUI() {
   const g = state.game; if (!g) return;
+  clearRPSRoundTimers(g);
+  g.myScore = Number(g.myScore) || 0;
+  g.theirScore = Number(g.theirScore) || 0;
+  g.round = Number(g.round) || 1;
+  g.myMove = null; g.theirMove = null; g.roundResolved = false; g.finished = false;
   const e = state.peers.get(g.opponent);
-  const opName = e ? e.name : 'حریف';
+  const opName = e ? safePeerName(e.name) : 'حریف';
   const [bgMe, fgMe] = avatarFor(state.myName);
   const [bgOp, fgOp] = avatarFor(opName);
   const meAv = $('gameMeAvatar');
-  if (safeImageSource(state.myProfile.avatar)) { meAv.innerHTML = `<img src="${escapeHTML(safeImageSource(state.myProfile.avatar))}" alt="">`; meAv.style.background = 'transparent'; }
-  else { meAv.style.background = bgMe; meAv.style.color = fgMe; meAv.textContent = state.myName[0] || '?'; }
+  if (safeImageSource(state.myProfile.avatar)) {
+    meAv.innerHTML = `<img src="${escapeHTML(safeImageSource(state.myProfile.avatar))}" alt="">`;
+    meAv.style.background = 'transparent';
+  } else {
+    meAv.textContent = state.myName[0] || '?'; meAv.style.background = bgMe; meAv.style.color = fgMe;
+  }
   const opAv = $('gameOpAvatar');
-  if (e && safeImageSource(e.avatar)) { opAv.innerHTML = `<img src="${escapeHTML(safeImageSource(e.avatar))}" alt="">`; opAv.style.background = 'transparent'; }
-  else { opAv.style.background = bgOp; opAv.style.color = fgOp; opAv.textContent = opName[0] || '?'; }
+  if (e && safeImageSource(e.avatar)) {
+    opAv.innerHTML = `<img src="${escapeHTML(safeImageSource(e.avatar))}" alt="">`;
+    opAv.style.background = 'transparent';
+  } else {
+    opAv.textContent = opName[0] || '?'; opAv.style.background = bgOp; opAv.style.color = fgOp;
+  }
   $('gameMeName').textContent = state.myName;
   $('gameOpName').textContent = opName;
-  $('gameMeMove').textContent = '❔'; $('gameOpMove').textContent = '❔';
-  $('gameMeMove').classList.remove('reveal-3d'); $('gameOpMove').classList.remove('reveal-3d');
-  $('gameMeScore').textContent = '۰'; $('gameOpScore').textContent = '۰';
-  $('gameRound').textContent = 'دور ۱ از ۳';
-  $('gameStatus').textContent = 'یک حرکت انتخاب کن!';
-  document.querySelectorAll('.game-choice-btns button').forEach(b => { b.classList.remove('selected'); b.disabled = false; });
-  const arena = document.querySelector('#gameModal .game-arena');
-  const versus = document.querySelector('#gameModal .game-vs');
-  if (arena) { arena.classList.remove('vs-intro'); void arena.offsetWidth; arena.classList.add('vs-intro'); }
-  if (versus) { versus.classList.remove('vs-shake'); void versus.offsetWidth; versus.classList.add('vs-shake'); }
+  $('gameMeScore').textContent = faNum(g.myScore);
+  $('gameOpScore').textContent = faNum(g.theirScore);
   $('gameModal').classList.add('on');
-  setTimeout(() => { if (arena) arena.classList.remove('vs-intro'); }, 1000);
-  setTimeout(() => { if (versus) versus.classList.remove('vs-shake'); }, 1300);
+  resetRPSRoundUI(g, true);
+  const arena = document.querySelector('#gameModal .rps-arena');
+  if (arena) {
+    arena.classList.remove('vs-intro');
+    void arena.offsetWidth;
+    arena.classList.add('vs-intro');
+    setTimeout(() => { if (arena.isConnected) arena.classList.remove('vs-intro'); }, 900);
+  }
+  setTimeout(() => { if (state.game === g && $('gameModal').classList.contains('on')) $('rpsClash').classList.remove('intro-pulse'); }, 1100);
 }
 function onGameMove(conn, msg) {
   const g = state.game;
-  if (!g || g.finished || g.roundResolved || g.id !== msg.gameId || conn.peer !== g.opponent || msg.round !== g.round || g.theirMove) return;
+  if (!g || g.finished || g.roundResolved || g.id !== msg.gameId ||
+      conn.peer !== g.opponent || msg.round !== g.round || g.theirMove) return;
   if (!Object.prototype.hasOwnProperty.call(GAME_MOVES, msg.move)) return;
   g.theirMove = msg.move;
+  const opponent = document.querySelector('#gameModal .rps-player[data-side="op"]');
+  if (opponent) opponent.classList.add('locked');
+  $('gameOpCaption').textContent = 'حرکت ثبت شد';
   checkGameResult();
 }
 
-document.querySelectorAll('.game-choice-btns button').forEach(btn => {
-  btn.onclick = () => {
-    if (!state.game || state.game.myMove) return;
-    const move = btn.dataset.move;
-    state.game.myMove = move;
-    document.querySelectorAll('.game-choice-btns button').forEach(b => b.disabled = true);
-    btn.classList.add('selected');
-    $('gameMeMove').textContent = GAME_MOVES[move];
-    $('gameMeMove').classList.remove('reveal-3d'); void $('gameMeMove').offsetWidth; $('gameMeMove').classList.add('reveal-3d');
-    setTimeout(() => $('gameMeMove').classList.remove('reveal-3d'), 950);
-    const e = state.peers.get(state.game.opponent);
-    if (e && e.conn) safeSend(e.conn, { type: 'game-move', gameId: state.game.id, round: state.game.round, move });
-    $('gameStatus').textContent = 'منتظر حریف...';
+document.querySelectorAll('.rps-choice-btns button').forEach(button => {
+  button.onclick = () => {
+    const g = state.game;
+    if (!g || g.finished || g.roundResolved || g.myMove) return;
+    const move = button.dataset.move;
+    if (!Object.prototype.hasOwnProperty.call(GAME_MOVES, move)) return;
+    g.myMove = move;
+    document.querySelectorAll('.rps-choice-btns button').forEach(b => {
+      b.disabled = true;
+      b.classList.toggle('selected', b === button);
+      b.classList.toggle('locked', b === button);
+    });
+    const mine = document.querySelector('#gameModal .rps-player[data-side="me"]');
+    if (mine) mine.classList.add('locked');
+    $('gameMeCaption').textContent = '🔒 حرکت قفل شد';
+    $('gameStatus').textContent = g.theirMove ? 'هر دو حرکت ثبت شد؛ آماده باش…' : 'حرکتت ثبت شد؛ منتظر حریفی…';
+    $('rpsFootnote').textContent = 'انتخابت تا وقتی حریف هم انتخاب نکنه مخفی می‌مونه.';
+    setRPSStage('waiting');
+    $('rpsCountdown').textContent = '…';
+    const entry = state.peers.get(g.opponent);
+    if (entry && entry.conn && entry.conn.open) {
+      safeSend(entry.conn, { type: 'game-move', gameId: g.id, round: g.round, move });
+    } else {
+      $('gameStatus').textContent = 'اتصال به حریف قطع شده؛ دوباره وصل شو.';
+      toast('❌ اتصال بازی قطع شد');
+      return;
+    }
     checkGameResult();
   };
 });
 function checkGameResult() {
-  const g = state.game; if (!g || !g.myMove || !g.theirMove) return;
-  $('gameOpMove').textContent = GAME_MOVES[g.theirMove];
-  $('gameOpMove').classList.remove('reveal-3d'); void $('gameOpMove').offsetWidth; $('gameOpMove').classList.add('reveal-3d');
-  setTimeout(() => $('gameOpMove').classList.remove('reveal-3d'), 950);
-  let w;
-  if (g.myMove === g.theirMove) w = 'tie';
-  else if (GAME_BEATS[g.myMove] === g.theirMove) w = 'me';
-  else w = 'them';
-  if (w === 'me') { g.myScore++; $('gameStatus').textContent = '🎉 بردی!'; }
-  else if (w === 'them') { g.theirScore++; $('gameStatus').textContent = '😢 باختی'; }
-  else $('gameStatus').textContent = '🤝 مساوی';
-  const scoreUpdates = [[$('gameMeScore'), g.myScore], [$('gameOpScore'), g.theirScore]];
-  scoreUpdates.forEach(([el, score]) => {
-    el.textContent = faNum(score);
-    el.classList.remove('count-up');
-    void el.offsetWidth;
-    el.classList.add('count-up');
-    setTimeout(() => el.classList.remove('count-up'), 700);
+  const g = state.game;
+  if (!g || g.finished || g.roundResolved || !g.myMove || !g.theirMove) return;
+  g.roundResolved = true;
+  g.revealTimers = [];
+  setRPSStage('countdown');
+  $('gameStatus').textContent = 'هر دو حرکت قفل شد…';
+  $('rpsFootnote').textContent = '۳… ۲… ۱… رو کن!';
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduceMotion) {
+    g.revealTimers.push(setTimeout(() => revealRPSRound(g), 80));
+    return;
+  }
+  const counts = ['۳', '۲', '۱'];
+  counts.forEach((number, index) => {
+    g.revealTimers.push(setTimeout(() => {
+      if (state.game !== g || g.finished) return;
+      $('rpsCountdown').textContent = number;
+      const clash = $('rpsClash');
+      clash.classList.remove('countdown-pop');
+      void clash.offsetWidth;
+      clash.classList.add('countdown-pop');
+      $('gameStatus').textContent = index === 0 ? 'آماده…' : index === 1 ? 'حواست باشه…' : 'سنگ، کاغذ، قیچی…';
+    }, index * 420));
   });
-  setTimeout(() => {
+  g.revealTimers.push(setTimeout(() => revealRPSRound(g), 1320));
+}
+function revealRPSRound(g) {
+  if (state.game !== g || g.finished || !g.roundResolved || !g.myMove || !g.theirMove) return;
+  setRPSStage('revealing');
+  const myMoveEl = $('gameMeMove');
+  const theirMoveEl = $('gameOpMove');
+  myMoveEl.textContent = GAME_MOVES[g.myMove];
+  theirMoveEl.textContent = GAME_MOVES[g.theirMove];
+  $('gameMeCaption').textContent = ({rock:'سنگ', paper:'کاغذ', scissors:'قیچی'})[g.myMove];
+  $('gameOpCaption').textContent = ({rock:'سنگ', paper:'کاغذ', scissors:'قیچی'})[g.theirMove];
+  [myMoveEl, theirMoveEl].forEach(el => {
+    el.classList.remove('reveal-3d', 'rps-revealing');
+    void el.offsetWidth;
+    el.classList.add('rps-revealing', 'reveal-3d');
+    setTimeout(() => el.classList.remove('reveal-3d'), 900);
+  });
+  let winner = 'tie';
+  if (g.myMove !== g.theirMove) winner = GAME_BEATS[g.myMove] === g.theirMove ? 'me' : 'them';
+  if (winner === 'me') g.myScore++;
+  if (winner === 'them') g.theirScore++;
+  const mine = document.querySelector('#gameModal .rps-player[data-side="me"]');
+  const theirs = document.querySelector('#gameModal .rps-player[data-side="op"]');
+  if (mine) mine.classList.toggle('winner', winner === 'me');
+  if (mine) mine.classList.toggle('loser', winner === 'them');
+  if (theirs) theirs.classList.toggle('winner', winner === 'them');
+  if (theirs) theirs.classList.toggle('loser', winner === 'me');
+  setRPSStage(winner === 'me' ? 'round-win' : winner === 'them' ? 'round-loss' : 'round-tie');
+  $('gameMeScore').textContent = faNum(g.myScore);
+  $('gameOpScore').textContent = faNum(g.theirScore);
+  [$('gameMeScore'), $('gameOpScore')].forEach(score => {
+    score.classList.remove('count-up'); void score.offsetWidth; score.classList.add('count-up');
+    setTimeout(() => score.classList.remove('count-up'), 700);
+  });
+  $('rpsCountdown').textContent = winner === 'me' ? '✓' : winner === 'them' ? '×' : '＝';
+  $('gameStatus').textContent = winner === 'me' ? '🏆 این دور رو بردی!' : winner === 'them' ? 'این دور برای حریف شد.' : '🤝 مساوی؛ دوباره تلاش کن!';
+  $('rpsFootnote').textContent = 'نتیجهٔ دور ' + faNum(g.round) + ': ' + faNum(g.myScore) + ' – ' + faNum(g.theirScore);
+  g.roundTimer = setTimeout(() => {
+    if (state.game !== g) return;
     if (g.myScore >= 2 || g.theirScore >= 2) {
-      $('gameStatus').textContent = g.myScore >= 2 ? '🏆 برنده شدی!' : '😢 باختی';
-      setTimeout(() => { $('gameModal').classList.remove('on'); state.game = null; }, 3000);
+      g.finished = true;
+      setRPSStage(g.myScore >= 2 ? 'match-win' : 'match-loss');
+      $('gameStatus').textContent = g.myScore >= 2 ? '🏆 قهرمان شدی!' : 'پایان بازی؛ حریف برد.';
+      $('rpsFootnote').textContent = 'نتیجهٔ نهایی: ' + faNum(g.myScore) + ' – ' + faNum(g.theirScore);
+      if (g.myScore >= 2) showConfetti();
+      document.querySelectorAll('.rps-choice-btns button').forEach(b => b.disabled = true);
+      g.closeTimer = setTimeout(() => {
+        if (state.game !== g) return;
+        $('gameModal').classList.remove('on');
+        state.game = null;
+      }, 2600);
       return;
     }
-    g.round++; g.myMove = null; g.theirMove = null;
-    $('gameMeMove').textContent = '❔'; $('gameOpMove').textContent = '❔';
-    $('gameRound').textContent = 'دور ' + g.round + ' از ۳';
-    $('gameStatus').textContent = 'حرکت بعدی رو انتخاب کن!';
-    document.querySelectorAll('.game-choice-btns button').forEach(b => { b.classList.remove('selected'); b.disabled = false; });
-  }, 1800);
+    g.round++;
+    g.myMove = null; g.theirMove = null; g.roundResolved = false;
+    g.revealTimers = [];
+    resetRPSRoundUI(g, false);
+  }, 2100);
 }
-
 // TTT
 function inviteToTTT(peerId) {
   const e = state.peers.get(peerId); if (!e || !e.conn) { toast('❌ آفلاین'); return; }
