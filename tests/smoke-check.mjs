@@ -145,6 +145,7 @@ assert.equal(GameLogic.classifyProfanity('اسکول پلشت دلقک'), null, 
 assert.equal(GameLogic.classifyProfanity('سلام دوست خوبم'), null, 'normal conversation should pass moderation');
 assert.equal(GameLogic.classifyProfanity('shit')?.severity, 1, 'less severe profanity should get the shortest ban tier');
 assert.equal(GameLogic.classifyProfanity('کسکش')?.severity, 2, 'strong profanity should get the middle ban tier');
+assert.equal(GameLogic.classifyProfanity('کس‌کش')?.severity, 2, 'invisible joiners should not bypass profanity checks');
 assert.equal(GameLogic.classifyProfanity('کیر مادر')?.severity, 3, 'very severe profanity should get the longest initial ban tier');
 
 console.log('Smoke checks passed: app syntax, poll integrity, NF letter scoring, RPS/TTT rules, classic UNO +4 legality/penalties, moderation tiers, accurate replies, responsive UI, and unique IDs.');
