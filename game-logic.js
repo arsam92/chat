@@ -167,22 +167,23 @@
     return 0;
   }
 
-  function unoCardCanPlay(card, current, hand = [], cardIndex = -1) {
+  function unoCardCanPlay(card, current) {
     if (!isValidUnoCard(card, true) || !isValidUnoCard(current, true)) return false;
-    if (card.type === 'wild') {
-      if (card.value !== 'wild4') return true;
-      // Classic UNO: Wild Draw Four is legal only when the player's hand
-      // contains no other card of the active color. A same number/action
-      // in another color does not make it illegal.
-      return !Array.isArray(hand) || !hand.some((held, index) =>
-        index !== cardIndex && held && held.type !== 'wild' &&
-        isValidUnoCard(held, false) && held.color === current.color
-      );
-    }
+    // A Wild or Wild Draw Four can be laid over any card. Wild Draw Four
+    // legality is resolved through the challenge rule, not by disabling the card.
+    if (card.type === 'wild') return true;
     if (card.color === current.color) return true;
     if (card.type === current.type && card.value === current.value &&
         (card.type === 'number' || card.type === 'special')) return true;
     return false;
+  }
+
+  function unoWildDrawFourIsLegal(hand, activeColor, cardIndex = -1) {
+    if (!Array.isArray(hand) || !UNO_COLORS.includes(activeColor)) return false;
+    return !hand.some((held, index) =>
+      index !== cardIndex && held && held.type !== 'wild' &&
+      isValidUnoCard(held, false) && held.color === activeColor
+    );
   }
 
   function unoCardsMatchInHand(heldCard, playedCard) {
@@ -266,6 +267,7 @@
     isValidUnoColor,
     isValidUnoCard,
     unoCardCanPlay,
+    unoWildDrawFourIsLegal,
     unoCardPenalty,
     unoCardsMatchInHand,
     normalizeModerationText,
