@@ -1000,6 +1000,21 @@
   .pm-head b { flex: 1; font-size: 15px; font-weight: 700; }
   .pm-close { width: 34px; height: 34px; border-radius: 10px; background: rgba(255, 80, 80, 0.15); color: #ff8080; border: 1px solid rgba(255, 80, 80, 0.3); cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
   .pm-close:hover { background: #ff4444; color: #fff; }
+  .pm-device-info-btn { width: 34px; height: 34px; flex: 0 0 34px; border-radius: 10px; background: rgba(0,217,163,.1); color: var(--primary); border: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: background .2s, transform .2s; }
+  .pm-device-info-btn:hover { background: rgba(0,217,163,.2); transform: translateY(-1px); }
+  .device-report-overlay { position: fixed; inset: 0; z-index: 9999; display: none; align-items: center; justify-content: center; padding: 18px; background: rgba(2,9,13,.78); backdrop-filter: blur(8px); }
+  .device-report-overlay.on { display: flex; }
+  .device-report-dialog { width: min(460px, 100%); padding: 24px; border-radius: 22px; border: 1px solid rgba(0,217,163,.24); background: linear-gradient(145deg, #10251f, #09151b); color: #eefaf7; box-shadow: 0 24px 80px rgba(0,0,0,.55); direction: rtl; }
+  .device-report-dialog h3 { margin: 0 0 12px; font-size: 19px; }
+  .device-report-dialog p { margin: 0 0 12px; color: #bfd2d1; font-size: 13px; line-height: 1.9; }
+  .device-report-dialog .report-recipient { color: #70f3ce; font-weight: 800; }
+  .device-report-dialog .report-warning { padding: 10px 12px; border-radius: 12px; background: rgba(255,191,71,.08); border: 1px solid rgba(255,191,71,.2); color: #f2ddb0; }
+  .device-report-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .device-report-actions button { flex: 1; min-height: 42px; border-radius: 12px; border: 1px solid rgba(255,255,255,.12); cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; }
+  #deviceReportCancel { background: rgba(255,255,255,.06); color: #dce8e8; }
+  #deviceReportConfirm { background: linear-gradient(135deg, #00d9a3, #26c6da); color: #06221b; }
+  #deviceReportConfirm:disabled { opacity: .55; cursor: progress; }
+  @media (prefers-reduced-motion: reduce) { .pm-device-info-btn { transition: none; } }
   .pm-messages { flex: 1; overflow-y: auto; padding: 20px; }
 
   /* Games */
@@ -2322,6 +2337,7 @@
       <b id="pmTitle">چت خصوصی</b>
       <small class="pm-presence" id="pmPresence"><span class="pm-presence-dot"></span><span id="pmPresenceText">گفت‌وگوی خصوصی</span></small>
     </div>
+    <button type="button" class="pm-device-info-btn" id="pmDeviceInfoBtn" aria-label="اشتراک‌گذاری داوطلبانهٔ گزارش اتصال" title="ارسال داوطلبانهٔ IP و نوع دستگاه">📱</button>
     <button type="button" class="pm-close" id="pmClose" aria-label="بستن گفت‌وگوی خصوصی">✕</button>
   </div>
   <div class="messages pm-messages" id="pmMessages" aria-live="polite" aria-label="پیام‌های خصوصی"></div>
@@ -2331,6 +2347,18 @@
     <input type="text" id="pmInput" maxlength="500" placeholder="پیام خصوصی بنویس…" aria-label="متن پیام خصوصی">
     <button type="submit" class="send-btn pm-send-btn" id="pmSendBtn" aria-label="ارسال پیام خصوصی" title="ارسال">➤</button>
   </form>
+</div>
+
+<div class="device-report-overlay" id="deviceReportOverlay" aria-hidden="true">
+  <section class="device-report-dialog" role="dialog" aria-modal="true" aria-labelledby="deviceReportTitle" aria-describedby="deviceReportDisclosure">
+    <h3 id="deviceReportTitle">📱 اشتراک‌گذاری گزارش اتصال</h3>
+    <p id="deviceReportDisclosure">این کار اختیاری است و تا وقتی تأیید نکنی هیچ گزارشی جمع‌آوری یا ارسال نمی‌شود. با تأیید، IP عمومی از سرویس بیرونی ipify دریافت می‌شود؛ آن سرویس هم IP درخواست را می‌بیند. سپس فقط IP عمومی، نوع دستگاه، سیستم‌عامل و مرورگر (در حدی که مرورگر ارائه کند) به‌صورت پیام خصوصی برای <span class="report-recipient" id="deviceReportRecipient">مخاطب فعلی</span> ارسال می‌شود.</p>
+    <p class="report-warning">این گزارش به میکروفون، گالری، عکس‌ها یا فایل‌های دستگاه دسترسی ندارد. مدل دقیق گوشی هم ممکن است توسط مرورگر پنهان شده باشد.</p>
+    <div class="device-report-actions">
+      <button type="button" id="deviceReportCancel">انصراف</button>
+      <button type="button" id="deviceReportConfirm">موافقم و ارسال کن</button>
+    </div>
+  </section>
 </div>
 
 <div class="user-menu" id="userMenu">
@@ -3750,6 +3778,7 @@ function sendSeen(peerId) {
   }
 }
 function closePM() {
+  if (typeof closeDeviceReportDialog === 'function') closeDeviceReportDialog();
   const previous = state.pmOpenFor;
   if (previous && pmLocalTypingPeer === previous) sendPrivateTyping(false, previous);
   clearTimeout(pmTypingTimer); clearTimeout(pmRemoteTypingTimer);
@@ -4618,6 +4647,137 @@ $('stickerBtn').onclick = () => { const p = $('stickerPanel'); const was = p.cla
 document.addEventListener('click', e => {
   if (!e.target.closest('.emoji-panel') && !e.target.closest('.sticker-panel') && !e.target.closest('.upload-preview') && !e.target.closest('.composer')) closePanels();
 });
+let deviceReportPeerId = null;
+
+function openDeviceReportDialog() {
+  const peerId = state.pmOpenFor;
+  const entry = peerId && state.peers.get(peerId);
+  if (!peerId || !entry || !entry.conn || !entry.conn.open) {
+    toast('❌ اول وارد یک گفت‌وگوی خصوصیِ متصل شو');
+    return;
+  }
+  deviceReportPeerId = peerId;
+  $('deviceReportRecipient').textContent = safePeerName(entry.name);
+  $('deviceReportConfirm').disabled = false;
+  $('deviceReportConfirm').textContent = 'موافقم و ارسال کن';
+  $('deviceReportOverlay').classList.add('on');
+  $('deviceReportOverlay').setAttribute('aria-hidden', 'false');
+  $('deviceReportCancel').focus();
+}
+
+function closeDeviceReportDialog() {
+  deviceReportPeerId = null;
+  $('deviceReportOverlay').classList.remove('on');
+  $('deviceReportOverlay').setAttribute('aria-hidden', 'true');
+  $('deviceReportConfirm').disabled = false;
+  $('deviceReportConfirm').textContent = 'موافقم و ارسال کن';
+}
+
+function detectReportedBrowser(ua, brands) {
+  const brandNames = Array.isArray(brands) ? brands.map(item => String(item.brand || '')) : [];
+  const combined = brandNames.join(' ') + ' ' + String(ua || '');
+  if (/Edg\//i.test(combined) || /Microsoft Edge/i.test(combined)) return 'Microsoft Edge';
+  if (/OPR\//i.test(combined) || /Opera/i.test(combined)) return 'Opera';
+  if (/Firefox\//i.test(combined) || /Firefox/i.test(combined)) return 'Firefox';
+  if (/Chrome\//i.test(combined) || /Google Chrome|Chromium/i.test(combined)) return 'Chrome/Chromium';
+  if (/Safari\//i.test(combined) && !/Chrome|Chromium/i.test(combined)) return 'Safari';
+  return 'نامشخص';
+}
+
+function detectReportedOS(ua, hintPlatform) {
+  const hinted = String(hintPlatform || '').trim();
+  if (hinted) return hinted;
+  const value = String(ua || '');
+  if (/Windows/i.test(value)) return 'Windows';
+  if (/Android/i.test(value)) return 'Android';
+  if (/iPhone|iPad|iPod/i.test(value)) return 'iOS/iPadOS';
+  if (/Mac OS X|Macintosh/i.test(value)) return 'macOS';
+  if (/CrOS/i.test(value)) return 'ChromeOS';
+  if (/Linux/i.test(value)) return 'Linux';
+  return 'نامشخص';
+}
+
+async function sendMyDeviceReport() {
+  const targetId = deviceReportPeerId;
+  if (!targetId || targetId !== state.pmOpenFor) {
+    closeDeviceReportDialog();
+    toast('❌ مخاطب خصوصی تغییر کرده؛ گزارش ارسال نشد');
+    return;
+  }
+  const entry = state.peers.get(targetId);
+  if (!entry || !entry.conn || !entry.conn.open) {
+    closeDeviceReportDialog();
+    toast('❌ اتصال مخاطب قطع شد؛ گزارشی ارسال نشد');
+    return;
+  }
+  const confirmButton = $('deviceReportConfirm');
+  confirmButton.disabled = true;
+  confirmButton.textContent = 'در حال تهیه گزارش…';
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 7000);
+    let response;
+    try {
+      response = await fetch('https://api64.ipify.org?format=json', {
+        method: 'GET',
+        cache: 'no-store',
+        credentials: 'omit',
+        referrerPolicy: 'no-referrer',
+        signal: controller.signal
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+    if (!response.ok) throw new Error('IP lookup failed');
+    const payload = await response.json();
+    const ip = typeof payload.ip === 'string' ? payload.ip.trim() : '';
+    if (!ip || ip.length > 45 || !/^[0-9a-f:.]+$/i.test(ip)) throw new Error('Invalid IP response');
+
+    const ua = navigator.userAgent || '';
+    const hints = navigator.userAgentData;
+    let hintData = {};
+    if (hints && typeof hints.getHighEntropyValues === 'function') {
+      try { hintData = await hints.getHighEntropyValues(['model', 'platformVersion']); }
+      catch (_) { hintData = {}; }
+    }
+    const deviceType = hints && typeof hints.mobile === 'boolean'
+      ? (hints.mobile ? 'گوشی/تبلت' : 'رایانه')
+      : (/Android|iPhone|iPad|iPod|Mobile/i.test(ua) ? 'گوشی/تبلت' : 'رایانه');
+    const os = detectReportedOS(ua, hints && hints.platform);
+    const osVersion = String(hintData.platformVersion || '').trim().slice(0, 24);
+    const model = String(hintData.model || '').trim().slice(0, 35);
+    const browser = detectReportedBrowser(ua, hints && hints.brands);
+    const report = [
+      '📋 گزارش اتصال داوطلبانه',
+      'IP عمومی: ' + ip,
+      'دستگاه: ' + deviceType + (model ? ' · ' + model : ''),
+      'سیستم‌عامل: ' + os + (osVersion && osVersion !== '0.0.0' ? ' ' + osVersion : ''),
+      'مرورگر: ' + browser
+    ].join('\n').slice(0, 490);
+
+    if (state.pmOpenFor !== targetId) throw new Error('Private recipient changed');
+    const latestEntry = state.peers.get(targetId);
+    if (!latestEntry || !latestEntry.conn || !latestEntry.conn.open) throw new Error('Private connection closed');
+    closeDeviceReportDialog();
+    sendPM(report);
+    toast('✅ گزارش فقط برای ' + safePeerName(latestEntry.name) + ' در چت خصوصی ارسال شد');
+  } catch (_) {
+    confirmButton.disabled = false;
+    confirmButton.textContent = 'دوباره تلاش کن';
+    toast('❌ گزارش ارسال نشد؛ IP در دسترس نبود یا اتصال قطع شد');
+  }
+}
+
+$('pmDeviceInfoBtn').addEventListener('click', openDeviceReportDialog);
+$('deviceReportCancel').addEventListener('click', closeDeviceReportDialog);
+$('deviceReportConfirm').addEventListener('click', sendMyDeviceReport);
+$('deviceReportOverlay').addEventListener('click', event => {
+  if (event.target === $('deviceReportOverlay')) closeDeviceReportDialog();
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && $('deviceReportOverlay').classList.contains('on')) closeDeviceReportDialog();
+});
+
 $('pmForm').addEventListener('submit', e => {
   e.preventDefault();
   const input = $('pmInput');
