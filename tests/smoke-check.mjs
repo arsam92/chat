@@ -14,6 +14,13 @@ assert.match(html, /src="\.\/game-logic\.js"/, 'shared game logic must load from
 assert.match(app, /const ROOM_NAME = \/\^ci-\[a-z0-9-\]\{1,40\}\$\/.test\(requestedTestRoom\) \? requestedTestRoom : 'global-chat-2026';/, 'regular visitors share the canonical room while CI uses isolated rooms');
 assert.ok(app.includes('return [...new Set([canonical, slugify(scopedName)])];'), 'fresh clients use a stable room plus a legacy compatibility alias');
 assert.ok(app.includes("if (ROOM_NAME !== 'global-chat-2026') return [canonical];"), 'isolated test rooms must never scan or join the public room alias');
+const roomDiscoveryStart = app.indexOf('async function discover(slugs)');
+const roomDiscoveryEnd = app.indexOf('function finishDiscover()', roomDiscoveryStart);
+const roomDiscoverySource = app.slice(roomDiscoveryStart, roomDiscoveryEnd);
+assert.ok(roomDiscoveryStart >= 0 && roomDiscoveryEnd > roomDiscoveryStart, 'shared room discovery should be present');
+assert.ok(!roomDiscoverySource.includes('if (hasRoomConnection) return;'), 'an existing canonical peer must not skip legacy-room discovery');
+assert.match(app, /state\.mySlot === 0 && legacySlug && now - \(state\.lastLegacyRoomProbeAt \|\| 0\) >= 30000/, 'the canonical room owner should periodically discover old clients');
+assert.match(app, /if \(rosterChanged\) broadcast\(\{ type: 'user-list', members: roster\(\) \}\)/, 'new peers should propagate roster updates until room namespaces converge');
 assert.match(app, /function probePeerIds\(ids\)/, 'room discovery must probe an explicit target list');
 assert.match(app, /for \(let slot = 0; slot < Math\.min\(MAX_SLOTS, Math\.max\(0, state\.mySlot\)\); slot\+\+\)/, 'new clients should scan earlier occupied slots instead of every empty slot');
 assert.ok(app.includes('for (const slug of roomIds.filter(id => id !== canonicalSlug))'), 'legacy room IDs are scanned only in the fallback phase');

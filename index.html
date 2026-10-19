@@ -3214,12 +3214,24 @@ function onProfile(conn, msg) {
 }
 function onUserList(conn, msg) {
   if (!msg.members) return;
+  let rosterChanged = false;
   msg.members.forEach(m => {
     if (!m || !m.id || m.id === state.myPeerId || isPeerBanned(m.id)) return;
     let e = state.peers.get(m.id);
-    if (!e) { e = { conn: null, name: m.name, slot: m.slot, avatar: m.avatar, bio: m.bio }; state.peers.set(m.id, e); if (!e.conn && state.peer) dial(m.id); }
-    else { e.name = m.name || e.name; if (m.avatar !== undefined) e.avatar = m.avatar; if (m.bio !== undefined) e.bio = m.bio; }
+    if (!e) {
+      e = { conn: null, name: m.name, slot: m.slot, avatar: m.avatar, bio: m.bio };
+      state.peers.set(m.id, e);
+      rosterChanged = true;
+      if (!e.conn && state.peer) dial(m.id);
+    } else {
+      if (m.name && e.name !== m.name) { e.name = m.name; rosterChanged = true; }
+      if (m.avatar !== undefined && e.avatar !== m.avatar) { e.avatar = m.avatar; rosterChanged = true; }
+      if (m.bio !== undefined && e.bio !== m.bio) { e.bio = m.bio; rosterChanged = true; }
+    }
   });
+  // Propagate only actual roster changes. This prevents loops while allowing
+  // a newly bridged legacy client to be discovered by every current client.
+  if (rosterChanged) broadcast({ type: 'user-list', members: roster() });
   renderUsers();
 }
 function onPublicMsg(conn, msg) {

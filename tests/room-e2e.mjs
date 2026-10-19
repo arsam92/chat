@@ -36,11 +36,11 @@ function attachDiagnostics(page, label) {
   });
 }
 
-async function enterRoom(context, label) {
+async function enterRoom(context, label, pageTarget = target) {
   const page = await context.newPage();
   pages.push(page);
   attachDiagnostics(page, label);
-  await page.goto(target, { waitUntil: 'domcontentloaded', timeout: 45000 });
+  await page.goto(pageTarget, { waitUntil: 'domcontentloaded', timeout: 45000 });
   await page.locator('#nameInput').waitFor({ state: 'visible', timeout: 15000 });
   await page.locator('#nameInput').fill(label);
   await page.locator('#loginBtn').click();
@@ -70,6 +70,37 @@ try {
     rosterHas(a, 'ROOM-TEST-B'),
     rosterHas(b, 'ROOM-TEST-A')
   ]);
+
+  // Regression: bridge a client in the previous URL-scoped room into the
+  // canonical room, even though A and B already have a working connection.
+  const legacyRoomName = uniqueTestRoom + '-legacy';
+  const legacyUrl = new URL(targetUrl);
+  legacyUrl.searchParams.set('testRoom', legacyRoomName);
+  const contextC = await browser.newContext();
+  const c = await enterRoom(contextC, 'ROOM-TEST-C-LEGACY', legacyUrl.toString());
+  await a.evaluate(slug => {
+    state.roomSlugs = [...new Set([...(state.roomSlugs || []), slug])];
+    return discover(state.roomSlugs);
+  }, legacyRoomName);
+
+  const connectedToName = (page, name) => page.waitForFunction(
+    expected => [...state.peers.values()].some(entry =>
+      entry.name === expected && entry.conn && entry.conn.open),
+    name,
+    { timeout }
+  );
+  await Promise.all([
+    rosterHas(a, 'ROOM-TEST-C-LEGACY'),
+    rosterHas(b, 'ROOM-TEST-C-LEGACY'),
+    rosterHas(c, 'ROOM-TEST-A'),
+    rosterHas(c, 'ROOM-TEST-B'),
+    connectedToName(a, 'ROOM-TEST-C-LEGACY'),
+    connectedToName(b, 'ROOM-TEST-C-LEGACY'),
+    connectedToName(c, 'ROOM-TEST-A'),
+    connectedToName(c, 'ROOM-TEST-B')
+  ]);
+  await c.evaluate(() => sendText('ROOM TEST LEGACY BRIDGE'));
+  await b.locator('.msg').filter({ hasText: 'ROOM TEST LEGACY BRIDGE' }).waitFor({ state: 'visible', timeout });
 
   // Exercise the actual poll UI and ensure the poll reaches the other browser.
   await a.locator('#pollBtn').click();
