@@ -2552,6 +2552,7 @@ function handleData(conn, msg) {
     case 'delivered': onDelivered(conn, msg); break;
     case 'seen': onSeen(conn, msg); break;
     case 'typing': onTyping(conn, msg); break;
+    case 'pm-typing': onPMTyping(conn, msg); break;
     case 'delete-msg': onDeleteMsg(conn, msg); break;
     case 'game-invite': onGameInvite(conn, msg); break;
     case 'game-response': onGameResponse(conn, msg); break;
@@ -2631,7 +2632,7 @@ function onPrivateMsg(conn, msg) {
   arr.push(entry);
   state.pm.set(id, arr);
   safeSend(conn, { type: 'delivered', msgId: msg.id, to: conn.peer });
-  if (state.pmOpenFor === id) { renderPM(); setTimeout(() => sendSeen(id), 300); }
+  if (state.pmOpenFor === id) { renderPM({ animateLatest: true }); setTimeout(() => sendSeen(id), 220); }
   else { state.unread.set(id, (state.unread.get(id) || 0) + 1); toast('💬 پیام خصوصی از ' + e.name); playNotif(); renderUsers(); }
   clearTypingTimer(conn.peer);
 }
@@ -2679,7 +2680,7 @@ function onSeen(conn, msg) {
     const el = findMessageElement(mid);
     if (el) { const t = el.querySelector('.ticks'); if (t) { t.textContent = '✓✓'; t.classList.add('seen'); } }
   });
-  if (state.pmOpenFor === id) renderPM();
+  // Update receipts in place; rebuilding the whole conversation here replayed every message animation.
 }
 function onTyping(conn, msg) {
   const e = state.peers.get(conn.peer); if (!e) return;
@@ -3024,50 +3025,129 @@ function deleteMessage(o, isPM) {
   }
 }
 
+let pmTypingTimer = null;
+let pmRemoteTypingTimer = null;
+let pmCloseTimer = null;
+let pmLocalTypingPeer = null;
+function sendPrivateTyping(isTyping, peerId = state.pmOpenFor) {
+  if (!peerId) return;
+  const entry = state.peers.get(peerId);
+  if (entry && entry.conn && entry.conn.open) safeSend(entry.conn, { type: 'pm-typing', typing: !!isTyping });
+  if (isTyping) pmLocalTypingPeer = peerId;
+  else if (pmLocalTypingPeer === peerId) pmLocalTypingPeer = null;
+}
+function setPMPresence(peerId, isTyping = false) {
+  const entry = state.peers.get(peerId);
+  const online = !!(entry && entry.conn && entry.conn.open);
+  $('pmPresence').classList.toggle('typing', isTyping);
+  $('pmPresenceText').textContent = isTyping ? 'در حال نوشتن…' : (online ? 'آنلاین' : 'اتصال در دسترس نیست');
+  $('pmTyping').hidden = !isTyping;
+}
+function onPMTyping(conn, msg) {
+  if (!conn || !msg || typeof msg.typing !== 'boolean') return;
+  if (state.pmOpenFor !== conn.peer) return;
+  clearTimeout(pmRemoteTypingTimer);
+  setPMPresence(conn.peer, msg.typing);
+  if (msg.typing) pmRemoteTypingTimer = setTimeout(() => {
+    if (state.pmOpenFor === conn.peer) setPMPresence(conn.peer, false);
+  }, 2400);
+}
 function openPM(id) {
   if (id === state.myPeerId) return;
   const e = state.peers.get(id); if (!e || !e.name) return;
+  if (pmCloseTimer) { clearTimeout(pmCloseTimer); pmCloseTimer = null; }
+  const previous = state.pmOpenFor;
+  if (previous && previous !== id) sendPrivateTyping(false, previous);
+  $('pmWindow').classList.remove('closing');
+  $('pmOverlay').classList.remove('closing');
   state.pmOpenFor = id; state.unread.set(id, 0);
-  $('pmTitle').textContent = '💬 ' + e.name;
+  $('pmTitle').textContent = safePeerName(e.name);
   const [bg, fg] = avatarFor(e.name);
   const av = $('pmAvatar');
   if (safeImageSource(e.avatar)) { av.innerHTML = `<img src="${escapeHTML(safeImageSource(e.avatar))}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; av.style.background = 'transparent'; }
   else { av.style.background = bg; av.style.color = fg; av.textContent = e.name[0] || '?'; }
-  renderPM(); renderUsers();
-  $('pmOverlay').classList.add('on'); $('pmWindow').classList.add('on');
-  setTimeout(() => { $('pmInput').focus(); sendSeen(id); }, 400);
+  setPMPresence(id, false);
+  renderPM({ forceBottom: true }); renderUsers();
+  $('pmOverlay').classList.add('on');
+  $('pmWindow').classList.add('on');
+  $('pmOverlay').setAttribute('aria-hidden', 'false');
+  $('pmWindow').setAttribute('aria-hidden', 'false');
+  setTimeout(() => {
+    if (state.pmOpenFor !== id || !$('pmWindow').classList.contains('on')) return;
+    $('pmInput').focus();
+    sendSeen(id);
+  }, 240);
 }
 function sendSeen(peerId) {
-  const e = state.peers.get(peerId); if (!e || !e.conn) return;
+  const e = state.peers.get(peerId); if (!e || !e.conn || !e.conn.open) return;
   const arr = state.pm.get(peerId) || [];
   const unseen = arr.filter(m => !m.mine && !m.seen).map(m => m.id);
-  if (unseen.length) { unseen.forEach(mid => { const m = arr.find(x => x.id === mid); if (m) m.seen = true; }); safeSend(e.conn, { type: 'seen', msgIds: unseen }); }
+  if (unseen.length) {
+    unseen.forEach(mid => { const m = arr.find(x => x.id === mid); if (m) m.seen = true; });
+    safeSend(e.conn, { type: 'seen', msgIds: unseen });
+    unseen.forEach(mid => {
+      const el = [...$('pmMessages').querySelectorAll('.msg[data-msgid]')].find(node => node.dataset.msgid === mid);
+      if (el) { const tick = el.querySelector('.ticks'); if (tick) { tick.classList.add('seen'); tick.classList.add('delivered'); tick.textContent = '✓✓'; } }
+    });
+  }
 }
-function closePM() { state.pmOpenFor = null; $('pmOverlay').classList.remove('on'); $('pmWindow').classList.remove('on'); }
-function renderPM() {
-  const box = $('pmMessages'); box.innerHTML = '';
+function closePM() {
+  const previous = state.pmOpenFor;
+  if (previous && pmLocalTypingPeer === previous) sendPrivateTyping(false, previous);
+  clearTimeout(pmTypingTimer); clearTimeout(pmRemoteTypingTimer);
+  pmLocalTypingPeer = null;
+  $('pmTyping').hidden = true;
+  state.pmOpenFor = null;
+  const windowEl = $('pmWindow'), overlay = $('pmOverlay');
+  windowEl.classList.remove('on'); overlay.classList.remove('on');
+  windowEl.classList.add('closing'); overlay.classList.add('closing');
+  windowEl.setAttribute('aria-hidden', 'true'); overlay.setAttribute('aria-hidden', 'true');
+  clearTimeout(pmCloseTimer);
+  pmCloseTimer = setTimeout(() => {
+    windowEl.classList.remove('closing'); overlay.classList.remove('closing');
+    pmCloseTimer = null;
+  }, 240);
+}
+function renderPM(options = {}) {
+  const box = $('pmMessages');
+  const keepAtBottom = !!options.forceBottom || (box.scrollHeight - box.scrollTop - box.clientHeight < 110);
+  box.innerHTML = '';
   const id = state.pmOpenFor; if (!id) return;
   const arr = state.pm.get(id) || [];
-  if (!arr.length) { const e = state.peers.get(id); const empty = document.createElement('div'); empty.style.cssText = 'color:#7a9ba8;text-align:center;padding:60px 20px;font-size:13.5px;line-height:2;white-space:pre-line'; empty.textContent = '🔒 این چت خصوصیه\nبین تو و ' + (e ? safePeerName(e.name) : 'این کاربر'); box.appendChild(empty); return; }
-  arr.forEach(m => {
+  if (!arr.length) {
+    const empty = document.createElement('div');
+    empty.className = 'pm-empty';
+    const icon = document.createElement('span'); icon.className = 'pm-empty-icon'; icon.textContent = '🔐';
+    const heading = document.createElement('b'); heading.textContent = 'گفت‌وگوی خصوصی';
+    const detail = document.createElement('p'); detail.textContent = 'این پیام‌ها فقط بین تو و ' + safePeerName(state.peers.get(id)?.name) + ' ردوبدل می‌شوند.';
+    empty.append(icon, heading, detail); box.appendChild(empty);
+    return;
+  }
+  arr.forEach((m, index) => {
     m._isPM = true;
     const w = document.createElement('div'); w.className = 'msg ' + (m.mine ? 'mine' : 'theirs');
     if (m.id) w.setAttribute('data-msgid', m.id);
-    w.classList.add(m.mine ? 'flying-in' : 'anim-in');
+    if (options.animateLatest && index === arr.length - 1) w.classList.add('pm-message-enter');
     const b = document.createElement('div'); b.className = 'bubble'; buildBubbleContent(b, m); w.appendChild(b);
     const rx = renderReactions(m); if (rx) w.appendChild(rx);
     const meta = document.createElement('div'); meta.className = 'meta';
     const ts = document.createElement('span'); ts.textContent = faTime(m.ts); meta.appendChild(ts);
-    if (m.mine) { const t = document.createElement('span'); t.className = 'ticks' + (m.seen ? ' seen' : (m.delivered ? ' delivered' : '')); t.textContent = m.seen || m.delivered ? '✓✓' : '✓'; meta.appendChild(t); }
-    const rxb = document.createElement('button'); rxb.className = 'react-btn'; rxb.textContent = '😀';
+    if (m.mine) {
+      const t = document.createElement('span');
+      t.className = 'ticks' + (m.seen ? ' seen' : (m.delivered ? ' delivered' : ''));
+      t.textContent = m.seen || m.delivered ? '✓✓' : '✓';
+      t.title = m.seen ? 'خوانده شد' : m.delivered ? 'تحویل داده شد' : 'ارسال شد';
+      meta.appendChild(t);
+    }
+    const rxb = document.createElement('button'); rxb.type = 'button'; rxb.className = 'react-btn'; rxb.textContent = '😀'; rxb.setAttribute('aria-label', 'واکنش به پیام');
     rxb.onclick = (e) => { e.stopPropagation(); showReactionPicker(e.currentTarget, m, true); }; meta.appendChild(rxb);
-    const mb = document.createElement('button'); mb.className = 'menu-btn'; mb.textContent = '⋯';
+    const mb = document.createElement('button'); mb.type = 'button'; mb.className = 'menu-btn'; mb.textContent = '⋯'; mb.setAttribute('aria-label', 'گزینه‌های پیام');
     mb.onclick = (e) => { e.stopPropagation(); showMsgMenu(e.clientX, e.clientY, m, true); }; meta.appendChild(mb);
     w.appendChild(meta);
     b.addEventListener('contextmenu', (e) => { e.preventDefault(); showMsgMenu(e.clientX, e.clientY, m, true); });
     box.appendChild(w);
   });
-  box.scrollTop = box.scrollHeight;
+  if (keepAtBottom) box.scrollTop = box.scrollHeight;
 }
 
 let reactionPicker = null;
@@ -3169,15 +3249,20 @@ function sendPoll(poll) {
 }
 function sendPM(text) {
   const id = state.pmOpenFor; if (!id) return;
-  const e = state.peers.get(id); if (!e || !e.conn) { toast('❌ کاربر آفلاین است'); return; }
-  const clean = text.trim(); if (!clean) return;
+  const e = state.peers.get(id);
+  if (!e || !e.conn || !e.conn.open) { toast('❌ اتصال کاربر در دسترس نیست؛ دوباره وارد چت شو.'); return; }
+  const clean = String(text || '').trim().slice(0, 500); if (!clean) return;
   const ts = Date.now(); const mid = genId();
   let arr = state.pm.get(id) || [];
   arr.push({ id: mid, from: state.myName, text: clean, ts, mine: true, delivered: false, seen: false, reactions: {} });
+  if (arr.length > 300) arr.splice(0, arr.length - 300);
   state.pm.set(id, arr);
+  sendPrivateTyping(false, id);
   safeSend(e.conn, { type: 'private-msg', id: mid, to: id, text: clean, ts });
-  renderPM();
-  sendTyping(false);
+  renderPM({ animateLatest: true });
+  const sendButton = $('pmSendBtn');
+  sendButton.classList.remove('sending'); void sendButton.offsetWidth; sendButton.classList.add('sending');
+  setTimeout(() => sendButton.classList.remove('sending'), 450);
 }
 
 function sendTyping(isTyping) { broadcast({ type: 'typing', typing: !!isTyping }); }
@@ -3831,10 +3916,20 @@ document.addEventListener('click', e => {
 $('pmForm').addEventListener('submit', e => {
   e.preventDefault();
   const input = $('pmInput');
-  if (input.value.trim()) { sendPM(input.value); input.value = ''; }
+  if (input.value.trim()) { sendPM(input.value); input.value = ''; input.focus(); }
+});
+$('pmInput').addEventListener('input', () => {
+  const peerId = state.pmOpenFor;
+  if (!peerId) return;
+  if (pmLocalTypingPeer !== peerId) sendPrivateTyping(true, peerId);
+  clearTimeout(pmTypingTimer);
+  pmTypingTimer = setTimeout(() => sendPrivateTyping(false, peerId), 1000);
 });
 $('pmClose').onclick = closePM;
 $('pmOverlay').onclick = closePM;
+$('settingsModal').addEventListener('click', event => {
+  if (event.target === $('settingsModal')) closeSettings();
+});
 // ═══════════════════════════════════════════
 //   ANIMATIONS EXTRAS
 // ═══════════════════════════════════════════
