@@ -26,7 +26,7 @@ assert.ok(!app.includes("bubble.closest('.msg')._pollData = poll;"), 'poll creat
 assert.match(app, /function syncPollOptionDraft\(\)/, 'adding/removing poll options must preserve the current live field values');
 assert.ok(app.includes("const optionInputs = [...$('pollOptionsList').querySelectorAll('input')];"), 'poll creation must read current values directly from the visible inputs');
 assert.ok(html.includes('id="pollError"'), 'poll validation errors should be visible near the form');
-assert.match(app, /classList\.add\('reveal-3d'\)/, 'RPS should activate the 3D reveal animation');
+assert.match(app, /classList\.add\('rps-revealing', 'reveal-3d'\)/, 'RPS should activate the new synchronized card reveal animation');
 assert.match(app, /classList\.add\('count-up'\)/, 'RPS score changes should animate');
 assert.match(app, /mark-in/, 'tic-tac-toe marks should animate as they appear');
 assert.ok(html.includes('ARSAM ARCADE'), 'game modals should include the new arcade styling');
