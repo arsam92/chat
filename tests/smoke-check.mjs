@@ -66,7 +66,7 @@ assert.match(app, /case 'moderation-report': onModerationReport\(conn, msg\)/, '
 assert.match(app, /function scrollToPMMessage\(msgId\)/, 'private reply quotes must jump to the correct message');
 assert.match(app, /state\.pmReplyTo = replySnapshot\(o\)/, 'private replies must retain the original sender and message ID');
 assert.ok(html.includes('id="pmReplyPreview"') && html.includes('id="pmRpName"'), 'private chat should show who a reply is addressed to');
-assert.match(app, /data-reply-to/, 'message DOM should explicitly record the reply target');
+assert.match(app, /w\.dataset\.replyTo = o\.reply\.msgId/, 'message DOM should explicitly record the reply target');
 assert.match(html, /prefers-reduced-motion:\s*reduce/, 'reduced-motion preference must be respected');
 assert.match(html, /id="mobileUsersBtn"/, 'mobile user-list button should exist');
 assert.match(html, /id="sidebarShade"/, 'mobile drawer backdrop should exist');
