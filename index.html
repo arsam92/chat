@@ -4886,8 +4886,11 @@ function onUNOMove(conn, msg) {
     u.turnSeq = msg.turnSeq;
     u.current = { ...msg.card };
     const keepsTurn = msg.card.type === 'special';
+    let penaltyCards = [];
     if (msg.card.type === 'special' && msg.card.value === 'draw2') {
-      u.myHand.push(...u.deck.splice(0, Math.min(2, u.deck.length)));
+      // The host owns the deck, but the penalty belongs in the guest's hand.
+      penaltyCards = u.deck.splice(0, Math.min(2, u.deck.length));
+      u.opHand.push(...penaltyCards);
     }
     u.myTurn = !keepsTurn;
     if (u.opHand.length === 0) { finishUNO(conn.peer); return; }
@@ -4895,7 +4898,7 @@ function onUNOMove(conn, msg) {
     if (peer && peer.conn) safeSend(peer.conn, {
       type: 'uno-sync', id: u.id, turnSeq: u.turnSeq, current: u.current,
       hostHandCount: u.myHand.length, guestHandCount: u.opHand.length,
-      turnOwner: keepsTurn ? 'guest' : 'host'
+      penaltyCards, turnOwner: keepsTurn ? 'guest' : 'host'
     });
     renderUNO();
     return;
@@ -4933,8 +4936,13 @@ function onUNOSync(conn, msg) {
       !Number.isInteger(msg.hostHandCount) || msg.hostHandCount < 0 || msg.hostHandCount > 100 ||
       !Number.isInteger(msg.guestHandCount) || msg.guestHandCount < 0 || msg.guestHandCount > 100 ||
       !['host', 'guest'].includes(msg.turnOwner)) return;
+  const penaltyCards = Array.isArray(msg.penaltyCards) ? msg.penaltyCards : [];
+  if (penaltyCards.length > 2 || !penaltyCards.every(card => GameLogic.isValidUnoCard(card, false))) return;
   u.current = { ...msg.current };
   u.opHand = new Array(msg.hostHandCount).fill(null);
+  // When the guest plays +2, only the host can draw from the deck. Pass those
+  // exact cards to the guest; never add them to the host's own hand.
+  if (penaltyCards.length) u.myHand.push(...penaltyCards);
   u.myTurn = msg.turnOwner === 'guest';
   renderUNO();
 }
