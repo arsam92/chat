@@ -5181,16 +5181,20 @@ function onUNODrawResult(conn, msg) {
       !Number.isInteger(msg.guestHandCount) || msg.guestHandCount < 0 || msg.guestHandCount > 100 ||
       !GameLogic.isValidUnoCard(msg.current, true) || !['host', 'guest'].includes(msg.turnOwner)) return;
   const previousHostCount = u.opHand.length;
-  if (msg.drawnBy === 'host' && msg.hostHandCount !== previousHostCount + (msg.guestHandCount === u.myHand.length ? 1 : 0)) return;
-  if (msg.drawnBy === 'none' && msg.hostHandCount !== previousHostCount) return;
-  if (msg.drawnBy === 'guest' && msg.hostHandCount !== previousHostCount) return;
+  const previousGuestCount = u.myHand.length;
+  if (msg.drawnBy === 'host' &&
+      (msg.hostHandCount !== previousHostCount + 1 || msg.guestHandCount !== previousGuestCount || msg.card !== null)) return;
+  if (msg.drawnBy === 'none' &&
+      (msg.hostHandCount !== previousHostCount || msg.guestHandCount !== previousGuestCount || msg.card != null)) return;
+  if (msg.drawnBy === 'guest' &&
+      (msg.hostHandCount !== previousHostCount || msg.guestHandCount !== previousGuestCount + 1 ||
+       !GameLogic.isValidUnoCard(msg.card, false))) return;
   u.turnSeq = msg.turnSeq;
   u.current = { ...msg.current };
   u.opHand = new Array(msg.hostHandCount).fill(null);
   u.drawnCardOnly = false; u.drawnCardIndex = -1; u.waitingForDraw = false;
   u.opponentDrawnCardOnly = false; u.opponentDrawnCardIndex = -1;
   if (msg.drawnBy === 'guest') {
-    if (!GameLogic.isValidUnoCard(msg.card, false) || msg.guestHandCount !== u.myHand.length + 1) return;
     const index = u.myHand.length;
     u.myHand.push(msg.card);
     const canPlay = unoCardCanPlay(msg.card, u.current, u.myHand, index);
@@ -5221,7 +5225,7 @@ function unoDraw() {
     const peer = state.peers.get(u.opponent);
     if (peer && peer.conn) safeSend(peer.conn, {
       type: 'uno-draw-result', id: u.id, turnSeq: u.turnSeq, drawnBy: card ? 'host' : 'none',
-      hostHandCount: u.myHand.length, guestHandCount: u.opHand.length,
+      card: null, hostHandCount: u.myHand.length, guestHandCount: u.opHand.length,
       current: u.current, turnOwner: canPlay ? 'host' : 'guest'
     });
     if (!card) toast('❗ دسته کارت تمام شد؛ نوبت عوض شد');
