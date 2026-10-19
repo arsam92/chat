@@ -102,6 +102,27 @@ try {
   await c.evaluate(() => sendText('ROOM TEST LEGACY BRIDGE'));
   await b.locator('.msg').filter({ hasText: 'ROOM TEST LEGACY BRIDGE' }).waitFor({ state: 'visible', timeout });
 
+  // Selecting a meme inserts it at the current caret instead of sending a
+  // separate sticker message. Text before and after the image must survive
+  // on both connected browsers.
+  await a.locator('#chatInput').fill('INLINE MEME TEST start ');
+  await a.locator('#stickerBtn').click();
+  await a.locator('#stickerPanel.on .sticker-item').first().click();
+  assert.match(await a.locator('#chatInput').inputValue(), /⟦میم 1⟧/u, 'meme picker should insert an inline marker into the composer');
+  await a.locator('#chatInput').type(' INLINE MEME TEST end');
+  await a.locator('#chatInput').press('Enter');
+  const publicMemeA = a.locator('.msg').filter({ hasText: 'INLINE MEME TEST start' }).last();
+  const publicMemeB = b.locator('.msg').filter({ hasText: 'INLINE MEME TEST start' }).last();
+  await Promise.all([
+    publicMemeA.locator('.inline-meme').waitFor({ state: 'attached', timeout }),
+    publicMemeB.locator('.inline-meme').waitFor({ state: 'attached', timeout })
+  ]);
+  assert.match(await publicMemeA.locator('.bubble').innerText(), /INLINE MEME TEST start.*INLINE MEME TEST end/su);
+  assert.equal(await publicMemeA.locator('.inline-meme').count(), 1, 'public sender should render one inline meme');
+  assert.equal(await publicMemeB.locator('.inline-meme').count(), 1, 'public receiver should render one inline meme');
+  assert.equal(await publicMemeB.locator('.bubble-text').textContent(), 'INLINE MEME TEST start  INLINE MEME TEST end',
+    'the surrounding public message text should remain in its original order');
+
   // Exercise the actual poll UI and ensure the poll reaches the other browser.
   await a.locator('#pollBtn').click();
   await a.locator('#pollModal.on').waitFor({ state: 'visible', timeout: 5000 });
@@ -194,10 +215,23 @@ try {
   ]);
   await a.locator('#pmInput').fill('دارم تایپ می‌کنم');
   await b.locator('#pmTyping:not([hidden])').waitFor({ state: 'visible', timeout: 5000 });
-  await a.locator('#pmInput').fill('Private chat test works');
+  await a.locator('#pmInput').fill('PRIVATE MEME TEST start ');
+  await a.locator('#pmStickerBtn').click();
+  await a.locator('#pmStickerPicker.on .pm-sticker-item').first().click();
+  assert.match(await a.locator('#pmInput').inputValue(), /⟦میم 1⟧/u, 'private meme picker should insert at the text caret');
+  await a.locator('#pmInput').type(' PRIVATE MEME TEST end');
   await a.locator('#pmSendBtn').click();
-  await b.locator('#pmMessages .msg').filter({ hasText: 'Private chat test works' }).waitFor({ state: 'visible', timeout });
-  await a.locator('#pmMessages .msg.mine .ticks.delivered').waitFor({ state: 'visible', timeout });
+  const pmMemeA = a.locator('#pmMessages .msg.mine').filter({ hasText: 'PRIVATE MEME TEST start' }).last();
+  const pmMemeB = b.locator('#pmMessages .msg.theirs').filter({ hasText: 'PRIVATE MEME TEST start' }).last();
+  await Promise.all([
+    pmMemeA.locator('.inline-meme').waitFor({ state: 'attached', timeout }),
+    pmMemeB.locator('.inline-meme').waitFor({ state: 'attached', timeout })
+  ]);
+  assert.equal(await pmMemeA.locator('.inline-meme').count(), 1, 'private sender should render one inline meme');
+  assert.equal(await pmMemeB.locator('.inline-meme').count(), 1, 'private receiver should render one inline meme');
+  assert.equal(await pmMemeB.locator('.bubble-text').textContent(), 'PRIVATE MEME TEST start  PRIVATE MEME TEST end',
+    'the surrounding private message text should remain in order');
+  await a.locator('#pmMessages .msg.mine .ticks.delivered').last().waitFor({ state: 'visible', timeout });
 
   // The diagnostic report is strictly opt-in: opening/cancelling the consent
   // dialog must not contact the IP provider. Only explicit confirmation may
