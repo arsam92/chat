@@ -1846,17 +1846,21 @@
   </div>
 </div>
 
-<div class="pm-overlay" id="pmOverlay"></div>
-<div class="pm-window" id="pmWindow">
+<div class="pm-overlay" id="pmOverlay" aria-hidden="true"></div>
+<div class="pm-window" id="pmWindow" role="dialog" aria-modal="true" aria-labelledby="pmTitle" aria-hidden="true">
   <div class="pm-head">
-    <div class="u-avatar" id="pmAvatar">م</div>
-    <b id="pmTitle">چت خصوصی</b>
-    <button class="pm-close" id="pmClose">✕</button>
+    <div class="u-avatar pm-avatar" id="pmAvatar">م</div>
+    <div class="pm-heading">
+      <b id="pmTitle">چت خصوصی</b>
+      <small class="pm-presence" id="pmPresence"><span class="pm-presence-dot"></span><span id="pmPresenceText">گفت‌وگوی خصوصی</span></small>
+    </div>
+    <button type="button" class="pm-close" id="pmClose" aria-label="بستن گفت‌وگوی خصوصی">✕</button>
   </div>
-  <div class="messages pm-messages" id="pmMessages"></div>
-  <form class="composer" id="pmForm" autocomplete="off">
-    <input type="text" id="pmInput" maxlength="500" placeholder="پیام خصوصی...">
-    <button type="submit" class="send-btn">📤</button>
+  <div class="messages pm-messages" id="pmMessages" aria-live="polite" aria-label="پیام‌های خصوصی"></div>
+  <div class="pm-typing" id="pmTyping" hidden aria-live="polite"><span class="pm-typing-dots"><i></i><i></i><i></i></span><span>در حال نوشتن…</span></div>
+  <form class="composer pm-composer" id="pmForm" autocomplete="off">
+    <input type="text" id="pmInput" maxlength="500" placeholder="پیام خصوصی بنویس…" aria-label="متن پیام خصوصی">
+    <button type="submit" class="send-btn pm-send-btn" id="pmSendBtn" aria-label="ارسال پیام خصوصی" title="ارسال">➤</button>
   </form>
 </div>
 
@@ -1876,7 +1880,7 @@
 
 <div class="modal-overlay" id="settingsModal">
   <div class="modal">
-    <button class="m-close" onclick="document.getElementById('settingsModal').classList.remove('on')">✕</button>
+    <button type="button" class="m-close" onclick="closeSettings()" aria-label="بستن تنظیمات">✕</button>
     <h3>⚙️ تنظیمات</h3>
     <div class="settings-section">
       <h4>👤 پروفایل</h4>
@@ -1902,35 +1906,49 @@
         <button class="font-btn" data-size="xlarge">خیلی بزرگ</button>
       </div>
     </div>
+    <p class="settings-footnote"><span>✓</span> تنظیمات و اندازهٔ فونت به‌صورت خودکار ذخیره می‌شوند.</p>
   </div>
 </div>
 
 <div class="modal-overlay" id="gameModal">
-  <div class="modal">
-    <h3>✊✋✌️ سنگ کاغذ قیچی</h3>
-    <div class="game-arena">
-      <div class="game-player">
-        <div class="gp-avatar" id="gameMeAvatar">م</div>
+  <section class="modal rps-modal" role="dialog" aria-modal="true" aria-labelledby="rpsTitle">
+    <div class="rps-heading">
+      <span class="rps-kicker">ARCADE <b>01</b></span>
+      <h3 id="rpsTitle">✊ سنگ، کاغذ، قیچی</h3>
+      <p>حرکتت رو انتخاب کن؛ هرکس دو دور ببره، قهرمانه.</p>
+    </div>
+    <div class="rps-scoreline">
+      <span class="rps-round-chip" id="gameRound">دور ۱ از ۳</span>
+      <span class="rps-live-chip"><i></i> دوئل زنده</span>
+    </div>
+    <div class="game-arena rps-arena">
+      <section class="game-player rps-player" data-side="me">
+        <div class="rps-player-top"><span class="rps-side-label">تو</span><div class="gp-avatar" id="gameMeAvatar">م</div></div>
         <div class="gp-name" id="gameMeName">من</div>
-        <div class="gp-move" id="gameMeMove">❔</div>
+        <div class="rps-move-well"><div class="gp-move" id="gameMeMove">?</div><span id="gameMeCaption">منتظر انتخاب</span></div>
         <div class="game-score" id="gameMeScore">۰</div>
+      </section>
+      <div class="rps-center-column">
+        <div class="game-vs">VS</div>
+        <div class="rps-clash" id="rpsClash" aria-live="polite"><span id="rpsCountdown">⚡</span></div>
+        <span class="rps-center-label">دوئل</span>
       </div>
-      <div class="game-vs">VS</div>
-      <div class="game-player">
-        <div class="gp-avatar" id="gameOpAvatar">ح</div>
+      <section class="game-player rps-player" data-side="op">
+        <div class="rps-player-top"><span class="rps-side-label">حریف</span><div class="gp-avatar" id="gameOpAvatar">ح</div></div>
         <div class="gp-name" id="gameOpName">حریف</div>
-        <div class="gp-move" id="gameOpMove">❔</div>
+        <div class="rps-move-well"><div class="gp-move" id="gameOpMove">?</div><span id="gameOpCaption">منتظر انتخاب</span></div>
         <div class="game-score" id="gameOpScore">۰</div>
-      </div>
+      </section>
     </div>
-    <div class="game-round" id="gameRound">دور ۱ از ۳</div>
-    <div class="game-status" id="gameStatus">یک حرکت انتخاب کن!</div>
-    <div class="game-choice-btns">
-      <button data-move="rock">✊</button>
-      <button data-move="paper">✋</button>
-      <button data-move="scissors">✌️</button>
+    <div class="game-status rps-status" id="gameStatus" role="status" aria-live="polite">یکی از حرکت‌ها رو انتخاب کن.</div>
+    <div class="rps-choice-heading"><span>قفل کردن حرکت</span><small>تا انتخاب حریف مخفی می‌مونه</small></div>
+    <div class="game-choice-btns rps-choice-btns">
+      <button type="button" data-move="rock" aria-label="سنگ"><span class="rps-choice-glyph">✊</span><span class="rps-choice-label">سنگ</span></button>
+      <button type="button" data-move="paper" aria-label="کاغذ"><span class="rps-choice-glyph">✋</span><span class="rps-choice-label">کاغذ</span></button>
+      <button type="button" data-move="scissors" aria-label="قیچی"><span class="rps-choice-glyph">✌️</span><span class="rps-choice-label">قیچی</span></button>
     </div>
-  </div>
+    <p class="rps-footer" id="rpsFootnote">اولین نفری که ۲ دور رو ببره، برنده می‌شه.</p>
+  </section>
 </div>
 
 <div class="modal-overlay" id="tttModal">
@@ -1991,7 +2009,7 @@
       <div class="uno-piles">
         <div class="uno-pile">
           <div class="uno-pile-label">دسته</div>
-          <div class="uno-deck" id="unoDeck" onclick="unoDraw()">🎴</div>
+          <button type="button" class="uno-deck uno-back" id="unoDeck" onclick="unoDraw()" aria-label="برداشتن کارت از دسته" title="برداشتن کارت"><span class="uno-back-oval"><span>UNO</span></span></button>
         </div>
         <div class="uno-pile">
           <div class="uno-pile-label">رو میز</div>
