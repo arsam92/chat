@@ -2970,18 +2970,21 @@ async function discover(slugs) {
   }
   await probePeerIds(canonicalTargets);
   await new Promise(resolve => setTimeout(resolve, 250));
-  const hasRoomConnection = [...state.peers.values()].some(entry => entry.conn && entry.conn.open);
-  if (hasRoomConnection) return;
 
-  // One compatibility pass lets a freshly loaded client find a still-open tab
-  // running the older URL-scoped build, without scanning that namespace forever.
+  // Do not skip the legacy room merely because a current-version peer was
+  // found. Some tabs/devices can keep the previous URL-scoped build cached;
+  // connecting to both namespaces merges those clients into the same mesh.
   const legacyTargets = [];
   for (const slug of roomIds.filter(id => id !== canonicalSlug)) {
     for (let slot = 0; slot < MAX_SLOTS; slot++) {
       legacyTargets.push(SLOT_PREFIX + slug + '-' + slot);
     }
   }
-  await probePeerIds(legacyTargets);
+  const now = Date.now();
+  if (legacyTargets.length && now - (state.lastLegacyRoomProbeAt || 0) >= 30000) {
+    state.lastLegacyRoomProbeAt = now;
+    await probePeerIds(legacyTargets);
+  }
 }
 function finishDiscover() { if (state.joinTimer) clearTimeout(state.joinTimer); const r = state.joinResolve; state.joinResolve = null; if (r) r(); }
 function finishJoin() {
@@ -3010,13 +3013,26 @@ function maintainRoomConnections() {
   state.roomScanRunning = true;
   const canonicalSlug = slugify(ROOM_NAME);
   const targets = new Set();
-  // Retry only earlier slots; later participants are responsible for dialing us.
+  // Retry only earlier canonical slots; later participants dial us.
   for (let slot = 0; slot < Math.min(MAX_SLOTS, Math.max(0, state.mySlot)); slot++) {
     targets.add(SLOT_PREFIX + canonicalSlug + '-' + slot);
   }
   // Also restore peers already discovered through a roster if their route dropped.
   for (const [id, entry] of state.peers) {
     if (!entry.conn || !entry.conn.open) targets.add(id);
+  }
+
+  // The canonical room's slot 0 acts as a lightweight compatibility bridge
+  // for users whose browser still has the older URL-scoped version cached.
+  // Scan that older namespace periodically, not from every client.
+  const roomIds = Array.isArray(state.roomSlugs) ? state.roomSlugs : [];
+  const legacySlug = roomIds.find(slug => slug !== canonicalSlug);
+  const now = Date.now();
+  if (state.mySlot === 0 && legacySlug && now - (state.lastLegacyRoomProbeAt || 0) >= 30000) {
+    state.lastLegacyRoomProbeAt = now;
+    for (let slot = 0; slot < MAX_SLOTS; slot++) {
+      targets.add(SLOT_PREFIX + legacySlug + '-' + slot);
+    }
   }
   try {
     for (const id of targets) {
