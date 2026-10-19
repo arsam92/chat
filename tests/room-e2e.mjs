@@ -191,8 +191,8 @@ try {
     b.locator('#unoModal.on').waitFor({ state: 'visible', timeout })
   ]);
   await Promise.all([
-    a.locator('#unoMyHand .uno-card-center').waitFor({ state: 'attached', timeout: 5000 }),
-    b.locator('#unoMyHand .uno-card-center').waitFor({ state: 'attached', timeout: 5000 })
+    a.locator('#unoMyHand .uno-card-center').first().waitFor({ state: 'attached', timeout: 5000 }),
+    b.locator('#unoMyHand .uno-card-center').first().waitFor({ state: 'attached', timeout: 5000 })
   ]);
   assert.equal(await a.locator('#unoMyHand .uno-card').count(), 7, 'host should have seven cards');
   assert.equal(await b.locator('#unoMyHand .uno-card').count(), 7, 'guest should have seven cards');
@@ -206,19 +206,36 @@ try {
   await Promise.all([
     a.evaluate(() => {
       const u = state.uno;
+      const guestHand = [
+        { color: 'red', value: 'draw2', type: 'special' },
+        { color: 'yellow', value: '0', type: 'number' },
+        { color: 'blue', value: '1', type: 'number' },
+        { color: 'green', value: '3', type: 'number' },
+        { color: 'yellow', value: '4', type: 'number' },
+        { color: 'blue', value: '6', type: 'number' },
+        { color: 'red', value: '8', type: 'number' }
+      ];
       u.current = { color: 'red', value: '4', type: 'number' };
       u.deck = [
         { color: 'blue', value: '2', type: 'number' },
         { color: 'green', value: '5', type: 'number' }
       ];
-      u.opHand[0] = { color: 'red', value: 'draw2', type: 'special' };
+      u.opHand = guestHand.map(card => ({ ...card }));
       u.turnSeq = 0; u.myTurn = false;
       renderUNO();
     }),
     b.evaluate(() => {
       const u = state.uno;
       u.current = { color: 'red', value: '4', type: 'number' };
-      u.myHand[0] = { color: 'red', value: 'draw2', type: 'special' };
+      u.myHand = [
+        { color: 'red', value: 'draw2', type: 'special' },
+        { color: 'yellow', value: '0', type: 'number' },
+        { color: 'blue', value: '1', type: 'number' },
+        { color: 'green', value: '3', type: 'number' },
+        { color: 'yellow', value: '4', type: 'number' },
+        { color: 'blue', value: '6', type: 'number' },
+        { color: 'red', value: '8', type: 'number' }
+      ];
       u.turnSeq = 0; u.myTurn = true;
       renderUNO();
     })
