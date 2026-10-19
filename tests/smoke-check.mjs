@@ -49,7 +49,7 @@ assert.match(app, /if \(penaltyCards\.length\) u\.myHand\.push\(\.\.\.penaltyCar
 assert.match(app, /u\.drawnCardOnly = canPlay/, 'only the newly drawn playable card should be enabled');
 assert.match(app, /function unoPassDraw\(\)/, 'players need to end their turn after choosing not to play a drawn card');
 assert.match(app, /card: null, hostHandCount: u\.myHand\.length/, 'the host must never leak a card drawn into its own hand');
-assert.match(app, /id="unoPassDraw"/, 'the drawn-card pass-turn control should exist');
+assert.match(html, /id="unoPassDraw"/, 'the drawn-card pass-turn control should exist');
 assert.ok(app.includes("ellipse") && app.includes("uno-back-oval"), 'UNO faces and backs should use the custom card artwork builder');
 assert.match(html, /prefers-reduced-motion: reduce/, 'new animations must respect reduced-motion preferences');
 assert.match(app, /function onGameMove\(conn, msg\)/, 'RPS move handler should exist');
