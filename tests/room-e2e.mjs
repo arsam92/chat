@@ -199,6 +199,36 @@ try {
   await b.locator('#pmMessages .msg').filter({ hasText: 'Private chat test works' }).waitFor({ state: 'visible', timeout });
   await a.locator('#pmMessages .msg.mine .ticks.delivered').waitFor({ state: 'visible', timeout });
 
+  // The diagnostic report is strictly opt-in: opening/cancelling the consent
+  // dialog must not contact the IP provider. Only explicit confirmation may
+  // query a mock IP response and send the report to this PM recipient.
+  let ipLookupCalls = 0;
+  await a.route('**api64.ipify.org**', async route => {
+    ipLookupCalls++;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ ip: '203.0.113.9' })
+    });
+  });
+  await a.locator('#pmDeviceInfoBtn').click();
+  await a.locator('#deviceReportOverlay.on').waitFor({ state: 'visible', timeout: 3000 });
+  assert.match(await a.locator('#deviceReportDisclosure').innerText(), /IP عمومی/u, 'consent dialog must disclose public-IP sharing');
+  assert.match(await a.locator('#deviceReportDisclosure').innerText(), /ROOM-TEST-B/u, 'consent dialog must name the exact private recipient');
+  await a.locator('#deviceReportCancel').click();
+  await a.locator('#deviceReportOverlay.on').waitFor({ state: 'hidden', timeout: 3000 });
+  assert.equal(ipLookupCalls, 0, 'cancelling the consent dialog must not fetch the public IP');
+  await a.locator('#pmDeviceInfoBtn').click();
+  await a.locator('#deviceReportConfirm').click();
+  const sharedDeviceReport = b.locator('#pmMessages .msg.theirs').filter({ hasText: '203.0.113.9' });
+  await sharedDeviceReport.waitFor({ state: 'visible', timeout });
+  assert.equal(ipLookupCalls, 1, 'public IP lookup should occur only after explicit confirmation');
+  assert.match(await sharedDeviceReport.innerText(), /گزارش اتصال داوطلبانه/u);
+  assert.match(await sharedDeviceReport.innerText(), /سیستم‌عامل/u);
+  assert.equal(await a.locator('#messages .msg').filter({ hasText: '203.0.113.9' }).count(), 0, 'diagnostic report must not be broadcast to the public room');
+  assert.equal(await b.locator('#messages .msg').filter({ hasText: '203.0.113.9' }).count(), 0, 'diagnostic report must remain in the selected private chat');
+
   // Private replies must identify the target sender and point back to the exact
   // message ID, not merely show a generic "replying" label.
   const originalPrivateMessageId = await b.locator('#pmMessages .msg.theirs')
