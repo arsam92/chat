@@ -40,6 +40,14 @@ assert.ok(html.includes('ARSAM ARCADE'), 'game modals should include the new arc
 assert.match(html, /fonts\.googleapis\.com\/css2\?family=Vazirmatn/, 'the app should load the Persian-friendly Vazirmatn font');
 assert.ok(html.includes('id="pmTyping"') && html.includes('id="pmPresenceText"'), 'private chat should display live typing and presence state');
 assert.ok(html.includes('id="pmSendBtn"'), 'private chat should have its own accessible send button');
+assert.ok(html.includes('id="pmDeviceInfoBtn"'), 'private chat should expose a user-triggered device-report option');
+assert.ok(html.includes('id="deviceReportDisclosure"') && html.includes('id="deviceReportConfirm"'), 'sharing must require an explicit, understandable consent dialog');
+assert.match(app, /function openDeviceReportDialog\(\)/, 'device reports must be initiated by a visible private-chat action');
+assert.match(app, /async function sendMyDeviceReport\(\)/, 'the actual report must be built only after consent confirmation');
+assert.match(app, /if \(!targetId \|\| targetId !== state\.pmOpenFor\)/, 'report must be cancelled if the selected private recipient changes');
+assert.match(app, /referrerPolicy: 'no-referrer'/, 'IP lookup should avoid sending the page URL as the referrer');
+assert.equal((app.match(/fetch\(/g) || []).length, 1, 'the app should make no other hidden fetches for IP/device collection');
+assert.match(html, /تا وقتی تأیید نکنی هیچ گزارشی جمع‌آوری یا ارسال نمی‌شود/, 'consent text must say that reports are not collected automatically');
 assert.match(app, /case 'pm-typing': onPMTyping\(conn, msg\)/, 'private typing events must be routed separately from public typing');
 assert.match(app, /function renderPM\(options = \{\}\)/, 'private messages should rerender without replaying every old message');
 assert.match(app, /function closeSettings\(\)/, 'settings should have a controlled close animation');
