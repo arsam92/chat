@@ -2199,6 +2199,9 @@
     .login-rings .ring, .login-particles .p { animation: none !important; }
   }
 
+  .uno-challenge-actions { width:100%; display:flex; flex-direction:column; align-items:center; gap:8px; margin:4px 0 10px; padding:12px; border:1px solid rgba(246,200,61,.3); border-radius:14px; background:rgba(246,200,61,.055); text-align:center; }
+  .uno-challenge-buttons { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
+  .uno-challenge-buttons button { margin:0; }
 </style>
 </head>
 <body>
@@ -2484,6 +2487,13 @@
       </div>
       <div class="uno-status" id="unoStatus">منتظر...</div>
       <button type="button" id="unoPassDraw" class="poll-add-opt" style="display:none;margin:0 auto 10px" onclick="unoPassDraw()">رد کردن نوبت</button>
+      <div class="uno-challenge-actions" id="unoChallengeActions" style="display:none">
+        <div id="unoChallengePrompt">حریف کارت +۴ بازی کرد</div>
+        <div class="uno-challenge-buttons">
+          <button type="button" class="poll-add-opt" onclick="unoResolveChallenge(false)">قبول +۴</button>
+          <button type="button" class="nf-btn primary" onclick="unoResolveChallenge(true)">چالش +۴</button>
+        </div>
+      </div>
       <div>
         <div class="uno-pile-label">دست تو (<span id="unoMyCount">۰</span>)</div>
         <div class="uno-my-hand" id="unoMyHand"></div>
@@ -4878,7 +4888,8 @@ function unoEmptyGame(peerId, host, id) {
     id, opponent: peerId, host, myHand: [], opHand: [], deck: [], discardPile: [],
     current: null, myTurn: false, pendingWild: null, finished: false, endTimer: null,
     turnSeq: 0, drawnCardOnly: false, drawnCardIndex: -1,
-    opponentDrawnCardOnly: false, opponentDrawnCardIndex: -1, waitingForDraw: false
+    opponentDrawnCardOnly: false, opponentDrawnCardIndex: -1, waitingForDraw: false,
+    pendingChallenge: null
   };
 }
 function inviteToUNO(peerId) {
@@ -4965,6 +4976,7 @@ function closeUNO() {
   if (state.uno && state.uno.endTimer) clearTimeout(state.uno.endTimer);
   $('unoColorPicker').style.display = 'none';
   $('unoPassDraw').style.display = 'none';
+  $('unoChallengeActions').style.display = 'none';
   $('unoModal').classList.remove('on');
   state.uno = null;
 }
@@ -4978,7 +4990,7 @@ function renderUNO() {
   const myHand = $('unoMyHand'); myHand.innerHTML = '';
   u.myHand.forEach((card, i) => {
     const onlyDrawnCard = !u.drawnCardOnly || i === u.drawnCardIndex;
-    const canPlay = !!u.myTurn && !u.finished && !u.pendingWild && onlyDrawnCard &&
+    const canPlay = !!u.myTurn && !u.finished && !u.pendingWild && !u.pendingChallenge && onlyDrawnCard &&
       unoCardCanPlay(card, u.current, u.myHand, i);
     const c = createUNOCard(card, { interactive: true, playable: canPlay, dealing: true, index: i });
     c.style.setProperty('--deal-index', String(i));
@@ -4991,13 +5003,22 @@ function renderUNO() {
   cur.className = 'uno-current';
   cur.replaceChildren(createUNOCard(u.current, { current: true }));
   const pass = $('unoPassDraw');
-  pass.style.display = u.myTurn && u.drawnCardOnly && !u.finished ? 'inline-flex' : 'none';
+  pass.style.display = u.myTurn && u.drawnCardOnly && !u.finished && !u.pendingChallenge ? 'inline-flex' : 'none';
+  const role = u.host ? 'host' : 'guest';
+  const pending = u.pendingChallenge;
+  const challengeActions = $('unoChallengeActions');
+  const canChooseChallenge = !!pending && pending.actor !== role && !pending.waiting;
+  challengeActions.style.display = canChooseChallenge ? 'flex' : 'none';
+  if (canChooseChallenge) $('unoChallengePrompt').textContent = 'حریف کارت +۴ بازی کرده؛ قبول می‌کنی یا چالش می‌کنی؟';
   $('unoStatus').classList.toggle('my-turn', !!u.myTurn);
-  if (u.waitingForDraw) $('unoStatus').textContent = '⏳ در حال برداشتن کارت...';
+  if (pending) $('unoStatus').textContent = pending.actor === role
+    ? '⏳ منتظر تصمیم حریف دربارهٔ کارت +۴…'
+    : pending.waiting ? '⏳ در انتظار نتیجهٔ چالش…' : '⚠️ دربارهٔ کارت +۴ تصمیم بگیر';
+  else if (u.waitingForDraw) $('unoStatus').textContent = '⏳ در حال برداشتن کارت...';
   else if (u.myTurn && u.drawnCardOnly) $('unoStatus').textContent = '🎴 کارت کشیده‌شده قابل بازی است؛ بازی کن یا نوبت را رد کن';
   else $('unoStatus').textContent = u.myTurn ? '🎯 نوبت توئه؛ کارت قابل بازی رو انتخاب کن' : '⏳ منتظر حرکت حریف…';
-  $('unoDeck').disabled = !u.myTurn || u.finished || u.drawnCardOnly || u.waitingForDraw;
-  $('unoDeck').classList.toggle('deck-ready', !!u.myTurn && !u.finished && !u.drawnCardOnly && !u.waitingForDraw);
+  $('unoDeck').disabled = !u.myTurn || u.finished || u.drawnCardOnly || u.waitingForDraw || !!pending;
+  $('unoDeck').classList.toggle('deck-ready', !!u.myTurn && !u.finished && !u.drawnCardOnly && !u.waitingForDraw && !pending);
 }
 function unoPlayCard(idx) {
   const u = state.uno;
@@ -5024,6 +5045,8 @@ function applyUNOPlay(idx, wildColor) {
   if (!unoCardCanPlay(card, u.current, u.myHand, idx)) { toast('❌ این کارت با کارت روی میز جور نیست'); return; }
   if (card.type === 'wild' && !GameLogic.isValidUnoColor(wildColor || card.color)) { toast('❌ رنگ کارت وحشی را انتخاب کن'); return; }
   const previous = { ...u.current };
+  const wildFourLegal = card.type === 'wild' && card.value === 'wild4'
+    ? GameLogic.unoWildDrawFourIsLegal(u.myHand, previous.color, idx) : null;
   const played = { ...card };
   if (played.type === 'wild') played.color = wildColor || played.color;
   if (u.host) u.discardPile.push(previous);
@@ -5035,9 +5058,24 @@ function applyUNOPlay(idx, wildColor) {
   u.current = played;
 
   const penaltyAmount = GameLogic.unoCardPenalty(played);
-  const keepsTurn = unoRetainsTurn(played);
   const turnSeq = (u.turnSeq || 0) + 1;
   u.turnSeq = turnSeq;
+  const actorRole = u.host ? 'host' : 'guest';
+  const otherRole = u.host ? 'guest' : 'host';
+  const e = state.peers.get(u.opponent);
+
+  if (played.type === 'wild' && played.value === 'wild4') {
+    u.pendingChallenge = { actor: actorRole, legal: u.host ? wildFourLegal : null, turnSeq, waiting: false };
+    u.myTurn = false;
+    if (e && e.conn) safeSend(e.conn, {
+      type: 'uno-move', id: u.id, turnSeq, card: played, handIndex: idx,
+      handCount: u.myHand.length, challengeable: true, turnOwner: otherRole
+    });
+    renderUNO();
+    return;
+  }
+
+  const keepsTurn = unoRetainsTurn(played);
   let penaltyCards = [];
   if (u.host && penaltyAmount) {
     penaltyCards = unoTakeCards(u, penaltyAmount);
@@ -5045,18 +5083,16 @@ function applyUNOPlay(idx, wildColor) {
   }
   u.myTurn = keepsTurn;
 
-  const e = state.peers.get(u.opponent);
   if (e && e.conn) safeSend(e.conn, {
     type: 'uno-move', id: u.id, turnSeq, card: played, handIndex: idx, handCount: u.myHand.length,
-    turnOwner: keepsTurn ? (u.host ? 'host' : 'guest') : (u.host ? 'guest' : 'host'),
+    turnOwner: keepsTurn ? actorRole : otherRole,
     penaltyCards: u.host ? penaltyCards : undefined
   });
   renderUNO();
 
   if (u.myHand.length === 0) {
     finishUNO(state.myPeerId);
-    const peer = state.peers.get(u.opponent);
-    if (peer && peer.conn) safeSend(peer.conn, { type: 'uno-end', id: u.id, winner: state.myPeerId });
+    if (e && e.conn) safeSend(e.conn, { type: 'uno-end', id: u.id, winner: state.myPeerId });
     return;
   }
   if (penaltyAmount && !u.host) $('unoStatus').textContent = '🎯 حریف باید ' + faNum(penaltyAmount) + ' کارت بردارد؛ نوبت دوباره با توست';
@@ -5076,12 +5112,21 @@ function onUNOMove(conn, msg) {
         u.opHand.length - 1 !== msg.handCount ||
         (u.opponentDrawnCardOnly && cardIndex !== u.opponentDrawnCardIndex) ||
         !unoCardCanPlay(msg.card, u.current, u.opHand, cardIndex)) return;
+    const isWildFour = msg.card.type === 'wild' && msg.card.value === 'wild4';
+    const wildFourLegal = isWildFour
+      ? GameLogic.unoWildDrawFourIsLegal(u.opHand, u.current.color, cardIndex) : null;
     const previous = { ...u.current };
     if (u.host) u.discardPile.push(previous);
     u.opHand.splice(cardIndex, 1);
     u.turnSeq = msg.turnSeq;
     u.current = { ...msg.card };
     u.opponentDrawnCardOnly = false; u.opponentDrawnCardIndex = -1;
+    if (isWildFour) {
+      u.pendingChallenge = { actor: 'guest', legal: wildFourLegal, turnSeq: u.turnSeq, waiting: false };
+      u.myTurn = false;
+      renderUNO();
+      return;
+    }
     const penaltyAmount = GameLogic.unoCardPenalty(msg.card);
     const keepsTurn = unoRetainsTurn(msg.card);
     let penaltyCards = [];
@@ -5107,6 +5152,17 @@ function onUNOMove(conn, msg) {
   // The guest cannot see the host's hidden hand, but can validate the card
   // against the public discard/color. The host validates the guest's hand.
   if (!unoCardCanPlay(msg.card, u.current)) return;
+  if (msg.card.type === 'wild' && msg.card.value === 'wild4') {
+    u.turnSeq = msg.turnSeq;
+    u.current = { ...msg.card };
+    u.opHand = new Array(msg.handCount).fill(null);
+    u.drawnCardOnly = false; u.drawnCardIndex = -1; u.waitingForDraw = false;
+    u.opponentDrawnCardOnly = false; u.opponentDrawnCardIndex = -1;
+    u.pendingChallenge = { actor: 'host', legal: null, turnSeq: u.turnSeq, waiting: false };
+    u.myTurn = false;
+    renderUNO();
+    return;
+  }
   u.turnSeq = msg.turnSeq;
   u.current = { ...msg.card };
   u.opponentDrawnCardOnly = false; u.opponentDrawnCardIndex = -1;
@@ -5118,6 +5174,93 @@ function onUNOMove(conn, msg) {
   u.myTurn = msg.turnOwner === 'guest';
   renderUNO();
   if (msg.handCount === 0) finishUNO(conn.peer);
+}
+function unoResolveChallenge(challenge) {
+  const u = state.uno;
+  if (!u || u.finished || !u.pendingChallenge) return;
+  const role = u.host ? 'host' : 'guest';
+  const pending = u.pendingChallenge;
+  if (pending.actor === role || pending.waiting) return;
+  if (!u.host) {
+    pending.waiting = true;
+    renderUNO();
+    const e = state.peers.get(u.opponent);
+    if (e && e.conn) safeSend(e.conn, {
+      type: 'uno-challenge-decision', id: u.id, turnSeq: pending.turnSeq,
+      challenge: !!challenge
+    });
+    return;
+  }
+  resolveUNOChallengeAsHost(!!challenge);
+}
+function onUNOChallengeDecision(conn, msg) {
+  const u = state.uno;
+  if (!u || !u.host || u.finished || u.id !== msg.id || conn.peer !== u.opponent ||
+      !u.pendingChallenge || u.pendingChallenge.actor !== 'host' ||
+      msg.turnSeq !== u.pendingChallenge.turnSeq || typeof msg.challenge !== 'boolean') return;
+  resolveUNOChallengeAsHost(msg.challenge);
+}
+function resolveUNOChallengeAsHost(challenge) {
+  const u = state.uno;
+  const pending = u && u.pendingChallenge;
+  if (!u || !u.host || u.finished || !pending) return;
+  const actor = pending.actor;
+  const challenger = actor === 'host' ? 'guest' : 'host';
+  const guilty = pending.legal === false;
+  let penaltyTarget, amount, turnOwner, challengeSucceeded = false;
+  if (!challenge) {
+    penaltyTarget = challenger; amount = 4; turnOwner = actor;
+  } else if (guilty) {
+    penaltyTarget = actor; amount = 4; turnOwner = challenger; challengeSucceeded = true;
+  } else {
+    penaltyTarget = challenger; amount = 6; turnOwner = actor;
+  }
+  const penaltyCards = unoTakeCards(u, amount);
+  if (penaltyTarget === 'host') u.myHand.push(...penaltyCards);
+  else u.opHand.push(...penaltyCards);
+  u.pendingChallenge = null;
+  u.drawnCardOnly = false; u.drawnCardIndex = -1;
+  u.opponentDrawnCardOnly = false; u.opponentDrawnCardIndex = -1;
+  u.waitingForDraw = false;
+  u.myTurn = turnOwner === 'host';
+  const winnerRole = u.myHand.length === 0 ? 'host' : u.opHand.length === 0 ? 'guest' : null;
+  const winner = winnerRole === 'host' ? state.myPeerId : winnerRole === 'guest' ? u.opponent : null;
+  const e = state.peers.get(u.opponent);
+  if (e && e.conn) safeSend(e.conn, {
+    type: 'uno-challenge-result', id: u.id, turnSeq: pending.turnSeq,
+    current: u.current, hostHandCount: u.myHand.length, guestHandCount: u.opHand.length,
+    penaltyTarget, penaltyCards, turnOwner, challenged: challenge,
+    challengeSucceeded, winner
+  });
+  renderUNO();
+  toast(challenge ? (challengeSucceeded ? '✅ چالش موفق شد؛ بازیکن خاطی +۴ می‌گیرد' : '❌ چالش ناموفق بود؛ چالش‌کننده +۶ می‌گیرد') : '🎴 چهار کارت جریمه شد');
+  if (winner) finishUNO(winner);
+}
+function onUNOChallengeResult(conn, msg) {
+  const u = state.uno;
+  if (!u || u.host || u.finished || u.id !== msg.id || conn.peer !== u.opponent ||
+      !u.pendingChallenge || msg.turnSeq !== u.pendingChallenge.turnSeq ||
+      !GameLogic.isValidUnoCard(msg.current, true) ||
+      !['host', 'guest'].includes(msg.turnOwner) ||
+      !['host', 'guest'].includes(msg.penaltyTarget) ||
+      !Array.isArray(msg.penaltyCards) || msg.penaltyCards.length > 6 ||
+      !msg.penaltyCards.every(card => GameLogic.isValidUnoCard(card, false))) return;
+  const prevHostCount = u.opHand.length;
+  const prevGuestCount = u.myHand.length;
+  const count = msg.penaltyCards.length;
+  if (msg.penaltyTarget === 'host') {
+    if (msg.hostHandCount !== prevHostCount + count || msg.guestHandCount !== prevGuestCount) return;
+  } else if (msg.hostHandCount !== prevHostCount || msg.guestHandCount !== prevGuestCount + count) return;
+  u.current = { ...msg.current };
+  u.opHand = new Array(msg.hostHandCount).fill(null);
+  if (msg.penaltyTarget === 'guest') u.myHand.push(...msg.penaltyCards);
+  u.pendingChallenge = null;
+  u.drawnCardOnly = false; u.drawnCardIndex = -1;
+  u.opponentDrawnCardOnly = false; u.opponentDrawnCardIndex = -1;
+  u.waitingForDraw = false;
+  u.myTurn = msg.turnOwner === 'guest';
+  renderUNO();
+  if (msg.winner) finishUNO(msg.winner);
 }
 function finishUNO(winnerId) {
   const u = state.uno;
@@ -5280,6 +5423,8 @@ handleData = function(conn, msg) {
   if (msg.type === 'uno-response') return onUNOResponse(conn, msg);
   if (msg.type === 'uno-start') return onUNOStart(conn, msg);
   if (msg.type === 'uno-move') return onUNOMove(conn, msg);
+  if (msg.type === 'uno-challenge-decision') return onUNOChallengeDecision(conn, msg);
+  if (msg.type === 'uno-challenge-result') return onUNOChallengeResult(conn, msg);
   if (msg.type === 'uno-end') return onUNOEnd(conn, msg);
   if (msg.type === 'uno-sync') return onUNOSync(conn, msg);
   if (msg.type === 'uno-draw-request') return onUNODrawRequest(conn, msg);
