@@ -1887,6 +1887,13 @@
   .pm-typing-dots i:nth-child(3) { animation-delay: .24s; }
   @keyframes pmTypingDot { 0%,60%,100% { opacity: .35; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
   @keyframes pmTypingAppear { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+
+  .pm-reply-preview { display:flex; align-items:center; gap:10px; padding:9px 14px; border-top:1px solid rgba(255,255,255,.04); background:rgba(0,217,163,.07); }
+  .pm-reply-preview[hidden] { display:none !important; }
+  .pm-rp-info { min-width:0; flex:1; display:flex; flex-direction:column; gap:3px; }
+  .pm-rp-info b { color:var(--primary); font-size:12px; }
+  .pm-rp-info small { color:#b5c5ce; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pm-reply-preview button { border:0; background:transparent; color:#b5c5ce; cursor:pointer; padding:6px; }
   .pm-composer {
     flex-shrink: 0; padding: 12px 14px max(12px, env(safe-area-inset-bottom));
     background: rgba(3,12,18,.78); border-top: 1px solid rgba(255,255,255,.075); gap: 9px;
@@ -2316,6 +2323,7 @@
   </div>
   <div class="messages pm-messages" id="pmMessages" aria-live="polite" aria-label="پیام‌های خصوصی"></div>
   <div class="pm-typing" id="pmTyping" hidden aria-live="polite"><span class="pm-typing-dots"><i></i><i></i><i></i></span><span>در حال نوشتن…</span></div>
+  <div class="pm-reply-preview" id="pmReplyPreview" hidden><div class="pm-rp-info"><b id="pmRpName"></b><small id="pmRpText"></small></div><button type="button" id="pmRpClose" aria-label="لغو پاسخ">✕</button></div>
   <form class="composer pm-composer" id="pmForm" autocomplete="off">
     <input type="text" id="pmInput" maxlength="500" placeholder="پیام خصوصی بنویس…" aria-label="متن پیام خصوصی">
     <button type="submit" class="send-btn pm-send-btn" id="pmSendBtn" aria-label="ارسال پیام خصوصی" title="ارسال">➤</button>
@@ -2581,9 +2589,10 @@ const state = {
   peer: null, peers: new Map(), publicMessages: new Map(),
   connectionPool: new Map(), connectingPeers: new Set(),
   pm: new Map(), unread: new Map(),
-  pmOpenFor: null, joined: false,
+  pmOpenFor: null, pmReplyTo: null, joined: false,
   joinResolve: null, pendingBootstrap: new Set(),
   joinTimer: null, discoveryTimer: null, roomScanRunning: false, roomSlugs: [], replyTo: null, pendingImage: null,
+  moderationBans: new Map(), localBanUntil: 0, localModerationStrikes: 0,
   myProfile: { avatar: null, bio: '' },
   typingTimers: new Map(),
   myTypingTimeout: null,
@@ -2592,6 +2601,15 @@ const state = {
   game: null, ttt: null, nf: null,
   msgMenuTarget: null
 };
+try {
+  const storedBans = JSON.parse(localStorage.getItem('chatModerationBans:v1') || '{}');
+  for (const [peerId, ban] of Object.entries(storedBans)) {
+    if (peerId && ban && Number.isFinite(Number(ban.until)) && Number.isFinite(Number(ban.strikes))) state.moderationBans.set(peerId, ban);
+  }
+  const savedSelfModeration = JSON.parse(localStorage.getItem('chatSelfModeration:v1') || '{}');
+  state.localBanUntil = Number(savedSelfModeration.until) || 0;
+  state.localModerationStrikes = Number(savedSelfModeration.strikes) || 0;
+} catch (_) {}
 
 const $ = id => document.getElementById(id);
 function escapeHTML(value) {
@@ -2632,6 +2650,96 @@ function toast(text) {
   const t = document.createElement('div'); t.className = 'toast'; t.textContent = text;
   $('toasts').appendChild(t);
   setTimeout(() => { t.style.transition = 'all 0.4s'; t.style.opacity = '0'; t.style.transform = 'translateY(-30px) scale(0.8)'; setTimeout(() => t.remove(), 400); }, 3200);
+}
+
+
+const MODERATION_BASE_MS = { 1: 60_000, 2: 10 * 60_000, 3: 60 * 60_000 };
+function moderationBanMs(severity, strikes) {
+  const base = MODERATION_BASE_MS[Math.max(1, Math.min(3, Number(severity) || 1))] || 60_000;
+  const multiplier = Math.pow(2, Math.min(4, Math.max(0, (Number(strikes) || 1) - 1)));
+  return Math.min(24 * 60 * 60_000, base * multiplier);
+}
+function moderationDurationLabel(ms) {
+  const mins = Math.max(1, Math.ceil((Number(ms) || 0) / 60_000));
+  if (mins >= 60) {
+    const hours = Math.ceil(mins / 60);
+    return faNum(hours) + ' ساعت';
+  }
+  return faNum(mins) + ' دقیقه';
+}
+function persistModerationBans() {
+  try { localStorage.setItem('chatModerationBans:v1', JSON.stringify(Object.fromEntries(state.moderationBans))); } catch (_) {}
+}
+function isPeerBanned(peerId) {
+  const ban = state.moderationBans.get(peerId);
+  return !!(ban && Number(ban.until) > Date.now());
+}
+function ensureLocalChatAllowed() {
+  if (state.localBanUntil > Date.now()) {
+    toast('⛔ به‌دلیل تخلف، تا ' + moderationDurationLabel(state.localBanUntil - Date.now()) + ' امکان ارسال پیام نداری.');
+    return false;
+  }
+  return true;
+}
+function recordOwnProfanity(violation) {
+  state.localModerationStrikes += 1;
+  const durationMs = moderationBanMs(violation.severity, state.localModerationStrikes);
+  state.localBanUntil = Date.now() + durationMs;
+  try {
+    localStorage.setItem('chatSelfModeration:v1', JSON.stringify({
+      until: state.localBanUntil, strikes: state.localModerationStrikes,
+      severity: violation.severity, updatedAt: Date.now()
+    }));
+  } catch (_) {}
+  // All connected clients can enforce the same rule for the offender's
+  // current PeerJS identity even though this static app has no central server.
+  broadcast({ type: 'moderation-report', offenderId: state.myPeerId, severity: violation.severity });
+  toast('🚫 پیام ارسال نشد؛ توهین حذف شد و محدودیت ' + moderationDurationLabel(durationMs) + ' اعمال شد.');
+}
+function moderateOutgoingText(text) {
+  if (!ensureLocalChatAllowed()) return false;
+  const violation = GameLogic.classifyProfanity(text);
+  if (!violation) return true;
+  recordOwnProfanity(violation);
+  return false;
+}
+function disconnectBannedPeer(peerId) {
+  if (!peerId) return;
+  const entry = state.peers.get(peerId);
+  if (state.pmOpenFor === peerId) closePM();
+  removePeerById(peerId, null, true);
+  if (entry && entry.conn && entry.conn.open) {
+    try { entry.conn.close(); } catch (_) {}
+  }
+}
+function applyPeerModerationBan(peerId, name, violation, isPrivate = false) {
+  if (!peerId || peerId === state.myPeerId || !violation) return;
+  const old = state.moderationBans.get(peerId) || {};
+  if (Number(old.until) > Date.now()) {
+    disconnectBannedPeer(peerId);
+    return;
+  }
+  const strikes = Math.max(0, Number(old.strikes) || 0) + 1;
+  const durationMs = moderationBanMs(violation.severity, strikes);
+  const record = {
+    until: Date.now() + durationMs, strikes, severity: violation.severity,
+    name: safePeerName(name || old.name), updatedAt: Date.now()
+  };
+  state.moderationBans.set(peerId, record);
+  persistModerationBans();
+  disconnectBannedPeer(peerId);
+  if (!isPrivate && state.joined) addSystemMsg('🛡️ پیام توهین‌آمیز حذف شد؛ ' + record.name + ' به‌مدت ' + moderationDurationLabel(durationMs) + ' مسدود شد.');
+  toast('🛡️ پیام توهین‌آمیز حذف شد؛ ' + record.name + ' برای ' + moderationDurationLabel(durationMs) + ' مسدود شد.');
+}
+function onModerationReport(conn, msg) {
+  if (!conn || !msg || typeof msg !== 'object' || msg.offenderId !== conn.peer ||
+      !Number.isInteger(msg.severity) || msg.severity < 1 || msg.severity > 3 ||
+      !state.peers.has(conn.peer)) return;
+  const entry = state.peers.get(conn.peer);
+  const baseDurationMs = MODERATION_BASE_MS[msg.severity];
+  applyPeerModerationBan(conn.peer, entry && entry.name, {
+    severity: msg.severity, baseDurationMs
+  }, false);
 }
 
 // Login particles
@@ -2921,7 +3029,7 @@ function settleBootstrap(id) {
   if (state.pendingBootstrap.size === 0) setTimeout(finishDiscover, 350);
 }
 function dial(id) {
-  if (!state.peer || state.peer.destroyed || !id || id === state.myPeerId) return;
+  if (!state.peer || state.peer.destroyed || !id || id === state.myPeerId || isPeerBanned(id)) return;
   const existing = state.peers.get(id);
   if (existing && existing.conn && existing.conn.open) return;
   if (state.connectingPeers.has(id)) return;
@@ -3020,6 +3128,7 @@ function handleData(conn, msg) {
   if (!msg || typeof msg !== 'object') return;
   switch (msg.type) {
     case 'hello': onHello(conn, msg); break;
+    case 'moderation-report': onModerationReport(conn, msg); break;
     case 'profile': onProfile(conn, msg); break;
     case 'public-msg': onPublicMsg(conn, msg); break;
     case 'private-msg': onPrivateMsg(conn, msg); break;
@@ -3047,6 +3156,7 @@ function handleData(conn, msg) {
 
 function onHello(conn, msg) {
   if (!conn || !msg || typeof msg !== 'object') return;
+  if (isPeerBanned(conn.peer)) { try { conn.close(); } catch (_) {} removePeerById(conn.peer, conn, true); return; }
   const id = conn.peer;
   let e = state.peers.get(id);
   if (!e) {
@@ -3079,7 +3189,7 @@ function onProfile(conn, msg) {
 function onUserList(conn, msg) {
   if (!msg.members) return;
   msg.members.forEach(m => {
-    if (!m || !m.id || m.id === state.myPeerId) return;
+    if (!m || !m.id || m.id === state.myPeerId || isPeerBanned(m.id)) return;
     let e = state.peers.get(m.id);
     if (!e) { e = { conn: null, name: m.name, slot: m.slot, avatar: m.avatar, bio: m.bio }; state.peers.set(m.id, e); if (!e.conn && state.peer) dial(m.id); }
     else { e.name = m.name || e.name; if (m.avatar !== undefined) e.avatar = m.avatar; if (m.bio !== undefined) e.bio = m.bio; }
@@ -3088,10 +3198,14 @@ function onUserList(conn, msg) {
 }
 function onPublicMsg(conn, msg) {
   if (!conn || !msg || typeof msg !== 'object' || typeof msg.id !== 'string' || msg.id.length > 100) return;
+  if (isPeerBanned(conn.peer)) { disconnectBannedPeer(conn.peer); return; }
   if (state.publicMessages.has(msg.id)) return;
   const e = state.peers.get(conn.peer);
   const name = (e && e.name) || safePeerName(msg.name);
-  const entry = { id: msg.id, name, senderId: conn.peer, text: typeof msg.text === 'string' ? msg.text.slice(0, 4000) : '', sticker: safeImageSource(msg.sticker), image: safeImageSource(msg.image), voice: safeAudioSource(msg.voice), voiceDur: Math.max(0, Math.min(3600, Number(msg.voiceDur) || 0)), reply: msg.reply && typeof msg.reply === 'object' ? { name: safePeerName(msg.reply.name), text: typeof msg.reply.text === 'string' ? msg.reply.text.slice(0, 240) : '', isSticker: !!msg.reply.isSticker, isImage: !!msg.reply.isImage, isVoice: !!msg.reply.isVoice, isPoll: !!msg.reply.isPoll, msgId: typeof msg.reply.msgId === 'string' ? msg.reply.msgId.slice(0, 100) : null } : null, poll: safePollPayload(msg.poll), ts: Number.isFinite(msg.ts) ? msg.ts : Date.now(), mine: false, reactions: {} };
+  const rawText = typeof msg.text === 'string' ? msg.text.slice(0, 4000) : '';
+  const profanity = GameLogic.classifyProfanity(rawText);
+  if (profanity) { applyPeerModerationBan(conn.peer, name, profanity, false); return; }
+  const entry = { id: msg.id, name, senderId: conn.peer, text: rawText, sticker: safeImageSource(msg.sticker), image: safeImageSource(msg.image), voice: safeAudioSource(msg.voice), voiceDur: Math.max(0, Math.min(3600, Number(msg.voiceDur) || 0)), reply: msg.reply && typeof msg.reply === 'object' ? { name: safePeerName(msg.reply.name), senderId: typeof msg.reply.senderId === 'string' ? msg.reply.senderId.slice(0, 100) : null, text: typeof msg.reply.text === 'string' ? msg.reply.text.slice(0, 240) : '', isSticker: !!msg.reply.isSticker, isImage: !!msg.reply.isImage, isVoice: !!msg.reply.isVoice, isPoll: !!msg.reply.isPoll, msgId: typeof msg.reply.msgId === 'string' ? msg.reply.msgId.slice(0, 100) : null } : null, poll: safePollPayload(msg.poll), ts: Number.isFinite(msg.ts) ? msg.ts : Date.now(), mine: false, reactions: {} };
   if (!entry.text && !entry.sticker && !entry.image && !entry.voice && !entry.poll) return;
   addMessage(entry);
   if (msg.id) safeSend(conn, { type: 'delivered', msgId: msg.id });
@@ -3100,10 +3214,15 @@ function onPublicMsg(conn, msg) {
 }
 function onPrivateMsg(conn, msg) {
   if (!conn || !msg || msg.to !== state.myPeerId || typeof msg.id !== 'string' || msg.id.length > 100) return;
-  const id = conn.peer; const e = state.peers.get(id); if (!e) return;
+  const id = conn.peer;
+  if (isPeerBanned(id)) { disconnectBannedPeer(id); return; }
+  const e = state.peers.get(id); if (!e) return;
+  const rawText = typeof msg.text === 'string' ? msg.text.slice(0, 4000) : '';
+  const profanity = GameLogic.classifyProfanity(rawText);
+  if (profanity) { applyPeerModerationBan(id, e.name, profanity, true); return; }
   let arr = state.pm.get(id) || [];
   if (arr.some(item => item.id === msg.id)) return;
-  const entry = { id: msg.id, from: e.name, senderId: conn.peer, text: typeof msg.text === 'string' ? msg.text.slice(0, 4000) : '', sticker: safeImageSource(msg.sticker), image: safeImageSource(msg.image), voice: safeAudioSource(msg.voice), voiceDur: Math.max(0, Math.min(3600, Number(msg.voiceDur) || 0)), reply: msg.reply && typeof msg.reply === 'object' ? { name: safePeerName(msg.reply.name), text: typeof msg.reply.text === 'string' ? msg.reply.text.slice(0, 240) : '', isSticker: !!msg.reply.isSticker, isImage: !!msg.reply.isImage, isVoice: !!msg.reply.isVoice, isPoll: !!msg.reply.isPoll, msgId: typeof msg.reply.msgId === 'string' ? msg.reply.msgId.slice(0, 100) : null } : null, poll: safePollPayload(msg.poll), ts: Number.isFinite(msg.ts) ? msg.ts : Date.now(), mine: false, delivered: false, seen: false, reactions: {} };
+  const entry = { id: msg.id, from: e.name, senderId: conn.peer, text: rawText, sticker: safeImageSource(msg.sticker), image: safeImageSource(msg.image), voice: safeAudioSource(msg.voice), voiceDur: Math.max(0, Math.min(3600, Number(msg.voiceDur) || 0)), reply: msg.reply && typeof msg.reply === 'object' ? { name: safePeerName(msg.reply.name), senderId: typeof msg.reply.senderId === 'string' ? msg.reply.senderId.slice(0, 100) : null, text: typeof msg.reply.text === 'string' ? msg.reply.text.slice(0, 240) : '', isSticker: !!msg.reply.isSticker, isImage: !!msg.reply.isImage, isVoice: !!msg.reply.isVoice, isPoll: !!msg.reply.isPoll, msgId: typeof msg.reply.msgId === 'string' ? msg.reply.msgId.slice(0, 100) : null } : null, poll: safePollPayload(msg.poll), ts: Number.isFinite(msg.ts) ? msg.ts : Date.now(), mine: false, delivered: false, seen: false, reactions: {} };
   if (!entry.text && !entry.sticker && !entry.image && !entry.voice && !entry.poll) return;
   if (arr.length >= 300) arr.splice(0, arr.length - 299);
   arr.push(entry);
@@ -3211,7 +3330,8 @@ function roster() {
 function buildBubbleContent(bubble, o) {
   if (o.reply) {
     const q = document.createElement('div'); q.className = 'reply-quote';
-    const n = document.createElement('div'); n.className = 'rq-name'; n.textContent = o.reply.name; q.appendChild(n);
+    const n = document.createElement('div'); n.className = 'rq-name'; n.textContent = '↩ پاسخ به ' + safePeerName(o.reply.name); q.appendChild(n);
+    if (o.reply.msgId) q.dataset.replyToId = o.reply.msgId;
     const t = document.createElement('div'); t.className = 'rq-text';
     if (o.reply.isSticker) t.textContent = '🎨 استیکر';
     else if (o.reply.isImage) t.textContent = '📷 عکس';
@@ -3219,7 +3339,7 @@ function buildBubbleContent(bubble, o) {
     else if (o.reply.isPoll) t.textContent = '📊 نظرسنجی';
     else t.textContent = o.reply.text || '';
     q.appendChild(t);
-    if (o.reply.msgId) q.onclick = (e) => { e.stopPropagation(); scrollToMessage(o.reply.msgId); };
+    if (o.reply.msgId) q.onclick = (e) => { e.stopPropagation(); if (o._isPM) scrollToPMMessage(o.reply.msgId); else scrollToMessage(o.reply.msgId); };
     bubble.appendChild(q);
   }
   if (o.sticker) { const src = safeImageSource(o.sticker); if (!src) { bubble.textContent = 'استیکر نامعتبر است'; return; } bubble.classList.add('sticker'); const img = document.createElement('img'); img.src = src; img.alt = 'استیکر'; img.loading = 'lazy'; bubble.appendChild(img); }
@@ -3291,6 +3411,15 @@ function voteOnPoll(msgId, idx, optEl) {
     if (e && e.conn) safeSend(e.conn, { type: 'poll-vote', msgId, optionIndex: idx, from: state.myPeerId });
   }
 }
+function scrollToPMMessage(msgId) {
+  const box = $('pmMessages');
+  const el = [...box.querySelectorAll('.msg[data-msgid]')].find(node => node.dataset.msgid === msgId);
+  if (!el) { toast('پیام اصلی این گفت‌وگو در دسترس نیست'); return; }
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.remove('highlighted'); void el.offsetWidth;
+  el.classList.add('highlighted');
+  setTimeout(() => el.classList.remove('highlighted'), 2000);
+}
 function scrollToMessage(msgId) {
   const el = findMessageElement(msgId);
   if (!el) { toast('❌ پیام اصلی پیدا نشد'); return; }
@@ -3342,7 +3471,13 @@ function addMessage(o, animType) {
   clearLastHighlight();
   const w = document.createElement('div');
   w.className = 'msg ' + (o.mine ? 'mine' : 'theirs');
-  if (o.id) { w.setAttribute('data-msgid', o.id); if (!o._isPM) { o.senderId = o.senderId || (o.mine ? state.myPeerId : null); state.publicMessages.set(String(o.id), o); } }
+  if (o.id) {
+    w.setAttribute('data-msgid', o.id);
+    o.senderId = o.senderId || (o.mine ? state.myPeerId : null);
+    if (o.senderId) w.dataset.senderId = o.senderId;
+    if (o.reply && o.reply.msgId) w.dataset.replyTo = o.reply.msgId;
+    if (!o._isPM) state.publicMessages.set(String(o.id), o);
+  }
   let animClass = '';
   if (animType === 'flying' || (o.mine && !animType)) {
     if (o.sticker) animClass = 'sticker-fly';
@@ -3537,6 +3672,7 @@ function openPM(id) {
   if (previous && previous !== id) sendPrivateTyping(false, previous);
   $('pmWindow').classList.remove('closing');
   $('pmOverlay').classList.remove('closing');
+  clearPMReply();
   state.pmOpenFor = id; state.unread.set(id, 0);
   $('pmTitle').textContent = safePeerName(e.name);
   const [bg, fg] = avatarFor(e.name);
@@ -3574,6 +3710,7 @@ function closePM() {
   clearTimeout(pmTypingTimer); clearTimeout(pmRemoteTypingTimer);
   pmLocalTypingPeer = null;
   $('pmTyping').hidden = true;
+  clearPMReply();
   state.pmOpenFor = null;
   const windowEl = $('pmWindow'), overlay = $('pmOverlay');
   windowEl.classList.remove('on'); overlay.classList.remove('on');
@@ -3605,6 +3742,8 @@ function renderPM(options = {}) {
     const w = document.createElement('div'); w.className = 'msg ' + (m.mine ? 'mine' : 'theirs');
     if (m.id) w.setAttribute('data-msgid', m.id);
     if (options.animateLatest && index === arr.length - 1) w.classList.add('pm-message-enter');
+    if (m.senderId) w.dataset.senderId = m.senderId;
+    if (m.reply && m.reply.msgId) w.dataset.replyTo = m.reply.msgId;
     const b = document.createElement('div'); b.className = 'bubble'; buildBubbleContent(b, m); w.appendChild(b);
     const rx = renderReactions(m); if (rx) w.appendChild(rx);
     const meta = document.createElement('div'); meta.className = 'meta';
@@ -3616,12 +3755,15 @@ function renderPM(options = {}) {
       t.title = m.seen ? 'خوانده شد' : m.delivered ? 'تحویل داده شد' : 'ارسال شد';
       meta.appendChild(t);
     }
+    const rb = document.createElement('button'); rb.type = 'button'; rb.className = 'reply-btn'; rb.textContent = '↩️'; rb.setAttribute('aria-label', 'پاسخ به پیام');
+    rb.onclick = (e) => { e.stopPropagation(); setReplyTo(m); }; meta.appendChild(rb);
     const rxb = document.createElement('button'); rxb.type = 'button'; rxb.className = 'react-btn'; rxb.textContent = '😀'; rxb.setAttribute('aria-label', 'واکنش به پیام');
     rxb.onclick = (e) => { e.stopPropagation(); showReactionPicker(e.currentTarget, m, true); }; meta.appendChild(rxb);
     const mb = document.createElement('button'); mb.type = 'button'; mb.className = 'menu-btn'; mb.textContent = '⋯'; mb.setAttribute('aria-label', 'گزینه‌های پیام');
     mb.onclick = (e) => { e.stopPropagation(); showMsgMenu(e.clientX, e.clientY, m, true); }; meta.appendChild(mb);
     w.appendChild(meta);
     b.addEventListener('contextmenu', (e) => { e.preventDefault(); showMsgMenu(e.clientX, e.clientY, m, true); });
+    b.addEventListener('dblclick', () => setReplyTo(m));
     box.appendChild(w);
   });
   if (keepAtBottom) box.scrollTop = box.scrollHeight;
@@ -3662,22 +3804,44 @@ function toggleReaction(o, emoji, isPM) {
   }
 }
 
-function setReplyTo(o) {
-  state.replyTo = {
-    name: o.mine ? state.myName : o.name,
+function replyContentLabel(o) {
+  if (o.sticker || o.isSticker) return '🎨 استیکر';
+  if (o.image || o.isImage) return '📷 عکس';
+  if (o.voice || o.isVoice) return '🎤 پیام صوتی';
+  if (o.poll || o.isPoll) return '📊 نظرسنجی';
+  return String(o.text || '').slice(0, 240);
+}
+function replySnapshot(o) {
+  return {
+    name: safePeerName(o.mine ? state.myName : (o.name || o.from)),
+    senderId: o.mine ? state.myPeerId : (o.senderId || null),
     text: o.text || '',
-    isSticker: !!o.sticker,
-    isImage: !!o.image,
-    isVoice: !!o.voice,
-    isPoll: !!o.poll,
-    msgId: o.id
+    isSticker: !!(o.sticker || o.isSticker),
+    isImage: !!(o.image || o.isImage),
+    isVoice: !!(o.voice || o.isVoice),
+    isPoll: !!(o.poll || o.isPoll),
+    msgId: typeof o.id === 'string' ? o.id : null
   };
+}
+function setReplyTo(o) {
+  if (!o) return;
+  if (o._isPM) {
+    state.pmReplyTo = replySnapshot(o);
+    $('pmRpName').textContent = '↩️ پاسخ به ' + state.pmReplyTo.name;
+    $('pmRpText').textContent = replyContentLabel(o) || 'پیام';
+    $('pmReplyPreview').hidden = false;
+    $('pmInput').focus();
+    return;
+  }
+  state.replyTo = replySnapshot(o);
   $('rpName').textContent = '↩️ پاسخ به ' + state.replyTo.name;
-  $('rpText').textContent = state.replyTo.isSticker ? '🎨 استیکر' : state.replyTo.isImage ? '📷 عکس' : state.replyTo.isVoice ? '🎤 پیام صوتی' : state.replyTo.isPoll ? '📊 نظرسنجی' : state.replyTo.text;
+  $('rpText').textContent = replyContentLabel(o);
   $('replyPreview').classList.add('on');
   $('chatInput').focus();
 }
 function clearReply() { state.replyTo = null; $('replyPreview').classList.remove('on'); }
+function clearPMReply() { state.pmReplyTo = null; $('pmReplyPreview').hidden = true; }
+$('pmRpClose').addEventListener('click', clearPMReply);
 $('rpClose').addEventListener('click', clearReply);
 
 let sendBtnAnimated = false;
@@ -3691,6 +3855,7 @@ function animateSendBtn() {
 
 function sendText(text) {
   const clean = text.trim(); if (!clean) return;
+  if (!moderateOutgoingText(clean)) return;
   const ts = Date.now(); const reply = state.replyTo; const id = genId();
   animateSendBtn();
   addMessage({ id, name: state.myName, text: clean, reply, ts, mine: true, reactions: {} });
@@ -3699,6 +3864,7 @@ function sendText(text) {
   sendTyping(false);
 }
 function sendSticker(url) {
+  if (!ensureLocalChatAllowed()) return;
   const ts = Date.now(); const reply = state.replyTo; const id = genId();
   animateSendBtn();
   addMessage({ id, name: state.myName, sticker: url, reply, ts, mine: true, reactions: {} });
@@ -3706,6 +3872,7 @@ function sendSticker(url) {
   clearReply();
 }
 function sendImage(dataUrl) {
+  if (!ensureLocalChatAllowed()) return;
   const ts = Date.now(); const reply = state.replyTo; const id = genId();
   animateSendBtn();
   addMessage({ id, name: state.myName, image: dataUrl, reply, ts, mine: true, reactions: {} });
@@ -3713,36 +3880,43 @@ function sendImage(dataUrl) {
   clearReply();
 }
 function sendVoice(dataUrl, dur) {
-  const ts = Date.now(); const id = genId();
+  if (!ensureLocalChatAllowed()) return;
+  const ts = Date.now(); const reply = state.replyTo; const id = genId();
   animateSendBtn();
-  addMessage({ id, name: state.myName, voice: dataUrl, voiceDur: dur, ts, mine: true, reactions: {} });
-  broadcast({ type: 'public-msg', id, name: state.myName, voice: dataUrl, voiceDur: dur, ts });
+  addMessage({ id, name: state.myName, voice: dataUrl, voiceDur: dur, reply, ts, mine: true, reactions: {} });
+  broadcast({ type: 'public-msg', id, name: state.myName, voice: dataUrl, voiceDur: dur, reply, ts });
+  clearReply();
 }
 function sendPoll(poll) {
-  const ts = Date.now(); const id = genId();
+  if (!ensureLocalChatAllowed()) return;
+  const ts = Date.now(); const reply = state.replyTo; const id = genId();
   animateSendBtn();
-  addMessage({ id, name: state.myName, poll, ts, mine: true, reactions: {} });
-  broadcast({ type: 'public-msg', id, name: state.myName, poll, ts });
+  addMessage({ id, name: state.myName, poll, reply, ts, mine: true, reactions: {} });
+  broadcast({ type: 'public-msg', id, name: state.myName, poll, reply, ts });
+  clearReply();
 }
 function sendPM(text) {
+  if (!ensureLocalChatAllowed()) return;
   const id = state.pmOpenFor; if (!id) return;
   const e = state.peers.get(id);
   if (!e || !e.conn || !e.conn.open) { toast('❌ اتصال کاربر در دسترس نیست؛ دوباره وارد چت شو.'); return; }
   const clean = String(text || '').trim().slice(0, 500); if (!clean) return;
-  const ts = Date.now(); const mid = genId();
+  if (!moderateOutgoingText(clean)) return;
+  const ts = Date.now(); const mid = genId(); const reply = state.pmReplyTo;
   let arr = state.pm.get(id) || [];
-  arr.push({ id: mid, from: state.myName, text: clean, ts, mine: true, delivered: false, seen: false, reactions: {} });
+  arr.push({ id: mid, from: state.myName, senderId: state.myPeerId, text: clean, reply, ts, mine: true, delivered: false, seen: false, reactions: {} });
   if (arr.length > 300) arr.splice(0, arr.length - 300);
   state.pm.set(id, arr);
   sendPrivateTyping(false, id);
-  safeSend(e.conn, { type: 'private-msg', id: mid, to: id, text: clean, ts });
+  safeSend(e.conn, { type: 'private-msg', id: mid, to: id, text: clean, reply, ts });
+  clearPMReply();
   renderPM({ animateLatest: true });
   const sendButton = $('pmSendBtn');
   sendButton.classList.remove('sending'); void sendButton.offsetWidth; sendButton.classList.add('sending');
   setTimeout(() => sendButton.classList.remove('sending'), 450);
 }
 
-function sendTyping(isTyping) { broadcast({ type: 'typing', typing: !!isTyping }); }
+function sendTyping(isTyping) { if (ensureLocalChatAllowed()) broadcast({ type: 'typing', typing: !!isTyping }); }
 $('chatInput').addEventListener('input', function() {
   if (state.myTypingTimeout) return;
   sendTyping(true);
@@ -5006,6 +5180,10 @@ function onUNODrawResult(conn, msg) {
       !Number.isInteger(msg.hostHandCount) || msg.hostHandCount < 0 || msg.hostHandCount > 100 ||
       !Number.isInteger(msg.guestHandCount) || msg.guestHandCount < 0 || msg.guestHandCount > 100 ||
       !GameLogic.isValidUnoCard(msg.current, true) || !['host', 'guest'].includes(msg.turnOwner)) return;
+  const previousHostCount = u.opHand.length;
+  if (msg.drawnBy === 'host' && msg.hostHandCount !== previousHostCount + (msg.guestHandCount === u.myHand.length ? 1 : 0)) return;
+  if (msg.drawnBy === 'none' && msg.hostHandCount !== previousHostCount) return;
+  if (msg.drawnBy === 'guest' && msg.hostHandCount !== previousHostCount) return;
   u.turnSeq = msg.turnSeq;
   u.current = { ...msg.current };
   u.opHand = new Array(msg.hostHandCount).fill(null);
@@ -5020,7 +5198,6 @@ function onUNODrawResult(conn, msg) {
     u.drawnCardIndex = canPlay ? index : -1;
     u.myTurn = msg.turnOwner === 'guest' && canPlay;
   } else {
-    if (msg.drawnBy === 'host' && msg.guestHandCount !== u.opHand.length) return;
     u.myTurn = msg.turnOwner === 'guest';
     u.opponentDrawnCardOnly = msg.drawnBy === 'host' && msg.turnOwner === 'host';
   }
