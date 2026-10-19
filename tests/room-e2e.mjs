@@ -338,6 +338,37 @@ try {
     b.waitForFunction(() => state.uno && !state.uno.pendingChallenge && state.uno.myTurn && state.uno.myHand.length === 8, null, { timeout })
   ]);
 
+  // Also cover the reverse direction: when the guest plays an illegal +4,
+  // the host (deck owner) challenges locally and the guest draws four.
+  await Promise.all([
+    a.evaluate(() => {
+      const u = state.uno;
+      u.current = { color: 'red', value: '4', type: 'number' };
+      u.myHand = [{ color: 'blue', value: '5', type: 'number' }];
+      u.opHand = [{ color: 'wild', value: 'wild4', type: 'wild' }, { color: 'red', value: '3', type: 'number' }];
+      u.deck = [
+        { color: 'blue', value: '0', type: 'number' }, { color: 'yellow', value: '2', type: 'number' },
+        { color: 'green', value: '4', type: 'number' }, { color: 'red', value: '6', type: 'number' }
+      ];
+      u.discardPile = []; u.turnSeq = 3; u.myTurn = false; u.pendingChallenge = null;
+      u.drawnCardOnly = false; u.opponentDrawnCardOnly = false; renderUNO();
+    }),
+    b.evaluate(() => {
+      const u = state.uno;
+      u.current = { color: 'red', value: '4', type: 'number' };
+      u.myHand = [{ color: 'wild', value: 'wild4', type: 'wild' }, { color: 'red', value: '3', type: 'number' }];
+      u.opHand = new Array(1).fill(null); u.turnSeq = 3; u.myTurn = true; u.pendingChallenge = null;
+      u.drawnCardOnly = false; u.opponentDrawnCardOnly = false; renderUNO();
+    })
+  ]);
+  await b.evaluate(() => window.applyUNOPlay(0, 'green'));
+  await a.locator('#unoChallengeActions').waitFor({ state: 'visible', timeout });
+  await a.locator('#unoChallengeActions button').nth(1).click();
+  await Promise.all([
+    a.waitForFunction(() => state.uno && !state.uno.pendingChallenge && state.uno.myTurn && state.uno.myHand.length === 1 && state.uno.opHand.length === 5, null, { timeout }),
+    b.waitForFunction(() => state.uno && !state.uno.pendingChallenge && !state.uno.myTurn && state.uno.myHand.length === 5, null, { timeout })
+  ]);
+
   // Mild teasing is allowed; severe profanity is blocked before a message
   // reaches chat, and the offender is banned on peers that receive the report.
   await a.evaluate(() => sendText('اسکول پلشت دلقک'));
