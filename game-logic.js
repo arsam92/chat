@@ -200,7 +200,7 @@
       .replace(/ك/g, 'ک')
       .replace(/[ۀة]/g, 'ه')
       .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
-      .replace(/[\u200c\u200d\u200e\u200f]/g, ' ')
+      .replace(/[\u200c\u200d\u200e\u200f]/g, '')
       .replace(/[^\p{L}\p{N}]+/gu, ' ')
       .replace(/\s+/g, ' ')
       .trim();
