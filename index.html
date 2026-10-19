@@ -4081,10 +4081,18 @@ function revealRPSRound(g) {
     el.classList.remove('reveal-3d', 'rps-revealing');
     void el.offsetWidth;
     el.classList.add('rps-revealing', 'reveal-3d');
-    setTimeout(() => el.classList.remove('reveal-3d'), 900);
+    const revealTimer = setTimeout(() => el.classList.remove('reveal-3d'), 900);
+    if (Array.isArray(g.revealTimers)) g.revealTimers.push(revealTimer);
   });
-  let winner = 'tie';
-  if (g.myMove !== g.theirMove) winner = GAME_BEATS[g.myMove] === g.theirMove ? 'me' : 'them';
+  const winner = g.myMove === g.theirMove ? 'tie' : (GAME_BEATS[g.myMove] === g.theirMove ? 'me' : 'them');
+  // Keep the actual reveal visible during the flip. Resolve the round only
+  // after the cards have had time to turn, rather than replacing the state
+  // synchronously in the same frame.
+  const revealDuration = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 60 : 760;
+  g.roundTimer = setTimeout(() => finishRPSRound(g, winner), revealDuration);
+}
+function finishRPSRound(g, winner) {
+  if (state.game !== g || g.finished || !g.roundResolved) return;
   if (winner === 'me') g.myScore++;
   if (winner === 'them') g.theirScore++;
   const mine = document.querySelector('#gameModal .rps-player[data-side="me"]');
@@ -4098,7 +4106,8 @@ function revealRPSRound(g) {
   $('gameOpScore').textContent = faNum(g.theirScore);
   [$('gameMeScore'), $('gameOpScore')].forEach(score => {
     score.classList.remove('count-up'); void score.offsetWidth; score.classList.add('count-up');
-    setTimeout(() => score.classList.remove('count-up'), 700);
+    const scoreTimer = setTimeout(() => score.classList.remove('count-up'), 700);
+    if (Array.isArray(g.revealTimers)) g.revealTimers.push(scoreTimer);
   });
   $('rpsCountdown').textContent = winner === 'me' ? '✓' : winner === 'them' ? '×' : '＝';
   $('gameStatus').textContent = winner === 'me' ? '🏆 این دور رو بردی!' : winner === 'them' ? 'این دور برای حریف شد.' : '🤝 مساوی؛ دوباره تلاش کن!';
@@ -4123,7 +4132,7 @@ function revealRPSRound(g) {
     g.myMove = null; g.theirMove = null; g.roundResolved = false;
     g.revealTimers = [];
     resetRPSRoundUI(g, false);
-  }, 2100);
+  }, 1750);
 }
 // TTT
 function inviteToTTT(peerId) {
