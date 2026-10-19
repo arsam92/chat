@@ -265,6 +265,79 @@ try {
   assert.equal(await a.evaluate(() => state.uno.myHand.length), 7, 'host must not accidentally keep guest penalty cards');
   assert.equal(await b.locator('#unoMyHand .uno-card').count(), 8, 'guest UI should render both penalty cards');
 
+  // Exercise both official Wild Draw Four challenge outcomes over real peer messages:
+  // a legal +4 challenged by the opponent costs the challenger six cards.
+  await Promise.all([
+    a.evaluate(() => {
+      const u = state.uno;
+      u.current = { color: 'red', value: '4', type: 'number' };
+      u.myHand = [{ color: 'wild', value: 'wild4', type: 'wild' }, { color: 'blue', value: '5', type: 'number' }];
+      u.opHand = [{ color: 'red', value: '5', type: 'number' }, { color: 'green', value: '3', type: 'number' }];
+      u.deck = [
+        { color: 'red', value: '1', type: 'number' }, { color: 'blue', value: '2', type: 'number' },
+        { color: 'green', value: '3', type: 'number' }, { color: 'yellow', value: '4', type: 'number' },
+        { color: 'red', value: '6', type: 'number' }, { color: 'blue', value: '7', type: 'number' }
+      ];
+      u.discardPile = []; u.turnSeq = 1; u.myTurn = true; u.pendingChallenge = null;
+      u.drawnCardOnly = false; u.opponentDrawnCardOnly = false; renderUNO();
+    }),
+    b.evaluate(() => {
+      const u = state.uno;
+      u.current = { color: 'red', value: '4', type: 'number' };
+      u.myHand = [{ color: 'red', value: '5', type: 'number' }, { color: 'green', value: '3', type: 'number' }];
+      u.opHand = new Array(2).fill(null); u.turnSeq = 1; u.myTurn = false; u.pendingChallenge = null;
+      u.drawnCardOnly = false; u.opponentDrawnCardOnly = false; renderUNO();
+    })
+  ]);
+  await a.evaluate(() => window.applyUNOPlay(0, 'blue'));
+  await b.locator('#unoChallengeActions').waitFor({ state: 'visible', timeout });
+  await b.locator('#unoChallengeActions button').nth(1).click();
+  await Promise.all([
+    a.waitForFunction(() => state.uno && !state.uno.pendingChallenge && state.uno.myTurn && state.uno.myHand.length === 1 && state.uno.opHand.length === 8, null, { timeout }),
+    b.waitForFunction(() => state.uno && !state.uno.pendingChallenge && !state.uno.myTurn && state.uno.myHand.length === 8, null, { timeout })
+  ]);
+
+  // If the +4 player held the active color, a successful challenge gives that
+  // player four cards and lets the challenger take the turn.
+  await Promise.all([
+    a.evaluate(() => {
+      const u = state.uno;
+      u.current = { color: 'red', value: '4', type: 'number' };
+      u.myHand = [{ color: 'wild', value: 'wild4', type: 'wild' }, { color: 'red', value: '3', type: 'number' }];
+      u.opHand = [
+        { color: 'red', value: '5', type: 'number' }, { color: 'green', value: '3', type: 'number' },
+        { color: 'blue', value: '2', type: 'number' }, { color: 'yellow', value: '1', type: 'number' },
+        { color: 'blue', value: '6', type: 'number' }, { color: 'green', value: '7', type: 'number' },
+        { color: 'red', value: '8', type: 'number' }, { color: 'yellow', value: '9', type: 'number' }
+      ];
+      u.deck = [
+        { color: 'blue', value: '0', type: 'number' }, { color: 'yellow', value: '2', type: 'number' },
+        { color: 'green', value: '4', type: 'number' }, { color: 'red', value: '6', type: 'number' }
+      ];
+      u.discardPile = []; u.turnSeq = 2; u.myTurn = true; u.pendingChallenge = null;
+      u.drawnCardOnly = false; u.opponentDrawnCardOnly = false; renderUNO();
+    }),
+    b.evaluate(() => {
+      const u = state.uno;
+      u.current = { color: 'red', value: '4', type: 'number' };
+      u.myHand = [
+        { color: 'red', value: '5', type: 'number' }, { color: 'green', value: '3', type: 'number' },
+        { color: 'blue', value: '2', type: 'number' }, { color: 'yellow', value: '1', type: 'number' },
+        { color: 'blue', value: '6', type: 'number' }, { color: 'green', value: '7', type: 'number' },
+        { color: 'red', value: '8', type: 'number' }, { color: 'yellow', value: '9', type: 'number' }
+      ];
+      u.opHand = new Array(2).fill(null); u.turnSeq = 2; u.myTurn = false; u.pendingChallenge = null;
+      u.drawnCardOnly = false; u.opponentDrawnCardOnly = false; renderUNO();
+    })
+  ]);
+  await a.evaluate(() => window.applyUNOPlay(0, 'green'));
+  await b.locator('#unoChallengeActions').waitFor({ state: 'visible', timeout });
+  await b.locator('#unoChallengeActions button').nth(1).click();
+  await Promise.all([
+    a.waitForFunction(() => state.uno && !state.uno.pendingChallenge && !state.uno.myTurn && state.uno.myHand.length === 5 && state.uno.opHand.length === 8, null, { timeout }),
+    b.waitForFunction(() => state.uno && !state.uno.pendingChallenge && state.uno.myTurn && state.uno.myHand.length === 8, null, { timeout })
+  ]);
+
   // Mild teasing is allowed; severe profanity is blocked before a message
   // reaches chat, and the offender is banned on peers that receive the report.
   await a.evaluate(() => sendText('اسکول پلشت دلقک'));
