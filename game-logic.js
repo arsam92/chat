@@ -168,7 +168,7 @@
   }
 
   function unoCardCanPlay(card, current, hand = [], cardIndex = -1) {
-    if (!isValidUnoCard(card, false) || !isValidUnoCard(current, true)) return false;
+    if (!isValidUnoCard(card, true) || !isValidUnoCard(current, true)) return false;
     if (card.type === 'wild') {
       if (card.value !== 'wild4') return true;
       // Classic UNO: Wild Draw Four is legal only when the player's hand
