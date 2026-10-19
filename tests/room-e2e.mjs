@@ -104,34 +104,107 @@ try {
     return /[1-9۱-۹]/u.test(info);
   }, null, { timeout: 10000 });
 
-  // Exercise a full rock-paper-scissors invite and verify the animated game UI.
-  const bPeerId = await a.locator('#userList .user-item').evaluateAll(rows => {
-    const row = rows.find(el => el.querySelector('.u-name')?.textContent?.includes('ROOM-TEST-B'));
+  // Exercise the redesigned, synchronized rock-paper-scissors reveal.
+  const peerIdFor = async (page, name) => page.locator('#userList .user-item').evaluateAll((rows, expected) => {
+    const row = rows.find(el => el.querySelector('.u-name')?.textContent?.includes(expected));
     return row?.dataset.userId || null;
-  });
-  assert.ok(bPeerId, 'the second player should have a discoverable peer ID');
+  }, name);
+  const bPeerId = await peerIdFor(a, 'ROOM-TEST-B');
+  const aPeerId = await peerIdFor(b, 'ROOM-TEST-A');
+  assert.ok(bPeerId && aPeerId, 'each player should have a discoverable peer ID');
+
   await a.evaluate(peerId => window.inviteToGame(peerId), bPeerId);
   await b.locator('.game-invite-toast .gi-accept').click();
   await Promise.all([
     a.locator('#gameModal.on').waitFor({ state: 'visible', timeout }),
     b.locator('#gameModal.on').waitFor({ state: 'visible', timeout })
   ]);
-  assert.equal(await a.locator('#gameModal .game-player').first().evaluate(el => getComputedStyle(el).borderRadius), '20px', 'RPS player panels should use the new arcade card styling');
+  assert.ok(parseFloat(await a.locator('#gameModal .rps-player').first().evaluate(el => getComputedStyle(el).borderRadius)) >= 16, 'RPS players should render as rounded arcade panels');
+  assert.equal(await a.locator('#gameMeMove').innerText(), '?', 'my move should stay hidden until both players lock their choices');
   await a.locator('#gameModal button[data-move="rock"]').click();
-  assert.equal(await a.locator('#gameMeMove').evaluate(el => el.classList.contains('reveal-3d')), true, 'RPS move should trigger the 3D reveal');
+  assert.equal(await a.locator('#gameMeMove').innerText(), '?', 'the first locked move remains hidden during suspense');
   await b.locator('#gameModal button[data-move="scissors"]').click();
+  await Promise.all([
+    a.locator('#rpsClash.revealing').waitFor({ state: 'visible', timeout }),
+    b.locator('#rpsClash.revealing').waitFor({ state: 'visible', timeout }),
+    a.locator('#gameMeMove.rps-revealing').waitFor({ state: 'visible', timeout }),
+    b.locator('#gameMeMove.rps-revealing').waitFor({ state: 'visible', timeout })
+  ]);
   await Promise.all([
     a.waitForFunction(() => document.querySelector('#gameMeScore')?.textContent?.trim() === '۱', null, { timeout }),
     b.waitForFunction(() => document.querySelector('#gameOpScore')?.textContent?.trim() === '۱', null, { timeout })
   ]);
 
-  console.log('PASS: two browsers joined, poll creation/voting synced, and RPS played with the enhanced game UI.');
+  // Play a second round to verify score progression and match-end cleanup.
+  await a.locator('#gameModal button[data-move="paper"]:not(:disabled)').waitFor({ state: 'visible', timeout });
+  await a.locator('#gameModal button[data-move="paper"]').click();
+  await b.locator('#gameModal button[data-move="rock"]:not(:disabled)').waitFor({ state: 'visible', timeout });
+  await b.locator('#gameModal button[data-move="rock"]').click();
+  await Promise.all([
+    a.waitForFunction(() => document.querySelector('#gameMeScore')?.textContent?.trim() === '۲', null, { timeout }),
+    b.waitForFunction(() => document.querySelector('#gameOpScore')?.textContent?.trim() === '۲', null, { timeout })
+  ]);
+  await Promise.all([
+    a.locator('#gameModal').waitFor({ state: 'hidden', timeout: 9000 }),
+    b.locator('#gameModal').waitFor({ state: 'hidden', timeout: 9000 })
+  ]);
+
+  // Test that private chat is usable, message delivery marks as read/received,
+  // the remote typing indicator is live, and closing it uses the new motion state.
+  await Promise.all([
+    a.evaluate(peerId => window.openPM(peerId), bPeerId),
+    b.evaluate(peerId => window.openPM(peerId), aPeerId)
+  ]);
+  await Promise.all([
+    a.locator('#pmWindow.on').waitFor({ state: 'visible', timeout: 5000 }),
+    b.locator('#pmWindow.on').waitFor({ state: 'visible', timeout: 5000 })
+  ]);
+  await a.locator('#pmInput').fill('دارم تایپ می‌کنم');
+  await b.locator('#pmTyping:not([hidden])').waitFor({ state: 'visible', timeout: 5000 });
+  await a.locator('#pmInput').fill('Private chat test works');
+  await a.locator('#pmSendBtn').click();
+  await b.locator('#pmMessages .msg').filter({ hasText: 'Private chat test works' }).waitFor({ state: 'visible', timeout });
+  await a.locator('#pmMessages .msg.mine .ticks.delivered').waitFor({ state: 'visible', timeout });
+  await Promise.all([a.locator('#pmClose').click(), b.locator('#pmClose').click()]);
+  await Promise.all([
+    a.locator('#pmWindow.on').waitFor({ state: 'hidden', timeout: 5000 }),
+    b.locator('#pmWindow.on').waitFor({ state: 'hidden', timeout: 5000 })
+  ]);
+
+  // Settings must open, apply a real font-size choice, persist it, and close via Escape.
+  await a.locator('#settingsBtn').click();
+  await a.locator('#settingsModal.on').waitFor({ state: 'visible', timeout: 5000 });
+  await a.locator('#fontOptions [data-size="large"]').click();
+  assert.equal(await a.locator('html').getAttribute('data-font'), 'large', 'font size selection should apply to the UI');
+  assert.ok(await a.evaluate(() => JSON.parse(localStorage.getItem('chatSettings') || '{}').font === 'large'), 'font setting should persist');
+  await a.keyboard.press('Escape');
+  await a.locator('#settingsModal.on').waitFor({ state: 'hidden', timeout: 5000 });
+
+  // Verify a full UNO invite/start, all seven hand cards rendered as card faces,
+  // the opponent's real card backs, and a proper discard-card face.
+  await a.evaluate(peerId => window.inviteToUNO(peerId), bPeerId);
+  await b.locator('.game-invite-toast').filter({ hasText: 'UNO' }).locator('.gi-accept').click();
+  await Promise.all([
+    a.locator('#unoModal.on').waitFor({ state: 'visible', timeout }),
+    b.locator('#unoModal.on').waitFor({ state: 'visible', timeout })
+  ]);
+  await Promise.all([
+    a.locator('#unoMyHand .uno-card-center').waitFor({ state: 'attached', timeout: 5000 }),
+    b.locator('#unoMyHand .uno-card-center').waitFor({ state: 'attached', timeout: 5000 })
+  ]);
+  assert.equal(await a.locator('#unoMyHand .uno-card').count(), 7, 'host should have seven cards');
+  assert.equal(await b.locator('#unoMyHand .uno-card').count(), 7, 'guest should have seven cards');
+  assert.equal(await a.locator('#unoOpHand .uno-card.opponent.uno-back .uno-back-oval').count(), 7, 'host should see seven stylized backs');
+  assert.equal(await b.locator('#unoOpHand .uno-card.opponent.uno-back .uno-back-oval').count(), 7, 'guest should see seven stylized backs');
+  assert.equal(await a.locator('#unoCurrent > .uno-card.current-card .uno-card-ellipse').count(), 1, 'discard pile should display a layered card face');
+  assert.ok(await a.locator('#unoMyHand .uno-card-corner').count() >= 14, 'hand cards should have duplicated corner labels');
+  console.log('PASS: room discovery, poll create/vote, two-round RPS, PM typing/delivery, settings, and UNO card faces.');
   console.log('A roster:', JSON.stringify(await a.locator('#userList .u-name').allTextContents()));
   console.log('B roster:', JSON.stringify(await b.locator('#userList .u-name').allTextContents()));
   console.log('A poll status:', await a.locator('.poll-card').filter({ hasText: 'ROOM TEST: کدام گزینه؟' }).locator('.poll-info').innerText());
-  console.log('RPS score:', await a.locator('#gameMeScore').innerText(), '-', await a.locator('#gameOpScore').innerText());
+  console.log('UNO hand/card faces:', await a.locator('#unoMyHand .uno-card').count(), await a.locator('#unoMyHand .uno-card-ellipse').count());
 } catch (error) {
-  console.error('FAIL: room, poll creation/voting, or game interaction failed.');
+  console.error('FAIL: room, poll, RPS, private chat, settings, or UNO interaction failed.');
   console.error(error?.stack || error);
   for (let i = 0; i < pages.length; i++) {
     const page = pages[i];
