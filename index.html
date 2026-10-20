@@ -520,6 +520,15 @@
   [data-theme="purple"] { --primary: #b388ff; --primary-dark: #8a5cf7; --border: rgba(179,136,255,0.25); --bg-dark: #10071e; --bg-mid: #241640; --msg-mine: linear-gradient(135deg, #b388ff, #8a5cf7); }
   [data-theme="ruby"] { --primary: #ff5252; --primary-dark: #d32f2f; --border: rgba(255,82,82,0.25); --bg-dark: #1a0808; --bg-mid: #330d0d; --msg-mine: linear-gradient(135deg, #ff5252, #d32f2f); }
   [data-theme="gold"] { --primary: #ffc107; --primary-dark: #d4a017; --border: rgba(255,193,7,0.3); --bg-dark: #1a1408; --bg-mid: #2d2410; --msg-mine: linear-gradient(135deg, #ffc107, #d4a017); }
+  [data-theme="midnight"] { --primary: #91a7ff; --primary-dark: #6479df; --border: rgba(145,167,255,.26); --bg-dark: #080d1b; --bg-mid: #151e38; --msg-mine: linear-gradient(135deg, #6479df, #3e50a5); }
+  [data-theme="rose"] { --primary: #ff8eae; --primary-dark: #dc6288; --border: rgba(255,142,174,.25); --bg-dark: #1a0b13; --bg-mid: #321725; --msg-mine: linear-gradient(135deg, #ec739a, #b63c6a); }
+  [data-theme="mint"] { --primary: #80cbc4; --primary-dark: #26a69a; --border: rgba(128,203,196,.24); --bg-dark: #061916; --bg-mid: #10312b; --msg-mine: linear-gradient(135deg, #80cbc4, #26a69a); }
+  [data-theme="graphite"] { --primary: #cbd5e1; --primary-dark: #94a3b8; --border: rgba(203,213,225,.22); --bg-dark: #0d1117; --bg-mid: #1c232d; --msg-mine: linear-gradient(135deg, #64748b, #475569); }
+  [data-theme="lavender"] { --primary: #d4b5ff; --primary-dark: #a879ed; --border: rgba(212,181,255,.25); --bg-dark: #120b20; --bg-mid: #27183e; --msg-mine: linear-gradient(135deg, #b99ae8, #8662c4); }
+  [data-theme="ice"] { --primary: #8ee8ff; --primary-dark: #45b9d4; --border: rgba(142,232,255,.24); --bg-dark: #061720; --bg-mid: #10303e; --msg-mine: linear-gradient(135deg, #8ee8ff, #329fbd); }
+  [data-theme="cherry"] { --primary: #ff6685; --primary-dark: #dc3157; --border: rgba(255,102,133,.25); --bg-dark: #1a0810; --bg-mid: #351321; --msg-mine: linear-gradient(135deg, #ff6685, #cf3158); }
+  [data-theme="amber"] { --primary: #ffca80; --primary-dark: #e69b3d; --border: rgba(255,202,128,.25); --bg-dark: #1a1208; --bg-mid: #302314; --msg-mine: linear-gradient(135deg, #ffca80, #db8830); }
+
   html[data-font="small"] { --bubble-font: 13px; }
   html[data-font="large"] { --bubble-font: 16.5px; }
   html[data-font="xlarge"] { --bubble-font: 18.5px; }
@@ -2240,6 +2249,143 @@
   .uno-challenge-actions { width:100%; display:flex; flex-direction:column; align-items:center; gap:8px; margin:4px 0 10px; padding:12px; border:1px solid rgba(246,200,61,.3); border-radius:14px; background:rgba(246,200,61,.055); text-align:center; }
   .uno-challenge-buttons { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
   .uno-challenge-buttons button { margin:0; }
+
+  /* Telegram-like message replies: clean quote bar, sender label, compact preview */
+  .reply-quote {
+    display: block;
+    margin: 0 0 7px;
+    padding: 7px 10px 7px 12px;
+    border: 0;
+    border-right: 3px solid var(--primary);
+    border-radius: 8px 5px 5px 8px;
+    background: rgba(0, 0, 0, .17);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: background-color 180ms ease, border-color 180ms ease;
+  }
+  .reply-quote::before { content: none; }
+  .reply-quote:hover { background: rgba(0, 0, 0, .25); transform: none; }
+  .reply-quote .rq-name {
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 800;
+    display: block;
+    line-height: 1.4;
+    margin-bottom: 2px;
+  }
+  .reply-quote .rq-name::after { display: none; }
+  .reply-quote .rq-text {
+    display: block;
+    max-width: min(330px, 70vw);
+    color: var(--text-dim);
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .theirs .reply-quote { border-right-color: var(--accent); background: rgba(255, 255, 255, .045); }
+  .theirs .reply-quote .rq-name { color: var(--accent); }
+  .reply-preview {
+    margin: 0 12px 8px;
+    padding: 9px 12px;
+    border: 0;
+    border-right: 3px solid var(--primary);
+    border-radius: 10px;
+    background: rgba(0, 217, 163, .075);
+  }
+  .reply-preview .rp-text { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .music-panel {
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: linear-gradient(145deg, rgba(255,255,255,.065), rgba(255,255,255,.025));
+    box-shadow: 0 14px 30px rgba(0,0,0,.15);
+  }
+  .music-track-title { color: #fff; font-size: 14px; font-weight: 800; line-height: 1.5; }
+  .music-track-artist { color: var(--text-dim); font-size: 11px; line-height: 1.8; margin: 2px 0 10px; }
+  .music-embed { width: 100%; min-height: 0; overflow: hidden; border-radius: 12px; }
+  .music-embed iframe { display: block; width: 100%; max-width: 100%; height: 152px; border: 0; border-radius: 12px; }
+  .music-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .music-action {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 9px 12px;
+    background: rgba(255,255,255,.06);
+    color: #fff;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .music-action.primary { background: var(--msg-mine); border-color: transparent; }
+  .music-action:disabled { opacity: .45; cursor: wait; }
+  .music-link { color: var(--primary); font-size: 11px; font-weight: 700; text-decoration: none; padding: 6px 2px; }
+  .music-link:hover { text-decoration: underline; }
+  .music-status { color: var(--primary); font-size: 11px; line-height: 1.6; margin-top: 9px; }
+  .music-note { color: var(--text-dim); font-size: 10px; margin-top: 4px; line-height: 1.6; }
+  /* Softer first-load animation and a calmer, more polished login screen */
+  #loginScreen {
+    isolation: isolate;
+    background:
+      radial-gradient(ellipse at 18% 18%, rgba(0,217,163,.19), transparent 42%),
+      radial-gradient(ellipse at 82% 76%, rgba(179,136,255,.16), transparent 43%),
+      linear-gradient(145deg, var(--bg-mid), var(--bg-dark) 72%);
+    transition: opacity 360ms cubic-bezier(.22,1,.36,1), transform 360ms cubic-bezier(.22,1,.36,1), filter 360ms ease;
+  }
+  .login-card {
+    border: 1px solid rgba(255,255,255,.13);
+    border-radius: 28px;
+    background: linear-gradient(150deg, rgba(17,39,42,.82), rgba(7,20,24,.88));
+    box-shadow: 0 28px 90px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
+    animation: loginCardIn 680ms cubic-bezier(.22,1,.36,1) both;
+    will-change: opacity, transform;
+  }
+  @keyframes loginCardIn {
+    from { opacity: 0; transform: translateY(16px) scale(.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .login-icon-wrap { animation: iconDrop 520ms 70ms cubic-bezier(.22,1,.36,1) both; }
+  .field { animation-duration: 520ms; animation-timing-function: cubic-bezier(.22,1,.36,1); }
+  .btn-primary { animation-duration: 520ms; animation-timing-function: cubic-bezier(.22,1,.36,1); }
+  #loginScreen.leaving { opacity: 0; transform: translateY(-8px) scale(.992); filter: blur(3px); }
+  #chatScreen.on { animation: chatEnter 620ms cubic-bezier(.22,1,.36,1) forwards; }
+  @keyframes chatEnter {
+    from { opacity: 0; transform: translateY(8px) scale(.992); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  #chatCredit {
+    position: fixed;
+    left: 10px;
+    bottom: 7px;
+    z-index: 8;
+    pointer-events: none;
+    max-width: calc(100vw - 20px);
+    padding: 4px 8px;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 999px;
+    background: rgba(5,12,15,.38);
+    color: rgba(220,235,238,.67);
+    font: 500 10px/1.4 'Vazirmatn', Tahoma, sans-serif;
+    letter-spacing: .01em;
+    backdrop-filter: blur(8px);
+  }
+  @media (max-width: 480px) {
+    #chatCredit { left: 6px; bottom: 5px; font-size: 9px; }
+    .music-panel { padding: 10px; }
+    .music-controls { gap: 6px; }
+    .music-action { padding: 8px 10px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #loginScreen, #chatScreen.on, .login-card, .login-icon-wrap, .field, .btn-primary {
+      animation: none !important;
+      transition-duration: .01ms !important;
+      will-change: auto !important;
+    }
+    body::before { animation: none !important; }
+  }
+
 </style>
 </head>
 <body>
@@ -2420,6 +2566,21 @@
     <div class="settings-section">
       <h4>🎨 تم رنگی</h4>
       <div class="theme-grid" id="themeGrid"></div>
+    </div>
+    <div class="settings-section">
+      <h4>🎵 آهنگ‌ها</h4>
+      <div class="music-panel">
+        <div class="music-track-title">Flower in a Hurricane</div>
+        <div class="music-track-artist">Justice · Tame Impala · SZA · King Gizzard &amp; The Lizard Wizard</div>
+        <div id="songEmbed" class="music-embed" aria-label="پخش‌کنندهٔ آهنگ Flower in a Hurricane"></div>
+        <div class="music-controls">
+          <button type="button" class="music-action primary" id="songPlayBtn" disabled>▶ پخش آهنگ</button>
+          <button type="button" class="music-action" id="songStopBtn" disabled>■ قطع آهنگ</button>
+          <a class="music-link" href="https://open.spotify.com/track/4HCOHRCSQelz2GPX8iTamO" target="_blank" rel="noopener noreferrer">بازکردن در Spotify ↗</a>
+        </div>
+        <p class="music-status" id="songStatus" role="status" aria-live="polite">برای آماده‌شدن پخش‌کننده، تنظیمات را باز نگه دار.</p>
+        <p class="music-note">پخش خودکار خاموش است و آهنگ تکرار خودکار ندارد.</p>
+      </div>
     </div>
     <div class="settings-section">
       <h4>🔤 اندازه فونت</h4>
@@ -2646,7 +2807,15 @@ const THEMES = [
   { id: 'sunset', name: 'غروب', color: 'linear-gradient(135deg, #ff6b6b, #ffa726)' },
   { id: 'purple', name: 'بنفش', color: 'linear-gradient(135deg, #b388ff, #8a5cf7)' },
   { id: 'ruby', name: 'یاقوت', color: 'linear-gradient(135deg, #ff5252, #d32f2f)' },
-  { id: 'gold', name: 'طلایی', color: 'linear-gradient(135deg, #ffc107, #d4a017)' }
+  { id: 'gold', name: 'طلایی', color: 'linear-gradient(135deg, #ffc107, #d4a017)' },
+  { id: 'midnight', name: 'نیمه‌شب', color: 'linear-gradient(135deg, #91a7ff, #3e50a5)' },
+  { id: 'rose', name: 'رز', color: 'linear-gradient(135deg, #ff8eae, #b63c6a)' },
+  { id: 'mint', name: 'نعنایی', color: 'linear-gradient(135deg, #80cbc4, #26a69a)' },
+  { id: 'graphite', name: 'گرافیتی', color: 'linear-gradient(135deg, #cbd5e1, #475569)' },
+  { id: 'lavender', name: 'اسطوخودوسی', color: 'linear-gradient(135deg, #d4b5ff, #8662c4)' },
+  { id: 'ice', name: 'یخی', color: 'linear-gradient(135deg, #8ee8ff, #329fbd)' },
+  { id: 'cherry', name: 'گیلاسی', color: 'linear-gradient(135deg, #ff6685, #cf3158)' },
+  { id: 'amber', name: 'کهربایی', color: 'linear-gradient(135deg, #ffca80, #db8830)' }
 ];
 
 const state = {
@@ -2839,6 +3008,94 @@ function saveSettings() {
 }
 loadSettings();
 
+let flowerSongController = null;
+let flowerSongLoading = false;
+function setFlowerSongStatus(message) {
+  const status = $('songStatus');
+  if (status) status.textContent = message;
+}
+function initFlowerSongPlayer() {
+  if (flowerSongController || flowerSongLoading) return;
+  const mount = $('songEmbed');
+  if (!mount) return;
+  flowerSongLoading = true;
+  setFlowerSongStatus('در حال بارگذاری پخش‌کنندهٔ Spotify…');
+
+  window.onSpotifyIframeApiReady = (IFrameAPI) => {
+    const target = $('songEmbed');
+    if (!target || !IFrameAPI || typeof IFrameAPI.createController !== 'function') {
+      flowerSongLoading = false;
+      setFlowerSongStatus('پخش‌کننده آماده نشد؛ از لینک Spotify استفاده کن.');
+      return;
+    }
+    try {
+      IFrameAPI.createController(target, {
+        uri: 'spotify:track:4HCOHRCSQelz2GPX8iTamO',
+        width: '100%',
+        height: '152'
+      }, (controller) => {
+        flowerSongController = controller;
+        flowerSongLoading = false;
+        $('songPlayBtn').disabled = false;
+        $('songStopBtn').disabled = false;
+        controller.addListener('playback_update', (event) => {
+          const data = event && event.data;
+          if (!data) return;
+          const duration = Number(data.duration || 0);
+          const position = Number(data.position || 0);
+          if (data.isPaused && duration > 0 && position >= duration - 900) {
+            setFlowerSongStatus('آهنگ تمام شد؛ تکرار خودکار ندارد.');
+          } else if (data.isBuffering) {
+            setFlowerSongStatus('در حال آماده‌سازی صدا…');
+          } else if (!data.isPaused) {
+            setFlowerSongStatus('در حال پخش آهنگ…');
+          } else if (position > 0) {
+            setFlowerSongStatus('پخش متوقف است.');
+          } else {
+            setFlowerSongStatus('آمادهٔ پخش؛ برای شروع روی «پخش آهنگ» بزن.');
+          }
+        });
+        setFlowerSongStatus('آمادهٔ پخش؛ برای شروع روی «پخش آهنگ» بزن.');
+      });
+    } catch (_) {
+      flowerSongLoading = false;
+      setFlowerSongStatus('پخش‌کننده آماده نشد؛ از لینک Spotify استفاده کن.');
+    }
+  };
+
+  const script = document.createElement('script');
+  script.src = 'https://open.spotify.com/embed/iframe-api/v1';
+  script.async = true;
+  script.onerror = () => {
+    flowerSongLoading = false;
+    setFlowerSongStatus('Spotify در دسترس نیست؛ می‌توانی از لینک رسمی استفاده کنی.');
+  };
+  document.head.appendChild(script);
+}
+$('songPlayBtn').addEventListener('click', () => {
+  if (!flowerSongController) {
+    initFlowerSongPlayer();
+    setFlowerSongStatus('در حال آماده‌سازی پخش‌کننده…');
+    return;
+  }
+  try {
+    flowerSongController.play();
+    setFlowerSongStatus('درخواست پخش آهنگ ارسال شد…');
+  } catch (_) {
+    setFlowerSongStatus('پخش شروع نشد؛ از کنترل خود پخش‌کننده امتحان کن.');
+  }
+});
+$('songStopBtn').addEventListener('click', () => {
+  if (!flowerSongController) return;
+  try {
+    flowerSongController.pause();
+    flowerSongController.seek(0);
+    setFlowerSongStatus('آهنگ متوقف شد.');
+  } catch (_) {
+    setFlowerSongStatus('نتوانستم آهنگ را متوقف کنم؛ از دکمهٔ توقف داخل پخش‌کننده استفاده کن.');
+  }
+});
+
 function buildThemeGrid() {
   const grid = $('themeGrid'); const cur = document.documentElement.getAttribute('data-theme') || 'emerald';
   grid.innerHTML = '';
@@ -2872,6 +3129,7 @@ let settingsCloseTimer = null;
 function openSettings() {
   if (settingsCloseTimer) { clearTimeout(settingsCloseTimer); settingsCloseTimer = null; }
   $('settingsModal').classList.remove('closing');
+  initFlowerSongPlayer();
   buildThemeGrid(); buildFontOptions(); renderProfileModal();
   $('settingsModal').classList.add('on');
 }
@@ -3423,7 +3681,7 @@ function roster() {
 function buildBubbleContent(bubble, o) {
   if (o.reply) {
     const q = document.createElement('div'); q.className = 'reply-quote';
-    const n = document.createElement('div'); n.className = 'rq-name'; n.textContent = '↩ پاسخ به ' + safePeerName(o.reply.name); q.appendChild(n);
+    const n = document.createElement('div'); n.className = 'rq-name'; n.textContent = safePeerName(o.reply.name); q.appendChild(n);
     if (o.reply.msgId) q.dataset.replyToId = o.reply.msgId;
     const t = document.createElement('div'); t.className = 'rq-text';
     if (o.reply.isSticker) t.textContent = '🎨 استیکر';
@@ -5754,5 +6012,6 @@ window.addEventListener('beforeunload', () => {
   if (state.peer && !state.peer.destroyed) { try { broadcast({ type: 'bye' }); } catch (_) {} }
 });
 </script>
+<div id="chatCredit" aria-label="اعتبار سازنده">ساخته شده توسط arsam7_FOX_RIP</div>
 </body>
 </html>
