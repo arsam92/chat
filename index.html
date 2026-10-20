@@ -3132,7 +3132,9 @@ function initFlowerSongPlayer() {
             } else if (event.data === 0) {
               stopFlowerSongFade();
               flowerSongStarted = false;
-              setFlowerSongStatus('آهنگ تمام شد؛ تکرار خودکار انجام نمی‌شود.');
+              setFlowerSongStatus(flowerSongEnabled
+                ? 'آهنگ تمام شد؛ تکرار خودکار انجام نمی‌شود.'
+                : 'موسیقی خاموش است؛ انتخابت برای ورودهای بعدی ذخیره شده.');
             } else if (event.data === 2 && flowerSongEnabled) {
               stopFlowerSongFade();
               flowerSongStarted = false;
