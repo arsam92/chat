@@ -3076,7 +3076,7 @@ function startFlowerSongPlayback() {
   }
 }
 function initFlowerSongPlayer() {
-  if (flowerSongController || flowerSongLoading || !flowerSongEnabled) return;
+  if (flowerSongController || flowerSongLoading) return;
   const mount = $('songEmbed');
   if (!mount) return;
   flowerSongLoading = true;
