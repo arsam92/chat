@@ -2305,8 +2305,9 @@
   }
   .music-track-title { color: #fff; font-size: 14px; font-weight: 800; line-height: 1.5; }
   .music-track-artist { color: var(--text-dim); font-size: 11px; line-height: 1.8; margin: 2px 0 10px; }
-  .music-embed { width: 100%; min-height: 200px; height: 200px; overflow: hidden; border-radius: 12px; background: rgba(0,0,0,.18); }
-  .music-embed iframe { display: block; width: 100%; max-width: 100%; height: 200px; min-height: 200px; border: 0; border-radius: 12px; }
+  .music-file-select { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; padding: 12px; border: 1px dashed var(--border); border-radius: 12px; background: rgba(0,0,0,.12); }
+  .music-file-label { display: inline-flex; align-items: center; justify-content: center; }
+  .music-file-name { color: var(--text-dim); min-width: 0; overflow-wrap: anywhere; font-size: 11px; }
   .music-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
   .music-action {
     border: 1px solid var(--border);
@@ -2572,14 +2573,19 @@
       <div class="music-panel">
         <div class="music-track-title">Flower in a Hurricane</div>
         <div class="music-track-artist">Justice · Tame Impala · SZA · King Gizzard &amp; The Lizard Wizard</div>
-        <div id="songEmbed" class="music-embed" aria-label="پخش‌کنندهٔ رسمی آهنگ Flower in a Hurricane"></div>
-        <div class="music-controls">
-          <button type="button" class="music-action primary" id="songPlayBtn" disabled>▶ روشن کردن موسیقی</button>
-          <button type="button" class="music-action" id="songStopBtn" disabled>■ خاموش کردن موسیقی</button>
-          <a class="music-link" href="https://www.youtube.com/watch?v=JWxoRY7AFSw" target="_blank" rel="noopener noreferrer">بازکردن آهنگ رسمی در YouTube ↗</a>
+        <audio id="backgroundSong" preload="auto" style="display:none" aria-hidden="true"></audio>
+        <div class="music-file-select">
+          <label for="songFileInput" class="music-action primary music-file-label">🎵 انتخاب فایل آهنگ از دستگاه</label>
+          <input type="file" id="songFileInput" accept="audio/*,.mp3,.m4a,.aac,.ogg,.opus,.wav,.flac,.webm" style="display:none">
+          <span id="songFileName" class="music-file-name">هنوز فایلی انتخاب نشده</span>
         </div>
-        <p class="music-status" id="songStatus" role="status" aria-live="polite">آهنگ از لحظهٔ ورود برای پخش خودکار آماده می‌شود.</p>
-        <p class="music-note">صدا آرام زیاد می‌شود و روی ۳۶٪ می‌ایستد. پخش تکراری خودکار نیست. مرورگر ممکن است پخش خودکار با صدا را محدود کند.</p>
+        <div class="music-controls">
+          <button type="button" class="music-action primary" id="songPlayBtn" disabled>▶ پخش / شروع دوباره</button>
+          <button type="button" class="music-action" id="songStopBtn" disabled>■ خاموش کردن موسیقی</button>
+          <a class="music-link" href="https://open.spotify.com/track/4HCOHRCSQelz2GPX8iTamO" target="_blank" rel="noopener noreferrer">صفحهٔ رسمی آهنگ ↗</a>
+        </div>
+        <p class="music-status" id="songStatus" role="status" aria-live="polite">یک فایل صوتی که مجاز به استفاده از آن هستی انتخاب کن. فایل در همین مرورگر ذخیره می‌شود؛ به API یوتیوب نیاز نیست.</p>
+        <p class="music-note">پس از انتخاب فایل، ورودهای بعدی تلاش می‌کنند آن را خودکار پخش کنند. صدا تا ۳۶٪ آرام بالا می‌رود و آهنگ تکرار نمی‌شود. مرورگر ممکن است برای شروع به یک کلیک نیاز داشته باشد.</p>
       </div>
     </div>
     <div class="settings-section">
@@ -2993,24 +2999,25 @@ function spawnLoginParticles() {
 spawnLoginParticles();
 
 // Settings
-let flowerSongController = null;
-let flowerSongLoading = false;
-let flowerSongPlayerReady = false;
+let flowerSongAudio = $('backgroundSong');
 let flowerSongEnabled = true;
 let flowerSongStarted = false;
-let flowerSongUserGestureSeen = false;
 let flowerSongRampTimer = null;
-let flowerSongVolume = 2;
-const FLOWER_SONG_TARGET_VOLUME = 36;
-const FLOWER_SONG_VIDEO_ID = 'JWxoRY7AFSw';
+let flowerSongVolume = 0.02;
+let flowerSongObjectUrl = null;
+let flowerSongFileName = '';
+const FLOWER_SONG_TARGET_VOLUME = 0.36;
+const FLOWER_SONG_DB_NAME = 'arsam-chat-local-audio-v1';
+const FLOWER_SONG_DB_STORE = 'tracks';
+const FLOWER_SONG_DB_KEY = 'flower-in-a-hurricane';
 
 function loadSettings() {
   try {
-    const s = JSON.parse(localStorage.getItem('chatSettings') || '{}');
-    if (s.theme) document.documentElement.setAttribute('data-theme', s.theme);
-    if (s.font) document.documentElement.setAttribute('data-font', s.font);
-    if (s.profile) state.myProfile = s.profile;
-    if (typeof s.musicEnabled === 'boolean') flowerSongEnabled = s.musicEnabled;
+    const settings = JSON.parse(localStorage.getItem('chatSettings') || '{}');
+    if (settings.theme) document.documentElement.setAttribute('data-theme', settings.theme);
+    if (settings.font) document.documentElement.setAttribute('data-font', settings.font);
+    if (settings.profile) state.myProfile = settings.profile;
+    if (typeof settings.musicEnabled === 'boolean') flowerSongEnabled = settings.musicEnabled;
   } catch (_) {}
 }
 function saveSettings() {
@@ -3029,171 +3036,227 @@ function setFlowerSongStatus(message) {
   if (status) status.textContent = message;
 }
 function syncFlowerSongControls() {
+  const hasTrack = !!(flowerSongAudio && flowerSongAudio.src);
   const play = $('songPlayBtn');
   const stop = $('songStopBtn');
   if (play) {
-    play.disabled = !flowerSongPlayerReady;
+    play.disabled = !hasTrack;
     play.textContent = flowerSongEnabled ? '▶ پخش / شروع دوباره' : '▶ روشن کردن موسیقی';
   }
   if (stop) {
-    stop.disabled = !flowerSongPlayerReady || !flowerSongEnabled;
+    stop.disabled = !hasTrack || !flowerSongEnabled;
     stop.textContent = flowerSongEnabled ? '■ خاموش کردن موسیقی' : 'موسیقی خاموش است';
   }
+  const fileName = $('songFileName');
+  if (fileName) fileName.textContent = flowerSongFileName || 'هنوز فایلی انتخاب نشده';
 }
 function stopFlowerSongFade() {
   if (flowerSongRampTimer) clearInterval(flowerSongRampTimer);
   flowerSongRampTimer = null;
 }
 function startFlowerSongFade() {
-  if (!flowerSongEnabled || !flowerSongController || !flowerSongPlayerReady) return;
+  if (!flowerSongEnabled || !flowerSongAudio || flowerSongAudio.paused) return;
+  if (flowerSongStarted && flowerSongRampTimer) return;
   stopFlowerSongFade();
   flowerSongStarted = true;
-  flowerSongVolume = 2;
-  try { flowerSongController.setVolume(flowerSongVolume); } catch (_) {}
+  flowerSongVolume = 0.02;
+  flowerSongAudio.volume = flowerSongVolume;
   setFlowerSongStatus('آهنگ با صدای کم شروع می‌شود و طی چند ثانیه آرام‌آرام بلندتر می‌شود…');
   flowerSongRampTimer = setInterval(() => {
-    if (!flowerSongEnabled || !flowerSongController || !flowerSongStarted) {
+    if (!flowerSongEnabled || !flowerSongAudio || flowerSongAudio.paused) {
       stopFlowerSongFade();
       return;
     }
-    flowerSongVolume = Math.min(FLOWER_SONG_TARGET_VOLUME, flowerSongVolume + 2);
-    try { flowerSongController.setVolume(flowerSongVolume); } catch (_) {}
+    flowerSongVolume = Math.min(FLOWER_SONG_TARGET_VOLUME, flowerSongVolume + 0.02);
+    flowerSongAudio.volume = flowerSongVolume;
     if (flowerSongVolume >= FLOWER_SONG_TARGET_VOLUME) {
       stopFlowerSongFade();
       setFlowerSongStatus('موسیقی پس‌زمینه روشن است؛ برای قطع آن «خاموش کردن موسیقی» را بزن.');
     }
-  }, 480);
+  }, 450);
 }
-function startFlowerSongPlayback() {
-  if (!flowerSongEnabled || !flowerSongController || !flowerSongPlayerReady) return;
-  try {
-    flowerSongController.setVolume(2);
-    flowerSongController.unMute();
-    flowerSongController.playVideo();
-    setFlowerSongStatus('درخواست پخش ارسال شد؛ صدا به‌آرامی زیاد می‌شود…');
-  } catch (_) {
-    setFlowerSongStatus('پخش خودکار توسط مرورگر محدود شد؛ یک بار دیگر روی «پخش آهنگ» بزن.');
-  }
-}
-function initFlowerSongPlayer() {
-  if (flowerSongController || flowerSongLoading) return;
-  const mount = $('songEmbed');
-  if (!mount) return;
-  flowerSongLoading = true;
-  setFlowerSongStatus('در حال بارگذاری پخش‌کنندهٔ رسمی YouTube…');
-
-  window.onYouTubeIframeAPIReady = () => {
-    if (!window.YT || typeof window.YT.Player !== 'function') {
-      flowerSongLoading = false;
-      setFlowerSongStatus('پخش‌کننده آماده نشد؛ لینک رسمی آهنگ پایین همین بخش را باز کن.');
+function openFlowerSongDatabase() {
+  return new Promise((resolve, reject) => {
+    if (!('indexedDB' in window)) {
+      reject(new Error('ذخیره‌سازی صوتی در این مرورگر پشتیبانی نمی‌شود.'));
       return;
     }
-    try {
-      flowerSongController = new window.YT.Player('songEmbed', {
-        width: '320',
-        height: '200',
-        videoId: FLOWER_SONG_VIDEO_ID,
-        playerVars: {
-          autoplay: 1,
-          controls: 1,
-          playsinline: 1,
-          rel: 0,
-          enablejsapi: 1,
-          origin: window.location.origin
-        },
-        events: {
-          onReady: (event) => {
-            flowerSongPlayerReady = true;
-            flowerSongLoading = false;
-            try { event.target.setVolume(2); } catch (_) {}
-            syncFlowerSongControls();
-            if (!flowerSongEnabled) {
-              event.target.stopVideo();
-              setFlowerSongStatus('موسیقی خاموش است؛ برای روشن‌کردن دوباره از همین تنظیمات استفاده کن.');
-            } else if (flowerSongUserGestureSeen) {
-              startFlowerSongPlayback();
-            } else {
-              event.target.playVideo();
-              setFlowerSongStatus('در حال تلاش برای پخش خودکار موسیقی…');
-              setTimeout(() => {
-                if (flowerSongEnabled && !flowerSongStarted) {
-                  setFlowerSongStatus('اگر مرورگر پخش خودکار صدا را مسدود کرد، با اولین کلیک داخل سایت آهنگ شروع می‌شود.');
-                }
-              }, 1800);
-            }
-          },
-          onStateChange: (event) => {
-            if (event.data === 1) {
-              if (!flowerSongEnabled) {
-                try { event.target.stopVideo(); } catch (_) {}
-                return;
-              }
-              startFlowerSongFade();
-            } else if (event.data === 0) {
-              stopFlowerSongFade();
-              flowerSongStarted = false;
-              setFlowerSongStatus(flowerSongEnabled
-                ? 'آهنگ تمام شد؛ تکرار خودکار انجام نمی‌شود.'
-                : 'موسیقی خاموش است؛ انتخابت برای ورودهای بعدی ذخیره شده.');
-            } else if (event.data === 2 && flowerSongEnabled) {
-              stopFlowerSongFade();
-              flowerSongStarted = false;
-              setFlowerSongStatus('آهنگ متوقف است.');
-            }
-          },
-          onError: () => {
-            flowerSongLoading = false;
-            setFlowerSongStatus('پخش‌کننده در دسترس نیست؛ لینک رسمی آهنگ را باز کن.');
-          }
-        }
-      });
-    } catch (_) {
-      flowerSongLoading = false;
-      setFlowerSongStatus('پخش‌کننده آماده نشد؛ لینک رسمی آهنگ را باز کن.');
-    }
-  };
-
-  const script = document.createElement('script');
-  script.src = 'https://www.youtube.com/iframe_api';
-  script.async = true;
-  script.onerror = () => {
-    flowerSongLoading = false;
-    setFlowerSongStatus('YouTube در دسترس نیست؛ لینک رسمی آهنگ را باز کن.');
-  };
-  document.head.appendChild(script);
+    let request;
+    try { request = indexedDB.open(FLOWER_SONG_DB_NAME, 1); }
+    catch (error) { reject(error); return; }
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(FLOWER_SONG_DB_STORE)) {
+        db.createObjectStore(FLOWER_SONG_DB_STORE);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error('بازکردن فضای ذخیره‌سازی ناموفق بود.'));
+  });
 }
-$('songPlayBtn').addEventListener('click', () => {
-  flowerSongEnabled = true;
-  saveSettings();
+async function saveFlowerSongLocally(file) {
+  const db = await openFlowerSongDatabase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(FLOWER_SONG_DB_STORE, 'readwrite');
+    tx.objectStore(FLOWER_SONG_DB_STORE).put({
+      blob: file,
+      name: String(file.name || 'background-audio').slice(0, 180),
+      savedAt: Date.now()
+    }, FLOWER_SONG_DB_KEY);
+    tx.oncomplete = () => { db.close(); resolve(true); };
+    tx.onerror = () => { db.close(); reject(tx.error || new Error('ذخیرهٔ فایل ناموفق بود.')); };
+    tx.onabort = () => { db.close(); reject(tx.error || new Error('ذخیرهٔ فایل لغو شد.')); };
+  });
+}
+async function readFlowerSongLocally() {
+  const db = await openFlowerSongDatabase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(FLOWER_SONG_DB_STORE, 'readonly');
+    const request = tx.objectStore(FLOWER_SONG_DB_STORE).get(FLOWER_SONG_DB_KEY);
+    request.onsuccess = () => { const result = request.result; db.close(); resolve(result || null); };
+    request.onerror = () => { db.close(); reject(request.error || new Error('خواندن فایل ذخیره‌شده ناموفق بود.')); };
+  });
+}
+function setFlowerSongSource(blob, name) {
+  if (flowerSongObjectUrl) {
+    try { URL.revokeObjectURL(flowerSongObjectUrl); } catch (_) {}
+  }
+  flowerSongObjectUrl = URL.createObjectURL(blob);
+  flowerSongFileName = String(name || 'آهنگ انتخاب‌شده').slice(0, 180);
+  flowerSongAudio.src = flowerSongObjectUrl;
+  flowerSongAudio.loop = false;
+  flowerSongAudio.preload = 'auto';
+  flowerSongAudio.volume = 0.02;
+  flowerSongAudio.load();
   syncFlowerSongControls();
-  if (!flowerSongController || !flowerSongPlayerReady) {
-    initFlowerSongPlayer();
-    setFlowerSongStatus('در حال آماده‌سازی پخش‌کننده…');
+}
+function tryPlayFlowerSong() {
+  if (!flowerSongEnabled || !flowerSongAudio || !flowerSongAudio.src) {
+    setFlowerSongStatus('برای پخش، یک فایل صوتی که مجاز به استفاده از آن هستی از دستگاهت انتخاب کن.');
     return;
   }
-  startFlowerSongPlayback();
+  flowerSongAudio.loop = false;
+  flowerSongAudio.volume = 0.02;
+  let result;
+  try { result = flowerSongAudio.play(); }
+  catch (_) {
+    setFlowerSongStatus('مرورگر پخش خودکار را مسدود کرد؛ برای شروع روی «پخش» بزن.');
+    return;
+  }
+  if (result && typeof result.then === 'function') {
+    result.then(() => {
+      if (!flowerSongAudio.paused) startFlowerSongFade();
+    }).catch(() => {
+      setFlowerSongStatus('مرورگر اجازهٔ پخش خودکار نداد؛ برای شروع روی «پخش / شروع دوباره» بزن.');
+    });
+  }
+}
+async function restoreFlowerSong() {
+  try {
+    const saved = await readFlowerSongLocally();
+    if (!saved || !(saved.blob instanceof Blob)) {
+      syncFlowerSongControls();
+      setFlowerSongStatus('برای پخش بدون YouTube، یک فایل صوتی که مجاز به استفاده از آن هستی انتخاب کن؛ فایل فقط در همین مرورگر ذخیره می‌شود.');
+      return;
+    }
+    setFlowerSongSource(saved.blob, saved.name);
+    if (flowerSongEnabled) {
+      setFlowerSongStatus('فایل آهنگ ذخیره‌شده پیدا شد؛ در حال تلاش برای پخش خودکار…');
+      tryPlayFlowerSong();
+    } else {
+      setFlowerSongStatus('موسیقی خاموش است؛ انتخابت برای ورودهای بعدی هم ذخیره شده.');
+    }
+  } catch (_) {
+    syncFlowerSongControls();
+    setFlowerSongStatus('این مرورگر نتوانست فایل ذخیره‌شده را بخواند؛ فایل را دوباره انتخاب کن.');
+  }
+}
+$('songFileInput').addEventListener('change', async (event) => {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const isAudio = (file.type && file.type.startsWith('audio/')) || /\.(mp3|m4a|aac|ogg|opus|wav|flac|webm)$/i.test(file.name || '');
+  if (!isAudio) {
+    setFlowerSongStatus('این فایل صوتی به نظر نمی‌رسد؛ یک فایل مانند MP3 یا M4A انتخاب کن.');
+    event.target.value = '';
+    return;
+  }
+  setFlowerSongSource(file, file.name);
+  flowerSongEnabled = true;
+  flowerSongStarted = false;
+  saveSettings();
+  syncFlowerSongControls();
+  // Play immediately during the file-picker gesture, then persist for next visit.
+  tryPlayFlowerSong();
+  try {
+    await saveFlowerSongLocally(file);
+    setFlowerSongStatus(flowerSongAudio.paused
+      ? 'فایل در همین مرورگر ذخیره شد؛ برای پخش روی دکمهٔ پخش بزن.'
+      : 'فایل در همین مرورگر ذخیره شد و پخش شروع شد.');
+  } catch (_) {
+    setFlowerSongStatus(flowerSongAudio.paused
+      ? 'فایل انتخاب شد ولی ذخیرهٔ ماندگار ممکن نشد؛ برای پخش کلیک کن.'
+      : 'پخش شروع شد، اما مرورگر نتوانست فایل را برای دفعات بعد ذخیره کند.');
+  }
+});
+$('songPlayBtn').addEventListener('click', () => {
+  flowerSongEnabled = true;
+  flowerSongStarted = false;
+  saveSettings();
+  syncFlowerSongControls();
+  if (!flowerSongAudio || !flowerSongAudio.src) {
+    $('songFileInput').click();
+    setFlowerSongStatus('اول فایل آهنگ را از دستگاه انتخاب کن.');
+    return;
+  }
+  try { flowerSongAudio.currentTime = 0; } catch (_) {}
+  tryPlayFlowerSong();
 });
 $('songStopBtn').addEventListener('click', () => {
   flowerSongEnabled = false;
+  flowerSongStarted = false;
   saveSettings();
   stopFlowerSongFade();
-  flowerSongStarted = false;
-  if (flowerSongController && flowerSongPlayerReady) {
-    try {
-      flowerSongController.setVolume(0);
-      flowerSongController.stopVideo();
-    } catch (_) {}
+  if (flowerSongAudio) {
+    try { flowerSongAudio.pause(); flowerSongAudio.currentTime = 0; flowerSongAudio.volume = 0; } catch (_) {}
   }
   syncFlowerSongControls();
   setFlowerSongStatus('موسیقی خاموش شد؛ انتخابت برای ورودهای بعدی هم ذخیره شد.');
 });
+flowerSongAudio.addEventListener('playing', () => {
+  if (flowerSongEnabled) startFlowerSongFade();
+});
+flowerSongAudio.addEventListener('ended', () => {
+  stopFlowerSongFade();
+  flowerSongStarted = false;
+  setFlowerSongStatus('آهنگ تمام شد؛ تکرار خودکار انجام نمی‌شود.');
+});
+flowerSongAudio.addEventListener('error', () => {
+  if (!flowerSongAudio.src) return;
+  stopFlowerSongFade();
+  flowerSongStarted = false;
+  setFlowerSongStatus('فایل صوتی خوانده نشد؛ یک فایل دیگر انتخاب کن.');
+});
+flowerSongAudio.addEventListener('pause', () => {
+  if (flowerSongEnabled && !flowerSongAudio.ended) {
+    stopFlowerSongFade();
+    flowerSongStarted = false;
+    setFlowerSongStatus('پخش متوقف است.');
+  }
+});
 document.addEventListener('pointerdown', (event) => {
   const target = event.target;
-  if (!target || (target.closest && target.closest('#settingsBtn, #songPlayBtn, #songStopBtn, .music-controls'))) return;
-  flowerSongUserGestureSeen = true;
-  if (flowerSongEnabled && flowerSongPlayerReady && !flowerSongStarted) startFlowerSongPlayback();
+  if (target && target.closest && target.closest('#settingsBtn, #songPlayBtn, #songStopBtn, #songFileInput, .music-controls')) return;
+  if (flowerSongEnabled && flowerSongAudio && flowerSongAudio.src && flowerSongAudio.paused) {
+    tryPlayFlowerSong();
+  }
 }, true);
-initFlowerSongPlayer();
+document.addEventListener('keydown', (event) => {
+  if (!['Tab', 'Enter', ' '].includes(event.key)) return;
+  if (flowerSongEnabled && flowerSongAudio && flowerSongAudio.src && flowerSongAudio.paused) {
+    tryPlayFlowerSong();
+  }
+}, true);
+restoreFlowerSong();
 
 function buildThemeGrid() {
   const grid = $('themeGrid'); const cur = document.documentElement.getAttribute('data-theme') || 'emerald';
