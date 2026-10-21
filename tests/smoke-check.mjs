@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const GameLogic = require('../game-logic.js');
+const KnowledgeQuiz = require('../knowledge-quiz.js');
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const scripts = [...html.matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)];
 assert.equal(scripts.length, 1, 'exactly one inline application script expected');
@@ -11,6 +12,13 @@ assert.equal(scripts.length, 1, 'exactly one inline application script expected'
 const app = scripts[0][1];
 assert.doesNotThrow(() => new Function(app), 'inline JavaScript must parse');
 assert.match(html, /src="\.\/game-logic\.js"/, 'shared game logic must load from Pages');
+assert.match(html, /src="\.\/knowledge-quiz\.js"/, 'knowledge quiz module must load from Pages');
+assert.ok(html.includes('id="umQuiz"'), 'the user menu should offer the information quiz');
+assert.ok(html.includes('id="pmVoiceCallBtn"') && html.includes('state.peer.call(peerId,stream'), 'private chat should launch WebRTC voice calls');
+assert.ok(html.includes("peer.on('call', mediaCall => handleIncomingVoiceCall(mediaCall))"), 'incoming PeerJS media calls should be handled');
+assert.ok(html.includes('id="voiceAcceptBtn"') && html.includes('id="voiceMuteBtn"') && html.includes('id="voiceHangupBtn"'), 'voice calling should expose accept, mute and hang-up controls');
+assert.ok(html.includes('QUIZ_DURATION_MS=3*60*1000') && html.includes('pickQuestions(10)'), 'the quiz should use 10 questions and a three-minute limit');
+assert.ok(html.includes("case 'quiz-round-result': onQuizRoundResult(conn, msg); break;"), 'quiz result messages should be routed');
 assert.match(app, /const ROOM_NAME = \/\^ci-\[a-z0-9-\]\{1,40\}\$\/.test\(requestedTestRoom\) \? requestedTestRoom : 'global-chat-2026';/, 'regular visitors share the canonical room while CI uses isolated rooms');
 assert.ok(app.includes('return [...new Set([canonical, slugify(scopedName)])];'), 'fresh clients use a stable room plus a legacy compatibility alias');
 assert.ok(app.includes("if (ROOM_NAME !== 'global-chat-2026') return [canonical];"), 'isolated test rooms must never scan or join the public room alias');
@@ -167,5 +175,19 @@ assert.equal(GameLogic.classifyProfanity('shit')?.severity, 1, 'less severe prof
 assert.equal(GameLogic.classifyProfanity('کسکش')?.severity, 2, 'strong profanity should get the middle ban tier');
 assert.equal(GameLogic.classifyProfanity('کس‌کش')?.severity, 2, 'invisible joiners should not bypass profanity checks');
 assert.equal(GameLogic.classifyProfanity('کیر مادر')?.severity, 3, 'very severe profanity should get the longest initial ban tier');
+
+// General-knowledge duel rules and answer-key privacy.
+let quizSeed=0.314159;
+const nextQuizRandom=()=>{quizSeed=(quizSeed*3.7+0.11)%1;return quizSeed;};
+const questions=KnowledgeQuiz.pickQuestions(10,nextQuizRandom);
+assert.equal(questions.length,10);
+assert.equal(new Set(questions.map(q=>q.id)).size,10,'questions should not repeat');
+assert.ok(questions.every(q=>q.options.length===4&&Number.isInteger(q.answerIndex)&&q.answerIndex>=0&&q.answerIndex<4));
+const publicQuestions=KnowledgeQuiz.publicQuestions(questions);
+assert.equal(KnowledgeQuiz.sanitizePublicQuestions(publicQuestions).length,10);
+assert.ok(publicQuestions.every(q=>!Object.prototype.hasOwnProperty.call(q,'answerIndex')),'answer keys must not be sent to the guest');
+assert.equal(KnowledgeQuiz.sanitizePublicQuestions(publicQuestions.slice(0,9)),null,'incomplete game payload must be rejected');
+assert.deepEqual(KnowledgeQuiz.scoreAnswers(questions,questions.map(q=>q.answerIndex)),{correctCount:10,total:10,percent:100});
+assert.deepEqual(KnowledgeQuiz.scoreAnswers(questions,[]),{correctCount:0,total:10,percent:0});
 
 console.log('Smoke checks passed: app syntax, poll integrity, NF letter scoring, RPS/TTT rules, classic UNO +4 legality/penalties, moderation tiers, accurate replies, responsive UI, and unique IDs.');

@@ -2251,6 +2251,61 @@
   .uno-challenge-buttons { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
   .uno-challenge-buttons button { margin:0; }
 
+
+  #pmVoiceCallBtn{width:35px;height:35px;flex:0 0 35px;border:1px solid rgba(62,220,181,.2);border-radius:12px;background:rgba(39,214,176,.08);color:var(--primary);font-size:16px;cursor:pointer}
+  #pmVoiceCallBtn:disabled{opacity:.42;cursor:not-allowed}
+  .voice-call-overlay{position:fixed;inset:0;z-index:10020;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,7,14,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+  .voice-call-overlay.on{display:flex;animation:voiceCallFade .2s ease both}
+  @keyframes voiceCallFade{from{opacity:0}to{opacity:1}}
+  .voice-call-card{width:min(400px,100%);padding:28px 24px 22px;border-radius:28px;text-align:center;color:#edf8fc;background:radial-gradient(circle at 50% 0,rgba(46,221,183,.15),transparent 45%),linear-gradient(155deg,#142331,#09131f 75%);border:1px solid rgba(160,205,225,.16);box-shadow:0 30px 100px rgba(0,0,0,.55)}
+  .voice-call-orb{width:92px;height:92px;margin:3px auto 15px;display:grid;place-items:center;border-radius:30px;background:linear-gradient(145deg,rgba(45,220,182,.18),rgba(92,166,255,.1));border:1px solid rgba(98,230,198,.25);box-shadow:0 0 0 10px rgba(53,210,177,.035),0 0 45px rgba(53,210,177,.12);font-size:40px;animation:voiceOrbPulse 2.3s ease-in-out infinite}
+  @keyframes voiceOrbPulse{50%{transform:scale(1.045);box-shadow:0 0 0 15px rgba(53,210,177,.025),0 0 55px rgba(53,210,177,.18)}}
+  .voice-call-eyebrow{margin:0;color:#66dcbf;font-size:9px;font-weight:900;letter-spacing:.16em;direction:ltr}
+  #voiceCallTitle{margin:7px 0;font-size:23px}
+  #voiceCallPeerName{margin:0 0 8px;color:#c3d8e2;font-weight:700}
+  #voiceCallStatus{min-height:24px;margin:0 auto 21px;color:#8da7b6;font-size:12px}
+  .voice-call-actions{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:9px}
+  .voice-call-actions button{border:1px solid rgba(255,255,255,.1);border-radius:13px;padding:11px 15px;background:rgba(255,255,255,.055);color:#eaf4f7;font:inherit;font-size:12px;cursor:pointer}
+  #voiceAcceptBtn{background:#1ba77e;border-color:#36d5ac;color:#fff}
+  #voiceDeclineBtn,#voiceHangupBtn{background:#9f3447;border-color:rgba(255,120,140,.35);color:#fff}
+  .voice-call-actions [hidden]{display:none!important}
+  .voice-call-note{margin:18px 0 0;color:#738c9a;font-size:10px;line-height:1.8}
+  #voiceRemoteAudio{display:none}
+  #quizModal{padding:14px;background:rgba(2,8,14,.84)}
+  #quizModal .quiz-modal{position:relative;width:min(620px,100%);max-height:min(92vh,850px);overflow-y:auto;padding:23px;border-radius:26px;color:#edf7fc;background:radial-gradient(circle at 50% 0,rgba(63,179,225,.13),transparent 38%),linear-gradient(155deg,#132230,#08121d 75%);border:1px solid rgba(139,197,225,.18);box-shadow:0 35px 110px rgba(0,0,0,.65)}
+  #quizModal .quiz-heading-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  #quizModal .quiz-kicker{display:inline-flex;color:#65ddc0;font-size:9px;font-weight:900;letter-spacing:.15em;direction:ltr}
+  #quizModal h3{margin:6px 0 4px;font-size:24px;color:#f1fbff}
+  #quizModal .quiz-subtitle{margin:0;color:#8da9b8;font-size:11px;line-height:1.8}
+  #quizExit{flex:0 0 34px;width:34px;height:34px;border:1px solid rgba(255,255,255,.1);border-radius:11px;background:rgba(255,255,255,.045);color:#aac0ca;cursor:pointer}
+  #quizModal .quiz-timer-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:22px 0 9px;color:#a9bfcb;font-size:11px;font-weight:700}
+  #quizCountdown{min-width:75px;text-align:center;border:1px solid rgba(84,227,190,.22);border-radius:999px;padding:7px 11px;background:rgba(40,205,167,.08);color:#71f0cf;direction:ltr;font-size:13px;font-weight:900;font-variant-numeric:tabular-nums}
+  #quizCountdown.warning{color:#ffb86f;border-color:rgba(255,184,111,.35);background:rgba(255,184,111,.08)}
+  #quizModal .quiz-progress{height:5px;border-radius:999px;overflow:hidden;background:rgba(255,255,255,.07)}
+  #quizProgressBar{display:block;width:100%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#41dfbc,#65baff);transition:width .25s linear}
+  #quizModal .quiz-scorebar{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:15px 0 20px}
+  #quizModal .quiz-score-card{min-width:0;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:10px 12px;border:1px solid rgba(255,255,255,.075);border-radius:14px;background:rgba(255,255,255,.035)}
+  #quizModal .quiz-score-card span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#9fb7c5;font-size:11px}
+  #quizModal .quiz-score-card strong{flex:0 0 auto;color:#75e8cb;font-size:14px;direction:ltr}
+  #quizModal .quiz-question{min-height:65px;display:flex;align-items:center;margin:0 0 15px;font-size:clamp(16px,3vw,21px);line-height:1.9;font-weight:800}
+  #quizModal .quiz-options{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  #quizModal .quiz-option{min-height:58px;padding:12px;display:flex;align-items:center;gap:10px;text-align:right;border:1px solid rgba(255,255,255,.09);border-radius:15px;background:rgba(255,255,255,.035);color:#e6f2f7;font:inherit;font-size:12px;line-height:1.8;cursor:pointer;transition:transform .18s ease,border-color .18s ease,background .18s ease}
+  #quizModal .quiz-option:hover:not(:disabled){transform:translateY(-2px);border-color:rgba(66,221,189,.42);background:rgba(40,205,167,.08)}
+  #quizModal .quiz-option:disabled{cursor:default}
+  #quizModal .quiz-option-mark{flex:0 0 25px;width:25px;height:25px;display:grid;place-items:center;border-radius:8px;background:rgba(255,255,255,.06);color:#a7c4d2;font-size:10px;font-weight:900}
+  #quizModal .quiz-option.correct{border-color:rgba(65,223,163,.62);background:rgba(36,183,123,.13)}
+  #quizModal .quiz-option.correct .quiz-option-mark{background:#238a69;color:white}
+  #quizModal .quiz-option.wrong{border-color:rgba(255,103,126,.55);background:rgba(202,54,79,.12)}
+  #quizModal .quiz-status{min-height:28px;margin:15px 0 0;text-align:center;color:#9bb1be;font-size:11px;line-height:1.8}
+  #quizModal .quiz-result{margin-top:15px;padding:17px;border:1px solid rgba(89,228,190,.22);border-radius:18px;background:rgba(43,204,165,.06);text-align:center}
+  #quizModal .quiz-result h4{margin:0 0 7px;color:#76edcf;font-size:20px}
+  #quizModal .quiz-result p{margin:4px 0;color:#c3d7e1;font-size:12px;line-height:1.9}
+  #quizModal .quiz-result strong{color:#fff}
+  #quizCloseResult{display:block;margin:14px auto 0;border:0;border-radius:12px;padding:10px 18px;background:#1fa982;color:#fff;font:inherit;font-size:12px;cursor:pointer}
+  #quizModal [hidden],#quizCloseResult[hidden]{display:none!important}
+  @media(max-width:520px){#quizModal{padding:8px}#quizModal .quiz-modal{padding:19px 13px;border-radius:21px}#quizModal .quiz-score-card{padding:9px 8px}#quizModal .quiz-option{padding:9px;min-height:66px;font-size:11px;gap:7px}#quizModal .quiz-option-mark{flex-basis:21px;width:21px;height:21px}}
+  @media(prefers-reduced-motion:reduce){.voice-call-orb,#quizModal .quiz-option,#quizProgressBar{animation:none!important;transition:none!important}}
+
   /* Telegram-like message replies: clean quote bar, sender label, compact preview */
   .reply-quote {
     display: block;
@@ -2507,6 +2562,7 @@
       <b id="pmTitle">چت خصوصی</b>
       <small class="pm-presence" id="pmPresence"><span class="pm-presence-dot"></span><span id="pmPresenceText">گفت‌وگوی خصوصی</span></small>
     </div>
+    <button type="button" id="pmVoiceCallBtn" aria-label="شروع تماس صوتی زنده" title="تماس صوتی زنده">📞</button>
     <button type="button" class="pm-device-info-btn" id="pmDeviceInfoBtn" aria-label="اشتراک‌گذاری داوطلبانهٔ گزارش اتصال" title="ارسال داوطلبانهٔ IP و نوع دستگاه">📱</button>
     <button type="button" class="pm-close" id="pmClose" aria-label="بستن گفت‌وگوی خصوصی">✕</button>
   </div>
@@ -2521,6 +2577,45 @@
     <input type="text" id="pmInput" maxlength="500" placeholder="پیام خصوصی بنویس…" aria-label="متن پیام خصوصی">
     <button type="submit" class="send-btn pm-send-btn" id="pmSendBtn" aria-label="ارسال پیام خصوصی" title="ارسال">➤</button>
   </form>
+</div>
+
+
+<div class="voice-call-overlay" id="voiceCallOverlay" aria-hidden="true">
+  <section class="voice-call-card" role="dialog" aria-modal="true" aria-labelledby="voiceCallTitle">
+    <div class="voice-call-orb" aria-hidden="true">🎙️</div>
+    <p class="voice-call-eyebrow">PEER-TO-PEER · WEBRTC</p>
+    <h3 id="voiceCallTitle">تماس صوتی زنده</h3>
+    <p id="voiceCallPeerName">کاربر</p>
+    <div id="voiceCallStatus" role="status" aria-live="polite">در حال اتصال...</div>
+    <audio id="voiceRemoteAudio" autoplay playsinline></audio>
+    <div class="voice-call-actions">
+      <button type="button" id="voiceAcceptBtn">✅ پاسخ به تماس</button>
+      <button type="button" id="voiceDeclineBtn">رد تماس</button>
+      <button type="button" id="voiceMuteBtn" hidden>🎙️ بی‌صدا کردن</button>
+      <button type="button" id="voiceEnableAudioBtn" hidden>🔊 فعال‌کردن صدا</button>
+      <button type="button" id="voiceHangupBtn" hidden>📵 پایان تماس</button>
+    </div>
+    <p class="voice-call-note">تماس پس از اجازهٔ میکروفون شروع می‌شود. سایت باید روی HTTPS یا localhost باز شود؛ بعضی شبکه‌ها تماس مستقیم WebRTC را محدود می‌کنند.</p>
+  </section>
+</div>
+<div class="modal-overlay" id="quizModal" aria-hidden="true">
+  <section class="modal quiz-modal" role="dialog" aria-modal="true" aria-labelledby="quizTitle">
+    <div class="quiz-heading-row">
+      <div><span class="quiz-kicker">ARSAM ARCADE · KNOWLEDGE DUEL</span><h3 id="quizTitle">🧠 اطلاعات عمومی</h3><p class="quiz-subtitle">۱۰ سؤال مشترک · ۳ دقیقه · هر پاسخ درست ۱۰٪</p></div>
+      <button type="button" id="quizExit" aria-label="خروج از مسابقه">✕</button>
+    </div>
+    <div class="quiz-timer-row"><span id="quizQuestionCount">سؤال ۱ از ۱۰</span><span id="quizCountdown">03:00</span></div>
+    <div class="quiz-progress"><span id="quizProgressBar"></span></div>
+    <div class="quiz-scorebar">
+      <div class="quiz-score-card"><span id="quizMeName">تو</span><strong id="quizMeScore">۰٪</strong></div>
+      <div class="quiz-score-card"><span id="quizOpName">حریف</span><strong id="quizOpScore">۰٪</strong></div>
+    </div>
+    <div class="quiz-question" id="quizQuestion">منتظر شروع مسابقه...</div>
+    <div class="quiz-options" id="quizOptions"></div>
+    <p class="quiz-status" id="quizStatus" role="status" aria-live="polite">برای پاسخ دادن یکی از گزینه‌ها را انتخاب کن.</p>
+    <div class="quiz-result" id="quizResult" hidden></div>
+    <button type="button" id="quizCloseResult" hidden>بستن نتیجه</button>
+  </section>
 </div>
 
 <div class="device-report-overlay" id="deviceReportOverlay" aria-hidden="true">
@@ -2541,6 +2636,7 @@
   <button id="umTTT">❌⭕ دوز</button>
   <button id="umNF">📝 اسم فامیل</button>
   <button id="umUNO">🎴 UNO</button>
+  <button id="umQuiz">🧠 اطلاعات عمومی</button>
 </div>
 
 <div class="msg-menu" id="msgMenu">
@@ -2733,9 +2829,11 @@
 
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <script src="./game-logic.js"></script>
+<script src="./knowledge-quiz.js"></script>
 <script>
 'use strict';
 const GameLogic = window.ChatGameLogic;
+const KnowledgeQuiz = window.ChatKnowledgeQuiz;
 
 // All regular visitors share one room. Automated browser tests can opt into
 // an isolated CI-only room so they never post test polls into the public chat.
@@ -2832,7 +2930,7 @@ const state = {
   myTypingTimeout: null,
   isRecording: false, mediaRecorder: null, audioChunks: [], recStartTime: 0,
   recInterval: null, recShouldSend: false,
-  game: null, ttt: null, nf: null,
+  game: null, ttt: null, nf: null, quiz: null, voiceCall: null,
   msgMenuTarget: null
 };
 try {
@@ -3317,8 +3415,60 @@ async function joinChat(name) {
     toast(err && err.type === 'room-full' ? '❌ ظرفیت پر است' : '❌ اتصال برقرار نشد');
   }
 }
+
+function showVoiceCallUI(v){
+  if(!v)return;const e=state.peers.get(v.peerId);$('voiceCallPeerName').textContent=safePeerName((e&&e.name)||v.peerName||'کاربر');$('voiceCallStatus').textContent=v.status||'در حال اتصال...';
+  const pending=!!(v.incoming&&!v.answered);$('voiceAcceptBtn').hidden=!pending;$('voiceDeclineBtn').hidden=!pending;$('voiceMuteBtn').hidden=!(v.localStream&&v.answered);$('voiceEnableAudioBtn').hidden=!v.needsAudioGesture;$('voiceHangupBtn').hidden=pending;
+  $('voiceMuteBtn').textContent=v.muted?'🔊 روشن‌کردن میکروفون':'🎙️ بی‌صدا کردن';$('voiceCallOverlay').classList.add('on');$('voiceCallOverlay').setAttribute('aria-hidden','false');
+}
+function cleanupVoiceCall(v,closeRemote){
+  if(!v||state.voiceCall!==v)return;state.voiceCall=null;if(v.timeout)clearTimeout(v.timeout);if(v.localStream)v.localStream.getTracks().forEach(function(t){t.stop();});
+  const audio=$('voiceRemoteAudio');if(audio){audio.pause();audio.srcObject=null;}if(closeRemote&&v.call){try{v.call.close();}catch(_){}}
+  $('voiceCallOverlay').classList.remove('on');$('voiceCallOverlay').setAttribute('aria-hidden','true');const target=state.pmOpenFor&&state.peers.get(state.pmOpenFor);$('pmVoiceCallBtn').disabled=!(target&&target.conn&&target.conn.open);
+}
+function wireVoiceMediaCall(v){
+  v.call.on('stream',function(remoteStream){
+    if(state.voiceCall!==v)return;v.remoteStream=remoteStream;v.connected=true;v.status='تماس برقرار شد';if(v.timeout)clearTimeout(v.timeout);v.timeout=null;$('voiceRemoteAudio').srcObject=remoteStream;
+    const playback=$('voiceRemoteAudio').play();if(playback&&typeof playback.catch==='function')playback.catch(function(){v.needsAudioGesture=true;$('voiceCallStatus').textContent='برای فعال‌شدن صدای تماس روی «فعال‌کردن صدا» بزن.';showVoiceCallUI(v);});showVoiceCallUI(v);
+  });
+  v.call.on('close',function(){cleanupVoiceCall(v,false);});v.call.on('error',function(){if(state.voiceCall!==v)return;toast('❌ اتصال تماس صوتی قطع شد');cleanupVoiceCall(v,false);});
+}
+function handleIncomingVoiceCall(mediaCall){
+  const e=state.peers.get(mediaCall.peer);if(!state.joined||!e||!e.name){try{mediaCall.close();}catch(_){}return;}
+  if(state.voiceCall){try{mediaCall.close();}catch(_){}toast('📵 تماس دیگری فعال است؛ تماس ورودی رد شد');return;}
+  const v={call:mediaCall,peerId:mediaCall.peer,peerName:safePeerName(e.name),incoming:true,answered:false,connected:false,muted:false,localStream:null,remoteStream:null,status:'تماس ورودی؛ قبول یا رد کن',timeout:null,needsAudioGesture:false};
+  state.voiceCall=v;wireVoiceMediaCall(v);showVoiceCallUI(v);v.timeout=setTimeout(function(){if(state.voiceCall===v&&!v.answered){toast('⌛ تماس بی‌پاسخ ماند');cleanupVoiceCall(v,true);}},30000);
+}
+async function startVoiceCall(){
+  const peerId=state.pmOpenFor,e=peerId&&state.peers.get(peerId);if(!e||!e.conn||!e.conn.open||!state.peer){toast('❌ کاربر در دسترس نیست');return;}
+  if(state.voiceCall){showVoiceCallUI(state.voiceCall);toast('⚠️ یک تماس در جریان است');return;}
+  if(!navigator.mediaDevices||typeof navigator.mediaDevices.getUserMedia!=='function'){toast('❌ مرورگر این دستگاه از میکروفون پشتیبانی نمی‌کند');return;}
+  $('pmVoiceCallBtn').disabled=true;
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});if(state.pmOpenFor!==peerId||!state.peer){stream.getTracks().forEach(function(t){t.stop();});toast('❌ مخاطب تماس تغییر کرد؛ دوباره تلاش کن');return;}
+    const mediaCall=state.peer.call(peerId,stream,{metadata:{name:state.myName}});if(!mediaCall){stream.getTracks().forEach(function(t){t.stop();});toast('❌ شروع تماس ناموفق بود');return;}
+    const v={call:mediaCall,peerId:peerId,peerName:safePeerName(e.name),incoming:false,answered:true,connected:false,muted:false,localStream:stream,remoteStream:null,status:'در انتظار پاسخ حریف...',timeout:null,needsAudioGesture:false};
+    state.voiceCall=v;wireVoiceMediaCall(v);showVoiceCallUI(v);v.timeout=setTimeout(function(){if(state.voiceCall===v&&!v.connected){toast('⌛ پاسخی برای تماس دریافت نشد');cleanupVoiceCall(v,true);}},35000);
+  }catch(error){toast(error&&error.name==='NotAllowedError'?'❌ اجازه میکروفون داده نشد':'❌ دسترسی به میکروفون یا شروع تماس ناموفق بود');}
+  finally{const target=state.pmOpenFor&&state.peers.get(state.pmOpenFor);$('pmVoiceCallBtn').disabled=!(target&&target.conn&&target.conn.open);}
+}
+async function answerVoiceCall(){
+  const v=state.voiceCall;if(!v||!v.incoming||v.answered)return;$('voiceAcceptBtn').disabled=true;$('voiceCallStatus').textContent='در انتظار اجازه میکروفون...';
+  try{if(!navigator.mediaDevices||typeof navigator.mediaDevices.getUserMedia!=='function')throw new Error('microphone-unavailable');const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    if(state.voiceCall!==v){stream.getTracks().forEach(function(t){t.stop();});return;}if(v.timeout)clearTimeout(v.timeout);v.timeout=null;v.localStream=stream;v.answered=true;v.status='تماس پذیرفته شد؛ در حال اتصال...';v.call.answer(stream);showVoiceCallUI(v);
+  }catch(error){toast(error&&error.name==='NotAllowedError'?'❌ اجازه میکروفون داده نشد':'❌ دسترسی به میکروفون ممکن نیست');cleanupVoiceCall(v,true);}
+  finally{$('voiceAcceptBtn').disabled=false;}
+}
+function enableRemoteCallAudio(){
+  const v=state.voiceCall;if(!v)return;const audio=$('voiceRemoteAudio');
+  if(audio&&v.remoteStream){audio.play().then(function(){v.needsAudioGesture=false;v.status='تماس برقرار شد';showVoiceCallUI(v);}).catch(function(){toast('🔈 هنوز مرورگر اجازه پخش صدا را نداده است');});}
+}
+function endVoiceCall(){const v=state.voiceCall;if(!v)return;cleanupVoiceCall(v,true);toast('📵 تماس پایان یافت');}
+function toggleVoiceMute(){const v=state.voiceCall;if(!v||!v.localStream)return;v.muted=!v.muted;v.localStream.getAudioTracks().forEach(function(t){t.enabled=!v.muted;});showVoiceCallUI(v);}
+
 function wirePeer(peer) {
   peer.on('connection', c => attachConn(c, { outgoing: false }));
+  peer.on('call', mediaCall => handleIncomingVoiceCall(mediaCall));
   peer.on('disconnected', () => {
     if (!state.peer || state.peer.destroyed) return;
     updateStatus('reconnecting');
@@ -3576,6 +3726,14 @@ function handleData(conn, msg) {
     case 'nf-response': onNFResponse(conn, msg); break;
     case 'nf-ready': onNFReady(conn, msg); break;
     case 'nf-answers': onNFAnswers(conn, msg); break;
+    case 'quiz-invite': onQuizInvite(conn, msg); break;
+    case 'quiz-response': onQuizResponse(conn, msg); break;
+    case 'quiz-start': onQuizStart(conn, msg); break;
+    case 'quiz-answer': onQuizAnswer(conn, msg); break;
+    case 'quiz-round-result': onQuizRoundResult(conn, msg); break;
+    case 'quiz-next': onQuizNext(conn, msg); break;
+    case 'quiz-finish': onQuizFinish(conn, msg); break;
+    case 'quiz-forfeit': onQuizForfeit(conn, msg); break;
     case 'poll-vote': onPollVote(conn, msg); break;
   }
 }
@@ -4053,6 +4211,7 @@ $('umChat').onclick = () => { if (menuTargetId) { openPM(menuTargetId); closeUse
 $('umRPS').onclick = () => { if (menuTargetId) { inviteToGame(menuTargetId); closeUserMenu(); } };
 $('umTTT').onclick = () => { if (menuTargetId) { inviteToTTT(menuTargetId); closeUserMenu(); } };
 $('umNF').onclick = () => { if (menuTargetId) { inviteToNF(menuTargetId); closeUserMenu(); } };
+$('umQuiz').onclick = () => { if (menuTargetId) { inviteToKnowledgeQuiz(menuTargetId); closeUserMenu(); } };
 
 function showMsgMenu(x, y, o, isPM) {
   state.msgMenuTarget = { o, isPM };
@@ -4121,6 +4280,7 @@ function openPM(id) {
   clearPMReply();
   state.pmOpenFor = id; state.unread.set(id, 0);
   $('pmTitle').textContent = safePeerName(e.name);
+  $('pmVoiceCallBtn').disabled = !(e.conn && e.conn.open);
   const [bg, fg] = avatarFor(e.name);
   const av = $('pmAvatar');
   if (safeImageSource(e.avatar)) { av.innerHTML = `<img src="${escapeHTML(safeImageSource(e.avatar))}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; av.style.background = 'transparent'; }
@@ -4409,6 +4569,140 @@ async function toggleRecording() {
 }
 $('recCancel').onclick = () => { state.recShouldSend = false; if (state.mediaRecorder && state.mediaRecorder.state === 'recording') state.mediaRecorder.stop(); };
 $('recSend').onclick = () => { state.recShouldSend = true; if (state.mediaRecorder && state.mediaRecorder.state === 'recording') state.mediaRecorder.stop(); };
+
+
+const QUIZ_DURATION_MS=3*60*1000;
+const QUIZ_QUESTION_MS=15000;
+function inviteToKnowledgeQuiz(peerId){
+  const entry=state.peers.get(peerId);
+  if(!entry||!entry.conn||!entry.conn.open){toast('❌ کاربر در دسترس نیست');return;}
+  if(state.quiz&&!state.quiz.finished){toast('⚠️ اول مسابقه فعلی را تمام کن');return;}
+  const id='quiz-'+Date.now()+'-'+Math.random().toString(36).slice(2,8);
+  const q={id:id,opponent:peerId,opponentName:safePeerName(entry.name),myName:state.myName,isHost:true,started:false,finished:false,questions:null,inviteTimer:null};
+  state.quiz=q;safeSend(entry.conn,{type:'quiz-invite',gameId:id,from:state.myPeerId,name:state.myName});toast('🧠 دعوت مسابقه اطلاعات عمومی ارسال شد');
+  q.inviteTimer=setTimeout(function(){if(state.quiz===q&&!q.started&&!q.finished){state.quiz=null;toast('⌛ زمان دعوت مسابقه تمام شد');}},20000);
+}
+function onQuizInvite(conn,msg){
+  const entry=state.peers.get(conn.peer);
+  if(!entry||msg.from!==conn.peer||typeof msg.gameId!=='string'||!/^quiz-[a-zA-Z0-9-]{8,80}$/.test(msg.gameId))return;
+  if(state.quiz&&!state.quiz.finished){safeSend(conn,{type:'quiz-response',gameId:msg.gameId,accepted:false,reason:'busy'});return;}
+  const card=document.createElement('div');card.className='game-invite-toast';
+  card.innerHTML='<h4>🧠 مسابقه اطلاعات عمومی</h4><p><b>'+escapeHTML(safePeerName(entry.name))+'</b> دعوتت کرده؛ ۱۰ سؤال و ۳ دقیقه وقت دارید.</p><div class="gi-btns"><button class="gi-accept">✅ قبول</button><button class="gi-decline">❌ رد</button></div>';
+  document.body.appendChild(card);let decided=false;
+  function removeCard(){if(card.parentNode)card.remove();}
+  card.querySelector('.gi-accept').onclick=function(){if(decided)return;decided=true;removeCard();state.quiz={id:msg.gameId,opponent:conn.peer,opponentName:safePeerName(entry.name),myName:state.myName,isHost:false,started:false,finished:false,questions:null};safeSend(conn,{type:'quiz-response',gameId:msg.gameId,accepted:true});toast('🧠 وارد مسابقه شدی');};
+  card.querySelector('.gi-decline').onclick=function(){if(decided)return;decided=true;removeCard();safeSend(conn,{type:'quiz-response',gameId:msg.gameId,accepted:false});};
+  setTimeout(removeCard,20000);
+}
+function onQuizResponse(conn,msg){
+  const q=state.quiz;if(!q||!q.isHost||q.started||q.finished||q.id!==msg.gameId||conn.peer!==q.opponent)return;
+  if(q.inviteTimer)clearTimeout(q.inviteTimer);q.inviteTimer=null;
+  if(!msg.accepted){state.quiz=null;toast(msg.reason==='busy'?'❌ حریف در مسابقه دیگری است':'❌ دعوت مسابقه رد شد');return;}
+  q.questions=KnowledgeQuiz.pickQuestions(10);
+  if(!Array.isArray(q.questions)||q.questions.length!==10){state.quiz=null;toast('❌ ساخت مسابقه ناموفق بود');return;}
+  Object.assign(q,{started:true,startedAt:Date.now(),index:0,myScore:0,theirScore:0,myAnswer:null,theirAnswer:null,myAnswered:false,theirAnswered:false,resolved:false,clock:null,questionTimer:null,nextTimer:null,finishFallback:null});
+  q.deadline=q.startedAt+QUIZ_DURATION_MS;
+  safeSend(conn,{type:'quiz-start',gameId:q.id,durationMs:QUIZ_DURATION_MS,questions:KnowledgeQuiz.publicQuestions(q.questions)});
+  openKnowledgeQuizUI(q);startQuizClock(q);renderQuizQuestion(q);startQuizQuestionTimer(q);
+}
+function onQuizStart(conn,msg){
+  const q=state.quiz;if(!q||q.isHost||q.finished||q.id!==msg.gameId||q.opponent!==conn.peer||q.started)return;
+  const questions=KnowledgeQuiz.sanitizePublicQuestions(msg.questions);
+  if(!questions||Number(msg.durationMs)!==QUIZ_DURATION_MS){state.quiz=null;toast('❌ داده مسابقه نامعتبر بود');return;}
+  q.questions=questions;Object.assign(q,{started:true,startedAt:Date.now(),index:0,myScore:0,theirScore:0,myAnswer:null,theirAnswer:null,myAnswered:false,theirAnswered:false,resolved:false,clock:null,questionTimer:null,nextTimer:null,finishFallback:null});
+  q.deadline=q.startedAt+QUIZ_DURATION_MS;openKnowledgeQuizUI(q);startQuizClock(q);renderQuizQuestion(q);
+}
+function openKnowledgeQuizUI(q){
+  $('quizResult').hidden=true;$('quizCloseResult').hidden=true;$('quizQuestion').style.display='flex';$('quizOptions').style.display='grid';$('quizStatus').style.display='block';
+  $('quizModal').classList.add('on');$('quizModal').setAttribute('aria-hidden','false');
+  $('quizMeName').textContent=safePeerName(state.myName);$('quizOpName').textContent=safePeerName(q.opponentName);renderQuizScores(q);
+}
+function renderQuizScores(q){$('quizMeScore').textContent=faNum((q.myScore||0)*10)+'٪';$('quizOpScore').textContent=faNum((q.theirScore||0)*10)+'٪';}
+function renderQuizTimer(q){
+  if(!q||!q.deadline)return;
+  const remaining=Math.max(0,q.deadline-Date.now());$('quizCountdown').textContent=faDur(Math.ceil(remaining/1000));$('quizCountdown').classList.toggle('warning',remaining<=30000);
+  $('quizProgressBar').style.width=(Math.max(0,Math.min(100,remaining/QUIZ_DURATION_MS*100)))+'%';
+  if(remaining<=0&&!q.isHost&&!q.finished){
+    $('quizOptions').querySelectorAll('button').forEach(function(b){b.disabled=true;});$('quizStatus').textContent='زمان تمام شد؛ منتظر نتیجه نهایی میزبان...';
+    if(!q.finishFallback)q.finishFallback=setTimeout(function(){if(state.quiz===q&&!q.finished)finishKnowledgeQuiz(q,null,true);},8000);
+  }
+}
+function startQuizClock(q){
+  if(q.clock)clearInterval(q.clock);renderQuizTimer(q);
+  q.clock=setInterval(function(){if(state.quiz!==q||q.finished)return;renderQuizTimer(q);if(q.deadline-Date.now()<=0){clearInterval(q.clock);q.clock=null;if(q.isHost)finishKnowledgeQuiz(q);}},300);
+}
+function renderQuizQuestion(q){
+  if(!q||q.finished||!q.started||!q.questions||q.index<0||q.index>=10)return;
+  const item=q.questions[q.index];$('quizQuestionCount').textContent='سؤال '+faNum(q.index+1)+' از ۱۰';$('quizQuestion').textContent=item.question;
+  $('quizStatus').textContent=q.myAnswered?'✅ پاسخت ثبت شد؛ منتظر حریف...':'یکی از چهار گزینه را انتخاب کن.';$('quizOptions').innerHTML='';
+  item.options.forEach(function(label,index){
+    const b=document.createElement('button');b.type='button';b.className='quiz-option';b.dataset.optionIndex=String(index);
+    const mark=document.createElement('span');mark.className='quiz-option-mark';mark.textContent=['الف','ب','ج','د'][index];
+    const text=document.createElement('span');text.textContent=label;b.append(mark,text);b.disabled=q.myAnswered||q.resolved||q.deadline<=Date.now();b.addEventListener('click',function(){answerQuizOption(index);});$('quizOptions').appendChild(b);
+  });
+  renderQuizScores(q);renderQuizTimer(q);
+}
+function startQuizQuestionTimer(q){
+  if(!q||!q.isHost||q.finished||q.resolved)return;if(q.questionTimer)clearTimeout(q.questionTimer);
+  q.questionTimer=setTimeout(function(){if(state.quiz===q&&!q.finished&&!q.resolved)resolveQuizQuestion(q,true);},Math.max(500,Math.min(QUIZ_QUESTION_MS,q.deadline-Date.now())));
+}
+function answerQuizOption(index){
+  const q=state.quiz;if(!q||!q.started||q.finished||q.resolved||q.myAnswered||!Number.isInteger(index)||index<0||index>3||q.deadline<=Date.now())return;
+  q.myAnswer=index;q.myAnswered=true;$('quizOptions').querySelectorAll('button').forEach(function(b){b.disabled=true;});$('quizStatus').textContent='✅ پاسخت ثبت شد؛ منتظر حریف...';
+  if(q.isHost)maybeResolveQuizQuestion(q);else{const e=state.peers.get(q.opponent);safeSend(e&&e.conn,{type:'quiz-answer',gameId:q.id,index:q.index,answerIndex:index});}
+}
+function onQuizAnswer(conn,msg){
+  const q=state.quiz;if(!q||!q.isHost||!q.started||q.finished||q.resolved||q.id!==msg.gameId||conn.peer!==q.opponent||msg.index!==q.index||!Number.isInteger(msg.answerIndex)||msg.answerIndex<0||msg.answerIndex>3||q.theirAnswered)return;
+  q.theirAnswer=msg.answerIndex;q.theirAnswered=true;maybeResolveQuizQuestion(q);
+}
+function maybeResolveQuizQuestion(q){if(q&&q.isHost&&q.myAnswered&&q.theirAnswered&&!q.resolved)resolveQuizQuestion(q,false);}
+function resolveQuizQuestion(q,forced){
+  if(!q||!q.isHost||q.finished||q.resolved||!q.questions||q.index<0||q.index>=10)return;if(!forced&&(!q.myAnswered||!q.theirAnswered))return;
+  q.resolved=true;if(q.questionTimer)clearTimeout(q.questionTimer);q.questionTimer=null;const item=q.questions[q.index];
+  if(q.myAnswered&&q.myAnswer===item.answerIndex)q.myScore++;if(q.theirAnswered&&q.theirAnswer===item.answerIndex)q.theirScore++;
+  const result={type:'quiz-round-result',gameId:q.id,index:q.index,correctIndex:item.answerIndex,hostAnswer:q.myAnswered?q.myAnswer:null,guestAnswer:q.theirAnswered?q.theirAnswer:null,hostScore:q.myScore,guestScore:q.theirScore};
+  const e=state.peers.get(q.opponent);safeSend(e&&e.conn,result);renderQuizRoundResult(q,result);
+  q.nextTimer=setTimeout(function(){
+    if(state.quiz!==q||q.finished)return;if(q.deadline<=Date.now()||q.index>=9){finishKnowledgeQuiz(q);return;}
+    q.index++;q.myAnswer=null;q.theirAnswer=null;q.myAnswered=false;q.theirAnswered=false;q.resolved=false;safeSend(e&&e.conn,{type:'quiz-next',gameId:q.id,index:q.index});renderQuizQuestion(q);startQuizQuestionTimer(q);
+  },1200);
+}
+function renderQuizRoundResult(q,msg){
+  if(!q||q.finished||msg.index!==q.index||!q.questions)return;q.resolved=true;q.myScore=q.isHost?msg.hostScore:msg.guestScore;q.theirScore=q.isHost?msg.guestScore:msg.hostScore;renderQuizScores(q);
+  const mine=q.isHost?msg.hostAnswer:msg.guestAnswer,theirs=q.isHost?msg.guestAnswer:msg.hostAnswer;
+  $('quizOptions').querySelectorAll('button').forEach(function(b){const index=Number(b.dataset.optionIndex);b.disabled=true;if(index===msg.correctIndex)b.classList.add('correct');else if((mine===index||theirs===index)&&index!==msg.correctIndex)b.classList.add('wrong');});
+  $('quizStatus').textContent=(mine===msg.correctIndex?'✅ پاسخ تو درست بود. ':mine===null?'⌛ پاسخ ندادی. ':'❌ پاسخ تو درست نبود. ')+'پاسخ درست: '+q.questions[q.index].options[msg.correctIndex];
+}
+function onQuizRoundResult(conn,msg){
+  const q=state.quiz;if(!q||q.isHost||!q.started||q.finished||q.id!==msg.gameId||conn.peer!==q.opponent||msg.index!==q.index||!Number.isInteger(msg.correctIndex)||msg.correctIndex<0||msg.correctIndex>3||!Number.isInteger(msg.hostScore)||!Number.isInteger(msg.guestScore)||msg.hostScore<0||msg.hostScore>10||msg.guestScore<0||msg.guestScore>10)return;renderQuizRoundResult(q,msg);
+}
+function onQuizNext(conn,msg){
+  const q=state.quiz;if(!q||q.isHost||!q.started||q.finished||q.id!==msg.gameId||conn.peer!==q.opponent||!Number.isInteger(msg.index)||msg.index!==q.index+1||msg.index<0||msg.index>9||!q.resolved)return;
+  q.index=msg.index;q.myAnswer=null;q.theirAnswer=null;q.myAnswered=false;q.theirAnswered=false;q.resolved=false;renderQuizQuestion(q);
+}
+function onQuizForfeit(conn,msg){const q=state.quiz;if(!q||!q.isHost||!q.started||q.finished||q.id!==msg.gameId||conn.peer!==q.opponent)return;finishKnowledgeQuiz(q,'host');}
+function onQuizFinish(conn,msg){
+  const q=state.quiz;if(!q||q.isHost||!q.started||q.finished||q.id!==msg.gameId||conn.peer!==q.opponent||!Number.isInteger(msg.hostScore)||!Number.isInteger(msg.guestScore)||msg.hostScore<0||msg.hostScore>10||msg.guestScore<0||msg.guestScore>10||!['host','guest','tie'].includes(msg.winner))return;
+  q.myScore=msg.guestScore;q.theirScore=msg.hostScore;finishKnowledgeQuiz(q,msg.winner,true);
+}
+function finishKnowledgeQuiz(q,winnerOverride,isRemote){
+  if(!q||q.finished)return;q.finished=true;
+  if(q.clock)clearInterval(q.clock);if(q.questionTimer)clearTimeout(q.questionTimer);if(q.nextTimer)clearTimeout(q.nextTimer);if(q.inviteTimer)clearTimeout(q.inviteTimer);if(q.finishFallback)clearTimeout(q.finishFallback);
+  q.clock=q.questionTimer=q.nextTimer=q.inviteTimer=q.finishFallback=null;let winner=winnerOverride;
+  if(q.isHost&&winnerOverride!=='guest'&&winnerOverride!=='host')winner=q.myScore>q.theirScore?'host':q.myScore<q.theirScore?'guest':'tie';
+  else if(!q.isHost&&(winnerOverride===true||winnerOverride===null||winnerOverride===undefined))winner=q.myScore>q.theirScore?'guest':q.myScore<q.theirScore?'host':'tie';
+  if(q.isHost&&!isRemote){const e=state.peers.get(q.opponent);safeSend(e&&e.conn,{type:'quiz-finish',gameId:q.id,hostScore:q.myScore,guestScore:q.theirScore,winner:winner});}
+  $('quizOptions').innerHTML='';$('quizOptions').style.display='none';$('quizQuestion').style.display='none';$('quizStatus').style.display='none';$('quizQuestionCount').textContent='مسابقه پایان یافت';
+  $('quizCountdown').textContent='۰۰:۰۰';$('quizProgressBar').style.width='0%';renderQuizScores(q);
+  const meSide=q.isHost?'host':'guest',title=winner==='tie'?'🤝 مساوی شد!':winner===meSide?'🏆 تو برنده شدی!':'🎯 حریف برنده شد!';
+  $('quizResult').innerHTML='<h4>'+title+'</h4><p>'+escapeHTML(safePeerName(q.myName||state.myName))+': <strong>'+faNum((q.myScore||0)*10)+'٪</strong> ('+faNum(q.myScore||0)+' از ۱۰)</p><p>'+escapeHTML(safePeerName(q.opponentName))+': <strong>'+faNum((q.theirScore||0)*10)+'٪</strong> ('+faNum(q.theirScore||0)+' از ۱۰)</p><p>'+(winner==='tie'?'امتیاز دو بازیکن برابر شد.':winner===meSide?'دانش تو این دور بیشتر بود.':'این دور به حریف رسید؛ دور بعد جبران کن!')+'</p>';
+  $('quizResult').hidden=false;$('quizCloseResult').hidden=false;$('quizStatus').textContent='';
+}
+function closeKnowledgeQuiz(){
+  const q=state.quiz;if(q&&!q.finished&&q.started){if(q.isHost)finishKnowledgeQuiz(q,'guest');else{const e=state.peers.get(q.opponent);safeSend(e&&e.conn,{type:'quiz-forfeit',gameId:q.id});q.finished=true;if(q.clock)clearInterval(q.clock);if(q.finishFallback)clearTimeout(q.finishFallback);}}
+  if(q&&q.inviteTimer)clearTimeout(q.inviteTimer);if(q&&q.questionTimer)clearTimeout(q.questionTimer);if(q&&q.nextTimer)clearTimeout(q.nextTimer);if(q&&q.clock)clearInterval(q.clock);
+  $('quizModal').classList.remove('on');$('quizModal').setAttribute('aria-hidden','true');state.quiz=null;
+}
 
 // Poll Creator
 let pollOptionDraft = ['', ''];
@@ -5231,6 +5525,14 @@ $('pmInput').addEventListener('input', () => {
 });
 $('pmClose').onclick = closePM;
 $('pmOverlay').onclick = closePM;
+$('pmVoiceCallBtn').onclick = startVoiceCall;
+$('voiceAcceptBtn').onclick = answerVoiceCall;
+$('voiceDeclineBtn').onclick = endVoiceCall;
+$('voiceHangupBtn').onclick = endVoiceCall;
+$('voiceMuteBtn').onclick = toggleVoiceMute;
+$('voiceEnableAudioBtn').onclick = enableRemoteCallAudio;
+$('quizExit').onclick = closeKnowledgeQuiz;
+$('quizCloseResult').onclick = closeKnowledgeQuiz;
 $('settingsModal').addEventListener('click', event => {
   if (event.target === $('settingsModal')) closeSettings();
 });
@@ -6096,6 +6398,8 @@ window.addEventListener('keydown', e => {
 
 window.addEventListener('beforeunload', () => {
   if (state.discoveryTimer) clearInterval(state.discoveryTimer);
+  if (state.voiceCall) cleanupVoiceCall(state.voiceCall, true);
+  if (state.quiz) { if (state.quiz.clock) clearInterval(state.quiz.clock); if (state.quiz.questionTimer) clearTimeout(state.quiz.questionTimer); if (state.quiz.nextTimer) clearTimeout(state.quiz.nextTimer); }
   if (state.peer && !state.peer.destroyed) { try { broadcast({ type: 'bye' }); } catch (_) {} }
 });
 </script>
