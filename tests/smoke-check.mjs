@@ -54,7 +54,8 @@ assert.match(app, /function openDeviceReportDialog\(\)/, 'device reports must be
 assert.match(app, /async function sendMyDeviceReport\(\)/, 'the actual report must be built only after consent confirmation');
 assert.match(app, /if \(!targetId \|\| targetId !== state\.pmOpenFor\)/, 'report must be cancelled if the selected private recipient changes');
 assert.match(app, /referrerPolicy: 'no-referrer'/, 'IP lookup should avoid sending the page URL as the referrer');
-assert.equal((app.match(/fetch\(/g) || []).length, 1, 'the app should make no other hidden fetches for IP/device collection');
+assert.equal((app.match(/fetch\(/g) || []).length, 2, 'only the consented device-report flow and optional login-music availability check may fetch');
+assert.match(app, /fetch\('assets\/login-theme\.mp3', \{ method:'HEAD', cache:'no-store' \}\)/, 'login music should check only the dedicated local asset path');
 assert.match(html, /تا وقتی تأیید نکنی هیچ گزارشی جمع‌آوری یا ارسال نمی‌شود/, 'consent text must say that reports are not collected automatically');
 assert.match(app, /case 'pm-typing': onPMTyping\(conn, msg\)/, 'private typing events must be routed separately from public typing');
 assert.match(app, /function renderPM\(options = \{\}\)/, 'private messages should rerender without replaying every old message');
