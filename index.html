@@ -2442,11 +2442,130 @@
     body::before { animation: none !important; }
   }
 
+
+  /* Cinematic login intro: polished first impression with accessible fallback */
+  #loginScreen { isolation:isolate; perspective:1200px; }
+  .login-cinematic-intro {
+    position:absolute; inset:0; z-index:8; display:grid; place-items:center;
+    overflow:hidden; pointer-events:none; text-align:center;
+    background:
+      radial-gradient(circle at 50% 42%, rgba(0,217,163,.15), transparent 28%),
+      radial-gradient(circle at 50% 50%, rgba(5,15,21,.92), rgba(4,12,16,.985) 72%);
+    animation:loginIntroCurtain 1450ms cubic-bezier(.72,0,.24,1) both;
+  }
+  .login-cinematic-intro::before,.login-cinematic-intro::after {
+    content:""; position:absolute; width:min(68vw,520px); aspect-ratio:1;
+    border:1px solid rgba(0,217,163,.19); border-radius:50%;
+    box-shadow:0 0 90px rgba(0,217,163,.08),inset 0 0 60px rgba(0,217,163,.05);
+    animation:loginIntroOrbit 6s linear infinite;
+  }
+  .login-cinematic-intro::after {
+    width:min(48vw,360px); border-color:rgba(179,136,255,.24);
+    animation-direction:reverse; animation-duration:9s;
+  }
+  .login-intro-content { position:relative; z-index:1; padding:24px; animation:loginIntroCopy 980ms cubic-bezier(.2,.8,.2,1) both; }
+  .login-intro-mark {
+    width:78px; height:78px; display:grid; place-items:center; margin:0 auto 20px;
+    border:1px solid rgba(0,217,163,.55); border-radius:25px;
+    background:linear-gradient(145deg,rgba(0,217,163,.2),rgba(179,136,255,.13));
+    box-shadow:0 0 0 9px rgba(0,217,163,.035),0 0 70px rgba(0,217,163,.23),inset 0 1px rgba(255,255,255,.18);
+    font-size:35px; animation:loginIntroMark 850ms cubic-bezier(.2,.8,.2,1) both;
+  }
+  .login-intro-kicker { margin:0 0 10px; color:#8fffe2; font-size:10px; font-weight:800; letter-spacing:.28em; direction:ltr; }
+  .login-intro-content h2 { margin:0; color:#f4fffd; font-size:clamp(22px,4.2vw,39px); font-weight:800; letter-spacing:-.04em; text-shadow:0 0 36px rgba(0,217,163,.18); }
+  .login-intro-caption { margin:12px 0 0; color:rgba(230,249,246,.68); font-size:12px; }
+  .login-intro-rule { width:110px; height:2px; margin:24px auto 0; overflow:hidden; background:rgba(255,255,255,.1); }
+  .login-intro-rule::after { content:""; display:block; width:45%; height:100%; background:linear-gradient(90deg,transparent,#00d9a3,#b388ff,transparent); animation:loginIntroRule 800ms 200ms ease-out both; }
+  @keyframes loginIntroCurtain { 0%,56%{opacity:1;visibility:visible} 100%{opacity:0;visibility:hidden} }
+  @keyframes loginIntroCopy { 0%{opacity:0;transform:translateY(15px);filter:blur(7px)} 35%,72%{opacity:1;transform:translateY(0);filter:blur(0)} 100%{opacity:0;transform:translateY(-8px);filter:blur(2px)} }
+  @keyframes loginIntroMark { 0%{opacity:0;transform:rotate(-16deg) scale(.72)} 65%{opacity:1;transform:rotate(3deg) scale(1.06)} 100%{opacity:1;transform:rotate(0) scale(1)} }
+  @keyframes loginIntroOrbit { from{transform:rotate(0) scale(.96)} to{transform:rotate(360deg) scale(1.04)} }
+  @keyframes loginIntroRule { from{transform:translateX(-130%)} to{transform:translateX(250%)} }
+  .login-card {
+    position:relative; z-index:2; border-color:rgba(199,255,244,.18);
+    background:linear-gradient(148deg,rgba(18,43,47,.88),rgba(5,17,22,.91)),var(--bg-dark);
+    box-shadow:0 35px 110px rgba(0,0,0,.48),0 0 0 1px rgba(255,255,255,.025),0 0 75px rgba(0,217,163,.09),inset 0 1px rgba(255,255,255,.1);
+    transform-origin:50% 60%; animation:loginCardCinema 900ms 180ms cubic-bezier(.2,.8,.2,1) both;
+  }
+  @keyframes loginCardCinema {
+    0%{opacity:0;transform:translateY(34px) rotateX(8deg) scale(.94);filter:blur(9px)}
+    68%{opacity:1;transform:translateY(-3px) rotateX(0) scale(1.008);filter:blur(0)}
+    100%{opacity:1;transform:translateY(0) rotateX(0) scale(1);filter:blur(0)}
+  }
+  .login-icon-wrap { animation:loginEmblemArrival 680ms 330ms cubic-bezier(.2,.8,.2,1) both; }
+  .login-icon { animation:loginEmblemFloat 4s 1.1s ease-in-out infinite,loginIconGlow 4.8s 1s ease-in-out infinite; transform-origin:center; }
+  @keyframes loginEmblemArrival { 0%{opacity:0;transform:translateY(-18px) scale(.78) rotate(-9deg)} 70%{opacity:1;transform:translateY(2px) scale(1.04) rotate(2deg)} 100%{opacity:1;transform:translateY(0) scale(1) rotate(0)} }
+  @keyframes loginEmblemFloat { 0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-4px) rotate(1deg)} }
+  .login-inner h1 { animation:loginTextArrival 520ms 390ms cubic-bezier(.2,.8,.2,1) both; text-shadow:0 0 28px rgba(0,217,163,.15); }
+  .login-inner > p { animation:loginTextArrival 520ms 470ms cubic-bezier(.2,.8,.2,1) both; }
+  #loginForm { animation:loginTextArrival 540ms 540ms cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes loginTextArrival { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  .login-audio-dock {
+    position:absolute; z-index:10; left:24px; bottom:22px;
+    display:flex; align-items:center; gap:12px; width:min(330px,calc(100vw - 32px)); min-height:68px;
+    padding:11px 13px; border:1px solid rgba(226,255,249,.13); border-radius:18px;
+    background:linear-gradient(135deg,rgba(8,24,29,.82),rgba(11,19,31,.72));
+    box-shadow:0 18px 50px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.08);
+    backdrop-filter:blur(18px) saturate(145%); -webkit-backdrop-filter:blur(18px) saturate(145%);
+    animation:loginAudioDockFade 800ms 650ms ease both;
+  }
+  @keyframes loginAudioDockFade { from{opacity:0} to{opacity:1} }
+  .login-audio-disc {
+    flex:0 0 42px; width:42px; height:42px; display:grid; place-items:center;
+    border:1px solid rgba(0,217,163,.26); border-radius:14px;
+    background:radial-gradient(circle at 30% 25%,rgba(0,217,163,.26),rgba(0,217,163,.05));
+    color:#9bffe6; font-size:23px; box-shadow:inset 0 1px rgba(255,255,255,.1);
+  }
+  .login-audio-bars { display:inline-flex; align-items:center; justify-content:center; gap:3px; height:16px; margin-inline-start:7px; vertical-align:middle; }
+  .login-audio-bars span { width:3px; height:5px; border-radius:4px; background:var(--primary); }
+  .login-audio-dock.is-playing .login-audio-bars span { animation:loginAudioBars 560ms ease-in-out infinite alternate; }
+  .login-audio-dock.is-playing .login-audio-bars span:nth-child(2){animation-delay:-340ms}
+  .login-audio-dock.is-playing .login-audio-bars span:nth-child(3){animation-delay:-180ms}
+  .login-audio-dock.is-playing .login-audio-bars span:nth-child(4){animation-delay:-420ms}
+  @keyframes loginAudioBars { from{height:4px;opacity:.55} to{height:15px;opacity:1} }
+  .login-audio-copy { display:flex; flex:1; min-width:0; flex-direction:column; gap:3px; }
+  .login-audio-copy strong { color:#f0fffb; font-size:11px; font-weight:800; }
+  .login-audio-copy > span { overflow:hidden; color:rgba(227,245,243,.65); font-size:10px; line-height:1.55; text-overflow:ellipsis; white-space:nowrap; }
+  .login-audio-toggle {
+    flex:0 0 38px; width:38px; height:38px; display:grid; place-items:center;
+    border:1px solid rgba(0,217,163,.28); border-radius:13px; background:rgba(0,217,163,.11);
+    color:#b4ffed; font-size:16px; cursor:pointer;
+    transition:transform 180ms ease,background-color 180ms ease,border-color 180ms ease !important;
+  }
+  .login-audio-toggle:not(:disabled):hover { transform:translateY(-2px); background:rgba(0,217,163,.2); }
+  .login-audio-toggle:active { transform:scale(.96); }
+  .login-audio-toggle:disabled { cursor:not-allowed; opacity:.45; }
+  .login-audio-toggle:focus-visible { outline:2px solid #96ffe6; outline-offset:3px; }
+  #loginThemeAudio { display:none; }
+  @media(max-width:560px) {
+    .login-audio-dock { left:50%; right:auto; bottom:14px; width:min(370px,calc(100vw - 28px)); translate:-50% 0; }
+    .login-intro-caption { max-width:260px; margin-inline:auto; line-height:1.8; }
+    .login-card { max-width:min(100%,390px); }
+  }
+  @media(prefers-reduced-motion:reduce) {
+    #loginIntro { display:none !important; animation:none !important; }
+    .login-cinematic-intro::before,.login-cinematic-intro::after,.login-intro-content,.login-intro-mark,.login-intro-rule::after,
+    .login-card,.login-icon-wrap,.login-inner h1,.login-inner > p,#loginForm,.login-audio-dock,.login-icon,.login-audio-dock.is-playing .login-audio-bars span {
+      animation:none !important; filter:none !important;
+    }
+    .login-card { opacity:1 !important; transform:none !important; }
+  }
+
 </style>
 </head>
 <body>
 
 <div id="loginScreen">
+  <div class="login-cinematic-intro" id="loginIntro" aria-hidden="true">
+    <div class="login-intro-content">
+      <div class="login-intro-mark">💬</div>
+      <p class="login-intro-kicker">YOUR SPACE • YOUR PEOPLE</p>
+      <h2>ارتباط، از همین‌جا شروع می‌شه</h2>
+      <p class="login-intro-caption">یک شروع تازه؛ چند کلیک تا دنیای گفت‌وگو</p>
+      <div class="login-intro-rule"></div>
+    </div>
+  </div>
+
   <div class="login-particles" id="loginParticles"></div>
   <div class="login-rings">
     <div class="ring r1"></div>
@@ -2470,6 +2589,17 @@
       </form>
     </div>
   </div>
+  <div class="login-audio-dock" id="loginAudioDock" aria-label="موسیقی صفحه ورود">
+    <div class="login-audio-disc" aria-hidden="true">♫</div>
+    <div class="login-audio-copy">
+      <strong>موسیقی شروع <span class="login-audio-bars" aria-hidden="true"><span></span><span></span><span></span><span></span></span></strong>
+      <span id="loginMusicStatus" aria-live="polite">در حال آماده‌سازی آهنگ...</span>
+    </div>
+    <button id="loginMusicToggle" class="login-audio-toggle" type="button" disabled aria-pressed="false" aria-label="پخش موسیقی صفحه ورود">
+      <span id="loginMusicGlyph" aria-hidden="true">▶</span>
+    </button>
+  </div>
+  <audio id="loginThemeAudio" preload="none" loop playsinline></audio>
 </div>
 
 <div id="chatScreen">
@@ -3408,6 +3538,7 @@ async function joinChat(name) {
     // A second quick pass catches peers that claimed a slot during the first scan.
     await new Promise(resolve => setTimeout(resolve, 650));
     await discover(slugs);
+    stopLoginThemePlayback();
     $('loginScreen').classList.add('leaving');
     setTimeout(() => finishJoin(), 700);
   } catch (err) {
@@ -5369,6 +5500,87 @@ $('loginForm').addEventListener('submit', e => {
   if (!name) { toast('❗ اسمت رو وارد کن'); return; }
   joinChat(name);
 });
+
+const loginThemeAudioEl = $('loginThemeAudio');
+const loginThemeToggle = $('loginMusicToggle');
+let loginThemeAvailable = false;
+let loginThemeUserPaused = false;
+
+function setLoginMusicPlaying(playing) {
+  $('loginAudioDock').classList.toggle('is-playing', playing);
+  loginThemeToggle.setAttribute('aria-pressed', String(playing));
+  loginThemeToggle.setAttribute('aria-label', playing ? 'توقف موقت موسیقی صفحه ورود' : 'پخش موسیقی صفحه ورود');
+  $('loginMusicGlyph').textContent = playing ? 'Ⅱ' : '▶';
+}
+async function playLoginTheme() {
+  if (!loginThemeAvailable || loginThemeUserPaused) return false;
+  try {
+    await loginThemeAudioEl.play();
+    setLoginMusicPlaying(true);
+    $('loginMusicStatus').textContent = 'موسیقی در حال پخش است';
+    return true;
+  } catch (error) {
+    setLoginMusicPlaying(false);
+    $('loginMusicStatus').textContent = 'برای شروع صدا، دکمهٔ پخش را بزن';
+    return false;
+  }
+}
+function stopLoginThemePlayback() {
+  if (!loginThemeAudioEl) return;
+  loginThemeAudioEl.pause();
+  try { loginThemeAudioEl.currentTime = 0; } catch (_) {}
+  setLoginMusicPlaying(false);
+}
+async function initializeLoginThemeAudio() {
+  try {
+    const response = await fetch('assets/login-theme.mp3', { method:'HEAD', cache:'no-store' });
+    if (!response.ok) throw new Error('login music asset is not installed');
+    loginThemeAudioEl.src = 'assets/login-theme.mp3';
+    loginThemeAudioEl.load();
+    loginThemeAvailable = true;
+    loginThemeToggle.disabled = false;
+    $('loginMusicStatus').textContent = 'در حال تلاش برای پخش خودکار...';
+    const started = await playLoginTheme();
+    if (!started && !loginThemeUserPaused) $('loginMusicStatus').textContent = 'برای شروع صدا، دکمهٔ پخش را بزن';
+  } catch (_) {
+    loginThemeAvailable = false;
+    loginThemeToggle.disabled = true;
+    $('loginMusicStatus').textContent = 'فایل مجاز را در assets/login-theme.mp3 قرار بده';
+    setLoginMusicPlaying(false);
+  }
+}
+loginThemeToggle.addEventListener('click', async () => {
+  if (!loginThemeAvailable) return;
+  if (!loginThemeAudioEl.paused) {
+    loginThemeUserPaused = true;
+    loginThemeAudioEl.pause();
+    setLoginMusicPlaying(false);
+    $('loginMusicStatus').textContent = 'موسیقی متوقف شد';
+    return;
+  }
+  loginThemeUserPaused = false;
+  $('loginMusicStatus').textContent = 'در حال پخش...';
+  await playLoginTheme();
+});
+loginThemeAudioEl.addEventListener('ended', () => setLoginMusicPlaying(false));
+loginThemeAudioEl.addEventListener('error', () => {
+  loginThemeAvailable = false;
+  loginThemeToggle.disabled = true;
+  setLoginMusicPlaying(false);
+  $('loginMusicStatus').textContent = 'فایل آهنگ خوانده نشد؛ مسیر یا فرمت را بررسی کن';
+});
+const loginScreenForAudio = $('loginScreen');
+loginScreenForAudio.addEventListener('pointerdown', event => {
+  if (event.target.closest('#loginMusicToggle')) return;
+  if (loginThemeAvailable && !loginThemeUserPaused && loginThemeAudioEl.paused) void playLoginTheme();
+}, true);
+loginScreenForAudio.addEventListener('keydown', event => {
+  if (event.target.closest('#loginMusicToggle')) return;
+  if (loginThemeAvailable && !loginThemeUserPaused && loginThemeAudioEl.paused) void playLoginTheme();
+}, true);
+void initializeLoginThemeAudio();
+
+
 $('chatForm').addEventListener('submit', e => {
   e.preventDefault();
   const input = $('chatInput');
