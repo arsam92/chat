@@ -9,7 +9,7 @@ const target = targetUrl.toString();
 const timeout = Number(process.env.ROOM_TEST_TIMEOUT_MS || 30000);
 const browser = await chromium.launch({
   headless: true,
-  args: ['--no-sandbox', '--disable-dev-shm-usage']
+  args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', '--autoplay-policy=no-user-gesture-required']
 });
 const diagnostics = [];
 const pages = [];
@@ -56,6 +56,10 @@ async function enterRoom(context, label, pageTarget = target) {
 try {
   const contextA = await browser.newContext();
   const contextB = await browser.newContext();
+  await Promise.all([
+    contextA.grantPermissions(['microphone'], { origin: targetUrl.origin }),
+    contextB.grantPermissions(['microphone'], { origin: targetUrl.origin })
+  ]);
   const a = await enterRoom(contextA, 'ROOM-TEST-A');
   const b = await enterRoom(contextB, 'ROOM-TEST-B');
 
@@ -203,6 +207,76 @@ try {
     b.locator('#gameModal').waitFor({ state: 'hidden', timeout: 9000 })
   ]);
 
+
+  // Run a real 10-question, two-browser knowledge duel. The host's private
+  // answer key drives both test clients so each round can verify scoring,
+  // answer feedback, synchronization, and the final tie result.
+  await a.evaluate(peerId => window.inviteToKnowledgeQuiz(peerId), bPeerId);
+  const quizInvite = b.locator('.game-invite-toast').filter({ hasText: 'مسابقه اطلاعات عمومی' });
+  await quizInvite.waitFor({ state: 'visible', timeout });
+  await quizInvite.locator('.gi-accept').click();
+  await Promise.all([
+    a.locator('#quizModal.on').waitFor({ state: 'visible', timeout }),
+    b.locator('#quizModal.on').waitFor({ state: 'visible', timeout })
+  ]);
+  assert.equal(await a.locator('#quizOptions .quiz-option').count(), 4, 'each quiz question should offer four choices');
+  assert.equal(await b.locator('#quizOptions .quiz-option').count(), 4, 'guest should see the same four options');
+  assert.equal(await a.locator('#quizQuestionCount').innerText(), 'سؤال ۱ از ۱۰');
+  assert.equal(await b.locator('#quizQuestionCount').innerText(), 'سؤال ۱ از ۱۰');
+  assert.ok(await b.evaluate(() => state.quiz.questions.every(q => !Object.prototype.hasOwnProperty.call(q, 'answerIndex'))),
+    'the guest must not receive the host answer key');
+
+  for (let round = 0; round < 10; round++) {
+    await Promise.all([
+      a.waitForFunction(expected => state.quiz && state.quiz.started && !state.quiz.finished && state.quiz.index === expected, round, { timeout }),
+      b.waitForFunction(expected => state.quiz && state.quiz.started && !state.quiz.finished && state.quiz.index === expected, round, { timeout })
+    ]);
+    const hostQuestion = await a.evaluate(() => {
+      const q = state.quiz.questions[state.quiz.index];
+      return { id: q.id, question: q.question, options: q.options.slice(), answerIndex: q.answerIndex };
+    });
+    const guestQuestion = await b.evaluate(() => {
+      const q = state.quiz.questions[state.quiz.index];
+      return { id: q.id, question: q.question, options: q.options.slice() };
+    });
+    assert.equal(hostQuestion.id, guestQuestion.id, 'both players must answer the same question');
+    assert.equal(hostQuestion.question, guestQuestion.question, 'question text should be synchronized');
+    assert.deepEqual(hostQuestion.options, guestQuestion.options, 'answer-option order should be identical on both clients');
+    assert.ok(Number.isInteger(hostQuestion.answerIndex) && hostQuestion.answerIndex >= 0 && hostQuestion.answerIndex < 4);
+    const correctOption = String(hostQuestion.answerIndex);
+    await Promise.all([
+      a.locator('#quizOptions .quiz-option[data-option-index="' + correctOption + '"]').click(),
+      b.locator('#quizOptions .quiz-option[data-option-index="' + correctOption + '"]').click()
+    ]);
+    await Promise.all([
+      a.locator('#quizOptions .quiz-option.correct').waitFor({ state: 'attached', timeout }),
+      b.locator('#quizOptions .quiz-option.correct').waitFor({ state: 'attached', timeout })
+    ]);
+    await Promise.all([
+      a.waitForFunction(expected => state.quiz && state.quiz.myScore >= expected && state.quiz.theirScore >= expected, round + 1, { timeout }),
+      b.waitForFunction(expected => state.quiz && state.quiz.myScore >= expected && state.quiz.theirScore >= expected, round + 1, { timeout })
+    ]);
+    assert.equal(await a.locator('#quizOptions .quiz-option.correct').count(), 1, 'the host should mark exactly one correct option');
+    assert.equal(await b.locator('#quizOptions .quiz-option.correct').count(), 1, 'the guest should mark exactly one correct option');
+  }
+  await Promise.all([
+    a.locator('#quizResult:not([hidden])').waitFor({ state: 'visible', timeout }),
+    b.locator('#quizResult:not([hidden])').waitFor({ state: 'visible', timeout })
+  ]);
+  const quizResultA = await a.locator('#quizResult').innerText();
+  const quizResultB = await b.locator('#quizResult').innerText();
+  assert.match(quizResultA, /مساوی/u, 'identical answers should produce a tie');
+  assert.match(quizResultB, /مساوی/u, 'both clients should agree on the winner');
+  assert.equal((quizResultA.match(/۱۰۰٪/gu) || []).length, 2, 'both players should finish at 100 percent');
+  assert.equal((quizResultB.match(/۱۰۰٪/gu) || []).length, 2, 'guest should receive both final scores');
+  await Promise.all([a.locator('#quizCloseResult').click(), b.locator('#quizCloseResult').click()]);
+  await Promise.all([
+    a.locator('#quizModal.on').waitFor({ state: 'hidden', timeout }),
+    b.locator('#quizModal.on').waitFor({ state: 'hidden', timeout })
+  ]);
+  assert.equal(await a.evaluate(() => state.quiz), null, 'host quiz state should be cleaned up');
+  assert.equal(await b.evaluate(() => state.quiz), null, 'guest quiz state should be cleaned up');
+
   // Test that private chat is usable, message delivery marks as read/received,
   // the remote typing indicator is live, and closing it uses the new motion state.
   await Promise.all([
@@ -213,6 +287,33 @@ try {
     a.locator('#pmWindow.on').waitFor({ state: 'visible', timeout: 5000 }),
     b.locator('#pmWindow.on').waitFor({ state: 'visible', timeout: 5000 })
   ]);
+
+  // Exercise the live PeerJS media connection using Chromium's fake microphone.
+  // Unlike the recorded-voice message button, this must create a call, receive
+  // the remote audio stream, toggle the local audio track, and clean up both sides.
+  await a.locator('#pmVoiceCallBtn').click();
+  await b.locator('#voiceCallOverlay.on').waitFor({ state: 'visible', timeout });
+  assert.match(await b.locator('#voiceCallStatus').innerText(), /تماس ورودی/u);
+  await b.locator('#voiceAcceptBtn').click();
+  await Promise.all([
+    a.waitForFunction(() => state.voiceCall && state.voiceCall.connected && state.voiceCall.remoteStream && state.voiceCall.remoteStream.getAudioTracks().length > 0, null, { timeout: 25000 }),
+    b.waitForFunction(() => state.voiceCall && state.voiceCall.connected && state.voiceCall.remoteStream && state.voiceCall.remoteStream.getAudioTracks().length > 0, null, { timeout: 25000 })
+  ]);
+  assert.equal(await a.locator('#voiceCallStatus').innerText(), 'تماس برقرار شد');
+  assert.equal(await b.locator('#voiceCallStatus').innerText(), 'تماس برقرار شد');
+  await a.locator('#voiceMuteBtn').click();
+  await a.waitForFunction(() => state.voiceCall && state.voiceCall.muted && state.voiceCall.localStream.getAudioTracks().every(track => !track.enabled), null, { timeout: 3000 });
+  assert.equal(await a.locator('#voiceMuteBtn').innerText(), '🔊 روشن‌کردن میکروفون');
+  await a.locator('#voiceMuteBtn').click();
+  await a.waitForFunction(() => state.voiceCall && !state.voiceCall.muted && state.voiceCall.localStream.getAudioTracks().every(track => track.enabled), null, { timeout: 3000 });
+  await a.locator('#voiceHangupBtn').click();
+  await Promise.all([
+    a.locator('#voiceCallOverlay.on').waitFor({ state: 'hidden', timeout: 5000 }),
+    b.locator('#voiceCallOverlay.on').waitFor({ state: 'hidden', timeout: 5000 })
+  ]);
+  assert.equal(await a.evaluate(() => state.voiceCall), null, 'caller state should clean up on hang-up');
+  assert.equal(await b.evaluate(() => state.voiceCall), null, 'receiver state should clean up on hang-up');
+
   await a.locator('#pmInput').fill('دارم تایپ می‌کنم');
   await b.locator('#pmTyping:not([hidden])').waitFor({ state: 'visible', timeout: 5000 });
   await a.locator('#pmInput').fill('PRIVATE MEME TEST start ');
@@ -474,13 +575,13 @@ try {
   assert.equal(await a.locator('#messages .msg').filter({ hasText: 'کیر مادر' }).count(), 0, 'offensive message should be blocked, not displayed');
   await b.waitForFunction(peerId => !state.peers.has(peerId), aPeerId, { timeout: 5000 });
 
-  console.log('PASS: room discovery, poll create/vote, two-round RPS, PM typing/delivery/replies, settings, UNO +2 routing, mild-language exemptions, and severe-profanity ban.');
+  console.log('PASS: room discovery, poll create/vote, two-round RPS, 10-question two-client quiz, live WebRTC audio call/mute/hang-up, PM typing/delivery/replies, settings, UNO +2 routing, and moderation.');
   console.log('A roster:', JSON.stringify(await a.locator('#userList .u-name').allTextContents()));
   console.log('B roster:', JSON.stringify(await b.locator('#userList .u-name').allTextContents()));
   console.log('A poll status:', await a.locator('.poll-card').filter({ hasText: 'ROOM TEST: کدام گزینه؟' }).locator('.poll-info').innerText());
   console.log('UNO host hand / guest hand:', await a.locator('#unoMyHand .uno-card').count(), await b.locator('#unoMyHand .uno-card').count());
 } catch (error) {
-  console.error('FAIL: room, poll, RPS, private chat, settings, or UNO interaction failed.');
+  console.error('FAIL: room, polls, RPS, knowledge quiz, WebRTC voice, private chat, settings, UNO, or moderation interaction failed.');
   console.error(error?.stack || error);
   for (let i = 0; i < pages.length; i++) {
     const page = pages[i];
