@@ -42,6 +42,42 @@ async function enterRoom(context, label, pageTarget = target) {
   attachDiagnostics(page, label);
   await page.goto(pageTarget, { waitUntil: 'domcontentloaded', timeout: 45000 });
   await page.locator('#nameInput').waitFor({ state: 'visible', timeout: 15000 });
+  const loginUi = await page.evaluate(() => ({
+    introPresent: !!document.querySelector('#loginIntro'),
+    introAnimation: getComputedStyle(document.querySelector('#loginIntro')).animationName,
+    cardAnimation: getComputedStyle(document.querySelector('.login-card')).animationName,
+    audioDockPresent: !!document.querySelector('#loginAudioDock'),
+    audioElementPresent: !!document.querySelector('#loginThemeAudio'),
+    audioDisabled: document.querySelector('#loginMusicToggle')?.disabled,
+    musicStatus: document.querySelector('#loginMusicStatus')?.textContent || ''
+  }));
+  assert.ok(loginUi.introPresent && loginUi.audioDockPresent && loginUi.audioElementPresent,
+    'the login screen should include the cinematic intro and a dedicated music dock');
+  assert.match(loginUi.introAnimation, /loginIntroCurtain|none/,
+    'the intro animation should exist or honor reduced-motion');
+  assert.match(loginUi.cardAnimation, /loginCardCinema|none/,
+    'the login card should use the new entrance animation or honor reduced-motion');
+  await page.waitForFunction(() => {
+    const status = document.querySelector('#loginMusicStatus')?.textContent || '';
+    return status && !status.includes('در حال آماده‌سازی آهنگ') && !status.includes('در حال تلاش برای پخش خودکار');
+  }, undefined, { timeout: 8000 });
+  const musicState = await page.evaluate(() => ({
+    disabled: document.querySelector('#loginMusicToggle')?.disabled,
+    status: document.querySelector('#loginMusicStatus')?.textContent || '',
+    paused: document.querySelector('#loginThemeAudio')?.paused,
+    source: document.querySelector('#loginThemeAudio')?.getAttribute('src') || ''
+  }));
+  const loginMusicAvailable = !musicState.disabled;
+  if (!loginMusicAvailable) {
+    assert.match(musicState.status, /assets\/login-theme\.mp3/,
+      'when no redistributable soundtrack is installed, the UI should explain the exact asset path');
+  } else if (musicState.paused) {
+    await page.locator('#loginMusicToggle').click();
+    await page.waitForFunction(() => {
+      const audio = document.querySelector('#loginThemeAudio');
+      return !!audio && !audio.paused && audio.readyState >= 2;
+    }, undefined, { timeout: 8000 });
+  }
   await page.locator('#nameInput').fill(label);
   await page.locator('#loginBtn').click();
   await page.waitForFunction(
@@ -50,6 +86,10 @@ async function enterRoom(context, label, pageTarget = target) {
     label,
     { timeout }
   );
+  if (loginMusicAvailable) {
+    assert.equal(await page.locator('#loginThemeAudio').evaluate(audio => audio.paused), true,
+      'the login-only soundtrack must stop after entering the chat');
+  }
   return page;
 }
 
